@@ -1,0 +1,2407 @@
+import { LanguageCode, LanguageOption } from '../types';
+
+export const LANGUAGES: LanguageOption[] = [
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
+];
+
+export interface TranslationStrings {
+  // App brand & common
+  appName: string;
+  appSubtitle: string;
+  dashboard: string;
+  patients: string;
+  newScreening: string;
+  screeningHistory: string;
+  referrals: string;
+  settings: string;
+  casesReviews: string;
+  online: string;
+  allDataSynced: string;
+  offline: string;
+  workingOffline: string;
+  recordsWaitingToSync: string;
+  syncNow: string;
+  searchPlaceholder: string;
+  search: string;
+  filter: string;
+  all: string;
+  none: string;
+  date: string;
+  result: string;
+  status: string;
+  action: string;
+  actions: string;
+  yes: string;
+  no: string;
+  cancel: string;
+  save: string;
+  delete: string;
+  edit: string;
+  view: string;
+  close: string;
+  back: string;
+  download: string;
+  print: string;
+  priority: string;
+  high: string;
+  medium: string;
+  low: string;
+  totalRecords: string;
+  noRecordsFound: string;
+  accessDenied: string;
+  accessDeniedDesc: string;
+
+  // Roles
+  adminRole: string;
+  nurseRole: string;
+  specialistRole: string;
+
+  // TopBar & User Menu
+  logout: string;
+  switchRole: string;
+  selectLanguage: string;
+  selectLanguageDesc: string;
+
+  // Admin Dashboard
+  systemOverview: string;
+  adminSubtitle: string;
+  manageSystemUsers: string;
+  totalPatients: string;
+  totalNurses: string;
+  totalSpecialists: string;
+  totalScreenings: string;
+  totalReferrals: string;
+  totalReports: string;
+  pendingReviews: string;
+  patientsDirectory: string;
+  patientsDirectoryDesc: string;
+  registeredPatients: string;
+  screeningOperations: string;
+  screeningOperationsDesc: string;
+  conductedScreenings: string;
+  userManagement: string;
+  userManagementDesc: string;
+  activeSystemUsers: string;
+
+  // Nurse Dashboard
+  goodMorning: string;
+  togetherVision: string;
+  startNewScreening: string;
+  todaysScreenings: string;
+  awaitingReview: string;
+  pendingSync: string;
+  recentScreenings: string;
+  viewAll: string;
+  noScreeningsYet: string;
+  noScreeningsDesc: string;
+  addPatient: string;
+  noPatientsYet: string;
+  noPatientsDesc: string;
+  addNewPatient: string;
+  viewReport: string;
+  viewProfile: string;
+
+  // Specialist Dashboard
+  welcomeSpecialist: string;
+  specialistSubtitle: string;
+  reviewPendingCases: string;
+  urgentCases: string;
+  reviewedCases: string;
+  followUps: string;
+  casesAwaitingReview: string;
+  actionNeeded: string;
+  noCasesAwaitingReview: string;
+  noCasesDesc: string;
+  reviewCase: string;
+  returnToDashboard: string;
+
+  // Patient Fields & Directory
+  patientId: string;
+  fullName: string;
+  age: string;
+  gender: string;
+  phone: string;
+  diabetesDuration: string;
+  knownDR: string;
+  savePatient: string;
+  registeredInSystem: string;
+  searchPatientPlaceholder: string;
+  noPatientsMatch: string;
+  startScreening: string;
+  backToPatients: string;
+  deletePatient: string;
+  deletePatientConfirmTitle: string;
+  deletePatientConfirmDesc: string;
+  deleting: string;
+  deleteSuccess: string;
+  patientProfile: string;
+  clinicalBaseline: string;
+  registeredOn: string;
+  assistedBy: string;
+  reportsAndDocuments: string;
+
+  // New Screening Wizard
+  selectPatient: string;
+  selectPatientDesc: string;
+  selectEye: string;
+  rightEye: string;
+  leftEye: string;
+  chooseImageSource: string;
+  captureImage: string;
+  captureDesc: string;
+  uploadImage: string;
+  uploadDesc: string;
+  captureFundusImage: string;
+  alignRetina: string;
+  cameraSteady: string;
+  properLighting: string;
+  retinaCentered: string;
+  fullFieldView: string;
+  captureBtn: string;
+  dragDropImage: string;
+  chooseFile: string;
+  imageQualityAssessment: string;
+  checkingImage: string;
+  focusSharpness: string;
+  illumination: string;
+  fieldOfView: string;
+  retinalVisibility: string;
+  imageSuitable: string;
+  imageSuitableDesc: string;
+  continueToResult: string;
+  aiScreeningResult: string;
+  drSeverity: string;
+  confidence: string;
+  aiDetectedFindings: string;
+  microaneurysms: string;
+  hemorrhages: string;
+  hardExudates: string;
+  heatmapOpacity: string;
+  whyThisResult: string;
+  referralRecommendation: string;
+  specialistReviewRecommended: string;
+  specialistReviewDesc: string;
+  generateReferralReport: string;
+  shareWithSpecialist: string;
+  screeningReport: string;
+  viewFullReport: string;
+  noHistoryYet: string;
+  noHistoryDesc: string;
+
+  // Specialist Review Page
+  specialistAssessment: string;
+  clinicalNotes: string;
+  notesPlaceholder: string;
+  clinicalRecommendation: string;
+  submitAssessment: string;
+  assessmentSubmitted: string;
+  recFollowUp: string;
+  recMonitoring: string;
+  recFurtherEval: string;
+  recNoAction: string;
+
+  // Referrals
+  activeSpecialistReferrals: string;
+  noReferralsYet: string;
+  noReferralsDesc: string;
+  performRetinalScreening: string;
+  openInSpecialistMode: string;
+  referralsMasterAudit: string;
+  referralsMasterAuditDesc: string;
+  referringNurse: string;
+  reason: string;
+  referredSpecialist: string;
+  specialistReviewStatus: string;
+  viewDetails: string;
+
+  // Reports
+  reportsMasterAudit: string;
+  reportsMasterAuditDesc: string;
+  screeningDate: string;
+  reportStatus: string;
+  sentToPatient: string;
+  generated: string;
+  downloadPdf: string;
+  generatingPdf: string;
+  sendReport: string;
+  resendReport: string;
+  aiAssistedReport: string;
+  officialDiagnosticReport: string;
+
+  // Admin Users
+  adminUsersTitle: string;
+  adminUsersSubtitle: string;
+  addUser: string;
+  emailOrUserId: string;
+  password: string;
+  activeStatus: string;
+  inactiveStatus: string;
+  toggleActive: string;
+  toggleInactive: string;
+  deleteUser: string;
+  deleteUserConfirmTitle: string;
+  deleteUserConfirmDesc: string;
+  userCreatedSuccess: string;
+  userDeletedSuccess: string;
+
+  // Settings
+  networkSyncStatus: string;
+  clinicStationProfile: string;
+  facilityName: string;
+  cameraModel: string;
+  onlineModeDesc: string;
+  offlineModeDesc: string;
+  pendingLocalSync: string;
+  lastCloudSync: string;
+  syncSuccessMsg: string;
+  resetAllData: string;
+  resetDataConfirmTitle: string;
+  resetDataConfirmDesc: string;
+
+  // Login & MFA
+  loginTitle: string;
+  loginButton: string;
+  authenticating: string;
+  quickFillCredentials: string;
+  twoStepVerification: string;
+  enterTotpCode: string;
+  signingInAs: string;
+  verifyAndProceed: string;
+  backToLogin: string;
+  setupMfaTitle: string;
+  setupMfaDesc: string;
+  mfaScanInstruction: string;
+  completeSetup: string;
+  retrySetup: string;
+
+  // DR Severity Labels
+  noDR: string;
+  mildDR: string;
+  moderateDR: string;
+  severeDR: string;
+  proliferativeDR: string;
+
+  // AI Assistant Chatbot UI
+  aiAssistant: string;
+  retinaXAiAssistant: string;
+  aiAssistantReady: string;
+  aiBackendFutureVersion: string;
+  typeYourMessage: string;
+  send: string;
+  closeChat: string;
+  minimizeChat: string;
+  interfaceReady: string;
+  noMessagesYet: string;
+  chatDisclaimer: string;
+  clearChat: string;
+  you: string;
+
+  // Restored & Added Keys
+  reports: string;
+  screeningId: string;
+  roleAdmin: string;
+  roleSpecialist: string;
+  roleNurse: string;
+  addNewUser: string;
+  allStatus: string;
+  userIdEmail: string;
+  dateAdded: string;
+  active: string;
+  inactive: string;
+  deactivate: string;
+  activate: string;
+  permanentDeletion: string;
+  aiExplanation: string;
+  xaiFeatureAttribution: string;
+  detailedModelExplanation: string;
+  clinicalReferences: string;
+  keyVisualEvidence: string;
+  spatialFeatureAttribution: string;
+  differentialStagingReasoning: string;
+  peerReviewedGuidelines: string;
+  clinicalAdvisory: string;
+  clinicalAdvisoryDesc: string;
+  captureWithCamera: string;
+  launchCamera: string;
+  diabetesDurationYears: string;
+  years: string;
+  referralStatus: string;
+  qualityValidation: string;
+  completed: string;
+  specialistReview: string;
+  assessment: string;
+  clinicalFindings: string;
+  recommendation: string;
+  referredDate: string;
+  assignSpecialist: string;
+  reasonForReferral: string;
+  diagnosis: string;
+  noReportsYet: string;
+  priorityLevel: string;
+  highPriority: string;
+  mediumPriority: string;
+  lowPriority: string;
+  keyFindings: string;
+  optional: string;
+  savedSuccessfully: string;
+  severity: string;
+  allGrades: string;
+  noDr: string;
+  mild: string;
+  moderate: string;
+  severe: string;
+  pdr: string;
+  eye: string;
+  referral: string;
+  screenings: string;
+  users: string;
+  activeRole: string;
+  signOut: string;
+}
+
+export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
+  en: {
+    appName: 'RETINA-X',
+    appSubtitle: 'AI-assisted retinal screening',
+    dashboard: 'Dashboard',
+    patients: 'Patients',
+    newScreening: 'New Screening',
+    screeningHistory: 'Screening History',
+    referrals: 'Referrals',
+    settings: 'Settings',
+    casesReviews: 'Cases / Reviews',
+    online: 'Online',
+    allDataSynced: 'All data synced',
+    offline: 'Offline',
+    workingOffline: 'Working offline',
+    recordsWaitingToSync: 'records waiting to sync',
+    syncNow: 'Sync Now',
+    searchPlaceholder: 'Search patient by name or ID...',
+    search: 'Search',
+    filter: 'Filter',
+    all: 'All',
+    none: 'None',
+    date: 'Date',
+    result: 'Result',
+    status: 'Status',
+    action: 'Action',
+    actions: 'Actions',
+    yes: 'Yes',
+    no: 'No',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    view: 'View',
+    close: 'Close',
+    back: 'Back',
+    download: 'Download',
+    print: 'Print',
+    priority: 'Priority',
+    high: 'High',
+    medium: 'Medium',
+    low: 'Low',
+    totalRecords: 'Total records',
+    noRecordsFound: 'No records found in system.',
+    accessDenied: 'Access Denied',
+    accessDeniedDesc: 'You do not have permission to access this page.',
+
+    adminRole: 'Administrator',
+    nurseRole: 'Nurse / Healthcare Worker',
+    specialistRole: 'Consultant Ophthalmologist',
+
+    logout: 'Log Out',
+    switchRole: 'Switch Role',
+    selectLanguage: 'Select Language',
+    selectLanguageDesc: 'Select your preferred language for the application.',
+
+    systemOverview: 'System Overview',
+    adminSubtitle: 'Full enterprise tele-ophthalmology administration and audit control.',
+    manageSystemUsers: 'Manage System Users',
+    totalPatients: 'Total Patients',
+    totalNurses: 'Total Nurses',
+    totalSpecialists: 'Total Specialists',
+    totalScreenings: 'Total Screenings',
+    totalReferrals: 'Total Referrals',
+    totalReports: 'Total Reports',
+    pendingReviews: 'Pending Reviews',
+    patientsDirectory: 'Patients Directory',
+    patientsDirectoryDesc: 'Browse all patient medical records, screenings, and assigned nurses.',
+    registeredPatients: 'Registered Patients',
+    screeningOperations: 'Screening Operations',
+    screeningOperationsDesc: 'Audit system-wide AI-assisted eye screenings, confidence ratings, and outcomes.',
+    conductedScreenings: 'Conducted Screenings',
+    userManagement: 'User Management',
+    userManagementDesc: 'Provision and manage staff accounts for Nurses, Specialists, and Administrators.',
+    activeSystemUsers: 'Active System Users',
+
+    goodMorning: 'Good morning',
+    togetherVision: 'Together for healthier vision.',
+    startNewScreening: 'Start New Screening',
+    todaysScreenings: "Today's Screenings",
+    awaitingReview: 'Awaiting Review',
+    pendingSync: 'Pending Sync',
+    recentScreenings: 'Recent Screenings',
+    viewAll: 'View All',
+    noScreeningsYet: 'No screenings yet',
+    noScreeningsDesc: 'Start by adding a patient and creating a new screening.',
+    addPatient: 'Add Patient',
+    noPatientsYet: 'No patients added yet',
+    noPatientsDesc: 'Add a patient to begin retinal screening.',
+    addNewPatient: 'Add New Patient',
+    viewReport: 'View Report',
+    viewProfile: 'View Profile',
+
+    welcomeSpecialist: 'Welcome',
+    specialistSubtitle: 'Ophthalmology triage and AI-assisted secondary review.',
+    reviewPendingCases: 'Review Pending Cases',
+    urgentCases: 'Urgent Cases',
+    reviewedCases: 'Reviewed Cases',
+    followUps: 'Follow-ups',
+    casesAwaitingReview: 'Cases Awaiting Review',
+    actionNeeded: 'action needed',
+    noCasesAwaitingReview: 'No cases awaiting review',
+    noCasesDesc: 'Screenings sent for specialist review will appear here.',
+    reviewCase: 'Review Case',
+    returnToDashboard: 'Return to Dashboard',
+
+    patientId: 'Patient ID',
+    fullName: 'Full Name',
+    age: 'Age',
+    gender: 'Gender',
+    phone: 'Phone Number',
+    diabetesDuration: 'Diabetes Duration (years)',
+    knownDR: 'Known Diabetic Retinopathy',
+    savePatient: 'Save Patient',
+    registeredInSystem: 'registered in system',
+    searchPatientPlaceholder: 'Search patient by name, ID or phone...',
+    noPatientsMatch: 'No patients match',
+    startScreening: 'Start Screening',
+    backToPatients: 'Back to Patients',
+    deletePatient: 'Delete Patient',
+    deletePatientConfirmTitle: 'Delete Patient?',
+    deletePatientConfirmDesc: 'This will permanently delete this patient and all associated screenings, findings, evidence, referrals, specialist reviews, and reports. This action cannot be undone.',
+    deleting: 'Deleting...',
+    deleteSuccess: 'Patient deleted successfully.',
+    patientProfile: 'Patient Profile',
+    clinicalBaseline: 'Clinical Baseline',
+    registeredOn: 'Registered',
+    assistedBy: 'Assisted by',
+    reportsAndDocuments: 'Reports & Documents',
+
+    selectPatient: 'Select Patient',
+    selectPatientDesc: 'Search for an existing patient or add a new one.',
+    selectEye: 'Select Eye',
+    rightEye: 'Right Eye',
+    leftEye: 'Left Eye',
+    chooseImageSource: 'Choose Image Source',
+    captureImage: 'Capture Image',
+    captureDesc: 'Use fundus camera or smartphone adapter',
+    uploadImage: 'Upload Image',
+    uploadDesc: 'Upload an existing fundus image',
+    captureFundusImage: 'Capture Fundus Image',
+    alignRetina: 'Align the retina and capture a clear image.',
+    cameraSteady: 'Keep the camera steady',
+    properLighting: 'Ensure proper lighting',
+    retinaCentered: 'Keep the retina centered',
+    fullFieldView: 'Capture full field of view',
+    captureBtn: 'Capture',
+    dragDropImage: 'Drag & drop image here',
+    chooseFile: 'Choose File',
+    imageQualityAssessment: 'Image Quality Assessment',
+    checkingImage: 'Checking if the image is suitable for AI analysis.',
+    focusSharpness: 'Focus / Sharpness',
+    illumination: 'Illumination',
+    fieldOfView: 'Field of View',
+    retinalVisibility: 'Retinal Visibility',
+    imageSuitable: 'Image Quality: Suitable',
+    imageSuitableDesc: 'This image is suitable for AI-assisted screening.',
+    continueToResult: 'Continue to Screening Result',
+    aiScreeningResult: 'AI Screening Result',
+    drSeverity: 'DR Severity',
+    confidence: 'Confidence',
+    aiDetectedFindings: 'AI-detected findings',
+    microaneurysms: 'Microaneurysms',
+    hemorrhages: 'Hemorrhages',
+    hardExudates: 'Hard Exudates',
+    heatmapOpacity: 'Heatmap Opacity',
+    whyThisResult: 'Why this result?',
+    referralRecommendation: 'Referral Recommendation',
+    specialistReviewRecommended: 'Specialist Review Recommended',
+    specialistReviewDesc: 'Based on the AI findings, this patient should be evaluated by an eye specialist.',
+    generateReferralReport: 'Generate Referral Report',
+    shareWithSpecialist: 'Share with Specialist',
+    screeningReport: 'Screening Report',
+    viewFullReport: 'View Full Report',
+    noHistoryYet: 'No screening history yet.',
+    noHistoryDesc: 'Complete a screening to see results here.',
+
+    specialistAssessment: 'Specialist Assessment',
+    clinicalNotes: 'Specialist Clinical Notes',
+    notesPlaceholder: 'Add detailed clinical impressions and remarks...',
+    clinicalRecommendation: 'Clinical Recommendation',
+    submitAssessment: 'Submit Specialist Assessment',
+    assessmentSubmitted: 'Assessment submitted successfully!',
+    recFollowUp: 'Follow-up in 3-6 Months',
+    recMonitoring: 'Specialist monitoring required',
+    recFurtherEval: 'Immediate Further Evaluation / Laser',
+    recNoAction: 'No further action needed',
+
+    activeSpecialistReferrals: 'active specialist referrals',
+    noReferralsYet: 'No referrals yet',
+    noReferralsDesc: 'When patients require specialist escalation, referrals will appear here.',
+    performRetinalScreening: 'Perform Retinal Screening',
+    openInSpecialistMode: 'Open in Specialist Mode',
+    referralsMasterAudit: 'Referrals Master Audit',
+    referralsMasterAuditDesc: 'Audit clinic-to-ophthalmologist clinical escalation and referral workflows.',
+    referringNurse: 'Referring Nurse',
+    reason: 'Reason',
+    referredSpecialist: 'Referred Specialist',
+    specialistReviewStatus: 'Specialist Review Status',
+    viewDetails: 'View Details',
+
+    reportsMasterAudit: 'Reports Master Audit',
+    reportsMasterAuditDesc: 'Audit and inspect clinical diagnostic reports generated across all screenings.',
+    screeningDate: 'Screening Date',
+    reportStatus: 'Report Status',
+    sentToPatient: 'Sent to Patient',
+    generated: 'Generated',
+    downloadPdf: 'Download PDF',
+    generatingPdf: 'Generating PDF...',
+    sendReport: 'Send Report',
+    resendReport: 'Resend Report',
+    aiAssistedReport: 'AI-Assisted Retinal Screening Report',
+    officialDiagnosticReport: 'Official Clinical Screening Summary',
+
+    adminUsersTitle: 'System Users Management',
+    adminUsersSubtitle: 'Provision and configure tele-ophthalmology accounts and credentials.',
+    addUser: 'Add New User',
+    emailOrUserId: 'Email / User ID',
+    password: 'Password',
+    activeStatus: 'Active',
+    inactiveStatus: 'Inactive',
+    toggleActive: 'Deactivate',
+    toggleInactive: 'Activate',
+    deleteUser: 'Delete User',
+    deleteUserConfirmTitle: 'Delete User Account?',
+    deleteUserConfirmDesc: 'This will permanently remove this user account from the system.',
+    userCreatedSuccess: 'User account created successfully in database!',
+    userDeletedSuccess: 'User account deleted successfully.',
+
+    networkSyncStatus: 'Network & Sync Status',
+    clinicStationProfile: 'Clinic Station Profile',
+    facilityName: 'Facility / Clinic Name',
+    cameraModel: 'Fundus Camera Model',
+    onlineModeDesc: 'Records sync automatically with central cloud registry.',
+    offlineModeDesc: 'Records are encrypted locally on this device until connectivity resumes.',
+    pendingLocalSync: 'Pending Local Sync',
+    lastCloudSync: 'Last cloud sync',
+    syncSuccessMsg: 'All offline screening records synchronized with central server!',
+    resetAllData: 'Reset All Data',
+    resetDataConfirmTitle: 'Reset Application Data?',
+    resetDataConfirmDesc: 'This will clear all local data and restore standard demo state.',
+
+    loginTitle: 'Login',
+    loginButton: 'Log In',
+    authenticating: 'Authenticating...',
+    quickFillCredentials: 'Quick Fill Credentials',
+    twoStepVerification: 'Two-Step Verification',
+    enterTotpCode: 'Enter the 6-digit code from your Google Authenticator app.',
+    signingInAs: 'Signing in as',
+    verifyAndProceed: 'Verify & Proceed',
+    backToLogin: 'Back to Login',
+    setupMfaTitle: 'Set Up Two-Step Verification',
+    setupMfaDesc: 'Scan this QR code with Google Authenticator to enable two-step verification.',
+    mfaScanInstruction: 'Open Google Authenticator on your mobile device and scan the QR code.',
+    completeSetup: 'Complete Setup & Continue',
+    retrySetup: 'Retry Setup',
+
+    noDR: 'No DR',
+    mildDR: 'Mild',
+    moderateDR: 'Moderate',
+    severeDR: 'Severe',
+    proliferativeDR: 'PDR (Proliferative)',
+
+    // AI Assistant Chatbot UI
+    aiAssistant: 'AI Assistant',
+    retinaXAiAssistant: 'RETINA-X AI Assistant',
+    aiAssistantReady: 'AI assistant interface is ready.',
+    aiBackendFutureVersion: 'Backend connection will be available in a future version.',
+    typeYourMessage: 'Type your message...',
+    send: 'Send',
+    closeChat: 'Close Chat',
+    minimizeChat: 'Minimize',
+    interfaceReady: 'Interface Ready',
+    noMessagesYet: 'No messages sent yet. Type a message below to test the interface.',
+    chatDisclaimer: 'Clinical assistant interface preview. No network or AI service connected.',
+    clearChat: 'Clear',
+    you: 'You',
+
+    // Restored UI Elements
+    reports: "Reports",
+    screeningId: "Screening ID",
+    roleAdmin: "Admin",
+    roleSpecialist: "Specialist",
+    roleNurse: "Nurse",
+    addNewUser: "Add New User",
+    allStatus: "All",
+    userIdEmail: "User ID / Email",
+    dateAdded: "Date Added",
+    active: "Active",
+    inactive: "Inactive",
+    deactivate: "Deactivate",
+    activate: "Activate",
+    permanentDeletion: "This action will permanently remove the user from the system.",
+    aiExplanation: "AI Explanation",
+    xaiFeatureAttribution: "XAI Feature Attribution",
+    detailedModelExplanation: "Detailed Model Explanation",
+    clinicalReferences: "Clinical References",
+    keyVisualEvidence: "Key Visual Evidence",
+    spatialFeatureAttribution: "Spatial Feature Attribution",
+    differentialStagingReasoning: "Differential Staging Reasoning",
+    peerReviewedGuidelines: "Peer-Reviewed Guidelines",
+    clinicalAdvisory: "Clinical Advisory",
+    clinicalAdvisoryDesc: "AI analysis is designed as a decision-support aid and does not replace qualified clinical diagnosis.",
+    captureWithCamera: "Capture with Camera",
+    launchCamera: "Launch Camera",
+    diabetesDurationYears: "Diabetes Duration (Years)",
+    years: "years",
+    referralStatus: "Referral Status",
+    qualityValidation: "Quality Validation",
+    completed: "Completed",
+    specialistReview: "Specialist Review",
+    assessment: "Assessment",
+    clinicalFindings: "Clinical Findings",
+    recommendation: "Recommendation",
+    referredDate: "Referred Date",
+    assignSpecialist: "Assign Specialist",
+    reasonForReferral: "Reason for Referral",
+    diagnosis: "Diagnosis",
+    noReportsYet: "No reports generated yet.",
+    priorityLevel: "Priority Level",
+    highPriority: "High",
+    mediumPriority: "Medium",
+    lowPriority: "Low",
+    keyFindings: "Key Findings",
+    optional: "optional",
+    savedSuccessfully: "Saved Successfully",
+    severity: "Severity",
+    allGrades: "All Grades",
+    noDr: "No DR",
+    mild: "Mild",
+    moderate: "Moderate",
+    severe: "Severe",
+    pdr: "PDR",
+    eye: "Eye",
+    referral: "Referral",
+    screenings: "Screenings",
+    users: "Users",
+    activeRole: "Active Role",
+    signOut: "Sign Out",
+  },
+
+  hi: {
+    appName: 'RETINA-X',
+    appSubtitle: 'एआई-सहायता प्राप्त रेटिना स्क्रीनिंग',
+    dashboard: 'डैशबोर्ड',
+    patients: 'मरीज़',
+    newScreening: 'नई स्क्रीनिंग',
+    screeningHistory: 'स्क्रीनिंग इतिहास',
+    referrals: 'रेफ़रल',
+    settings: 'सेटिंग्स',
+    casesReviews: 'मामले / समीक्षा',
+    online: 'ऑनलाइन',
+    allDataSynced: 'सभी डेटा सिंक हो गया',
+    offline: 'ऑफ़लाइन',
+    workingOffline: 'ऑफ़लाइन कार्य कर रहे हैं',
+    recordsWaitingToSync: 'रिकॉर्ड सिंक होने की प्रतीक्षा में',
+    syncNow: 'अभी सिंक करें',
+    searchPlaceholder: 'मरीज़ का नाम या आईडी खोजें...',
+    search: 'खोजें',
+    filter: 'फ़िल्टर',
+    all: 'सभी',
+    none: 'कोई नहीं',
+    date: 'दिनांक',
+    result: 'परिणाम',
+    status: 'स्थिति',
+    action: 'कार्रवाई',
+    actions: 'कार्रवाइयाँ',
+    yes: 'हाँ',
+    no: 'नहीं',
+    cancel: 'रद्द करें',
+    save: 'सहेजें',
+    delete: 'हटाएं',
+    edit: 'संपादित करें',
+    view: 'देखें',
+    close: 'बंद करें',
+    back: 'वापस',
+    download: 'डाउनलोड',
+    print: 'प्रिंट',
+    priority: 'प्राथमिकता',
+    high: 'उच्च',
+    medium: 'मध्यम',
+    low: 'निम्न',
+    totalRecords: 'कुल रिकॉर्ड',
+    noRecordsFound: 'सिस्टम में कोई रिकॉर्ड नहीं मिला।',
+    accessDenied: 'पहुँच अस्वीकृत',
+    accessDeniedDesc: 'आपको इस पृष्ठ तक पहुँचने की अनुमति नहीं है।',
+
+    adminRole: 'प्रशासक',
+    nurseRole: 'नर्स / स्वास्थ्य कार्यकर्ता',
+    specialistRole: 'सलाहकार नेत्र रोग विशेषज्ञ',
+
+    logout: 'लॉग आउट',
+    switchRole: 'भूमिका बदलें',
+    selectLanguage: 'भाषा चुनें',
+    selectLanguageDesc: 'एप्लिकेशन के लिए अपनी पसंदीदा भाषा चुनें।',
+
+    systemOverview: 'सिस्टम अवलोकन',
+    adminSubtitle: 'पूर्ण टेली-ऑप्थल्मोलॉजी प्रशासन और ऑडिट नियंत्रण।',
+    manageSystemUsers: 'सिस्टम उपयोगकर्ता प्रबंधित करें',
+    totalPatients: 'कुल मरीज़',
+    totalNurses: 'कुल नर्स',
+    totalSpecialists: 'कुल विशेषज्ञ',
+    totalScreenings: 'कुल स्क्रीनिंग',
+    totalReferrals: 'कुल रेफ़रल',
+    totalReports: 'कुल रिपोर्ट',
+    pendingReviews: 'लंबित समीक्षाएं',
+    patientsDirectory: 'मरीज़ निर्देशिका',
+    patientsDirectoryDesc: 'सभी मरीज़ मेडिकल रिकॉर्ड, स्क्रीनिंग और नर्स देखें।',
+    registeredPatients: 'पंजीकृत मरीज़',
+    screeningOperations: 'स्क्रीनिंग संचालन',
+    screeningOperationsDesc: 'सिस्टम-व्यापी एआई-सहायता प्राप्त नेत्र स्क्रीनिंग और परिणामों का ऑडिट करें।',
+    conductedScreenings: 'आयोजित स्क्रीनिंग',
+    userManagement: 'उपयोगकर्ता प्रबंधन',
+    userManagementDesc: 'नर्स, विशेषज्ञ और व्यवस्थापक खातों को प्रबंधित करें।',
+    activeSystemUsers: 'सक्रिय उपयोगकर्ता',
+
+    goodMorning: 'सुप्रभात',
+    togetherVision: 'स्वस्थ दृष्टि के लिए मिलकर काम करें।',
+    startNewScreening: 'नई स्क्रीनिंग शुरू करें',
+    todaysScreenings: 'आज की स्क्रीनिंग',
+    awaitingReview: 'समीक्षा लंबित',
+    pendingSync: 'लंबित सिंक',
+    recentScreenings: 'हाल की स्क्रीनिंग',
+    viewAll: 'सभी देखें',
+    noScreeningsYet: 'अभी कोई स्क्रीनिंग नहीं',
+    noScreeningsDesc: 'मरीज़ जोड़कर और नई स्क्रीनिंग बनाकर शुरुआत करें।',
+    addPatient: 'मरीज़ जोड़ें',
+    noPatientsYet: 'अभी कोई मरीज़ नहीं जोड़ा गया',
+    noPatientsDesc: 'रेटिना स्क्रीनिंग शुरू करने के लिए मरीज़ जोड़ें।',
+    addNewPatient: 'नया मरीज़ जोड़ें',
+    viewReport: 'रिपोर्ट देखें',
+    viewProfile: 'प्रोफ़ाइल देखें',
+
+    welcomeSpecialist: 'स्वागत है',
+    specialistSubtitle: 'ऑप्थल्मोलॉजी ट्राइएज और एआई-सहायता प्राप्त द्वितीयक समीक्षा।',
+    reviewPendingCases: 'लंबित मामलों की समीक्षा करें',
+    urgentCases: 'गंभीर मामले',
+    reviewedCases: 'समीक्षित मामले',
+    followUps: 'फ़ॉलो-अप',
+    casesAwaitingReview: 'समीक्षा हेतु लंबित मामले',
+    actionNeeded: 'कार्रवाई आवश्यक',
+    noCasesAwaitingReview: 'समीक्षा के लिए कोई मामला लंबित नहीं है',
+    noCasesDesc: 'विशेषज्ञ समीक्षा के लिए भेजी गई स्क्रीनिंग यहाँ दिखाई देंगी।',
+    reviewCase: 'मामले की समीक्षा करें',
+    returnToDashboard: 'डैशबोर्ड पर लौटें',
+
+    patientId: 'मरीज़ आईडी',
+    fullName: 'पूरा नाम',
+    age: 'आयु',
+    gender: 'लिंग',
+    phone: 'फ़ोन नंबर',
+    diabetesDuration: 'मधुमेह की अवधि (वर्ष)',
+    knownDR: 'ज्ञात डायबिटिक रेटिनोपैथी',
+    savePatient: 'मरीज़ सहेजें',
+    registeredInSystem: 'सिस्टम में पंजीकृत',
+    searchPatientPlaceholder: 'नाम, आईडी या फ़ोन द्वारा मरीज़ खोजें...',
+    noPatientsMatch: 'कोई मरीज़ मेल नहीं खाता',
+    startScreening: 'स्क्रीनिंग शुरू करें',
+    backToPatients: 'मरीज़ों पर वापस जाएं',
+    deletePatient: 'मरीज़ हटाएं',
+    deletePatientConfirmTitle: 'मरीज़ को हटाएं?',
+    deletePatientConfirmDesc: 'यह इस मरीज़ और सभी संबंधित स्क्रीनिंग, निष्कर्षों, रेफ़रल और रिपोर्ट को स्थायी रूप से हटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।',
+    deleting: 'हटाया जा रहा है...',
+    deleteSuccess: 'मरीज़ सफलतापूर्वक हटा दिया गया।',
+    patientProfile: 'मरीज़ प्रोफ़ाइल',
+    clinicalBaseline: 'क्लिनिकल विवरण',
+    registeredOn: 'पंजीकृत',
+    assistedBy: 'सहायक',
+    reportsAndDocuments: 'रिपोर्ट और दस्तावेज़',
+
+    selectPatient: 'मरीज़ चुनें',
+    selectPatientDesc: 'मौजूदा मरीज़ खोजें या नया जोड़ें।',
+    selectEye: 'आँख चुनें',
+    rightEye: 'दाहिनी आँख',
+    leftEye: 'बाईं आँख',
+    chooseImageSource: 'छवि स्रोत चुनें',
+    captureImage: 'छवि कैप्चर करें',
+    captureDesc: 'फंडस कैमरा या स्मार्टफोन एडेप्टर का उपयोग करें',
+    uploadImage: 'छवि अपलोड करें',
+    uploadDesc: 'मौजूदा फंडस छवि अपलोड करें',
+    captureFundusImage: 'फंडस छवि कैप्चर करें',
+    alignRetina: 'रेटिना को संरेखित करें और स्पष्ट छवि कैप्चर करें।',
+    cameraSteady: 'कैमरा स्थिर रखें',
+    properLighting: 'उचित प्रकाश सुनिश्चित करें',
+    retinaCentered: 'रेटिना को केंद्र में रखें',
+    fullFieldView: 'पूर्ण दृश्य क्षेत्र कैप्चर करें',
+    captureBtn: 'कैप्चर',
+    dragDropImage: 'छवि यहाँ खींचें और छोड़ें',
+    chooseFile: 'फ़ाइल चुनें',
+    imageQualityAssessment: 'छवि गुणवत्ता मूल्यांकन',
+    checkingImage: 'जांच रहे हैं कि क्या छवि विश्लेषण के लिए उपयुक्त है।',
+    focusSharpness: 'फ़ोकस / तीक्ष्णता',
+    illumination: 'रोशनी / चमक',
+    fieldOfView: 'दृश्य क्षेत्र',
+    retinalVisibility: 'रेटिना दृश्यता',
+    imageSuitable: 'छवि गुणवत्ता: उपयुक्त',
+    imageSuitableDesc: 'यह छवि एआई-सहायता प्राप्त स्क्रीनिंग के लिए उपयुक्त है।',
+    continueToResult: 'स्क्रीनिंग परिणाम पर आगे बढ़ें',
+    aiScreeningResult: 'एआई स्क्रीनिंग परिणाम',
+    drSeverity: 'डीआर गंभीरता',
+    confidence: 'विश्वसनीयता',
+    aiDetectedFindings: 'एआई-पहचाने गए निष्कर्ष',
+    microaneurysms: 'माइक्रोएन्यूरिज्म',
+    hemorrhages: 'रक्तस्राव (Hemorrhages)',
+    hardExudates: 'हार्ड एक्सयूडेट्स',
+    heatmapOpacity: 'हीटमैप अस्पष्टता',
+    whyThisResult: 'यह परिणाम क्यों?',
+    referralRecommendation: 'रेफ़रल सिफ़ारिश',
+    specialistReviewRecommended: 'विशेषज्ञ समीक्षा अनुशंसित',
+    specialistReviewDesc: 'एआई निष्कर्षों के आधार पर, इस रोगी का नेत्र रोग विशेषज्ञ द्वारा मूल्यांकन किया जाना चाहिए।',
+    generateReferralReport: 'रेफ़रल रिपोर्ट तैयार करें',
+    shareWithSpecialist: 'विशेषज्ञ के साथ साझा करें',
+    screeningReport: 'स्क्रीनिंग रिपोर्ट',
+    viewFullReport: 'पूरी रिपोर्ट देखें',
+    noHistoryYet: 'अभी कोई स्क्रीनिंग इतिहास नहीं है।',
+    noHistoryDesc: 'परिणाम देखने के लिए स्क्रीनिंग पूरी करें।',
+
+    specialistAssessment: 'विशेषज्ञ मूल्यांकन',
+    clinicalNotes: 'विशेषज्ञ क्लिनिकल नोट्स',
+    notesPlaceholder: 'विस्तृत क्लिनिकल टिप्पणियाँ जोड़ें...',
+    clinicalRecommendation: 'क्लिनिकल सिफ़ारिश',
+    submitAssessment: 'विशेषज्ञ मूल्यांकन सबमिट करें',
+    assessmentSubmitted: 'मूल्यांकन सफलतापूर्वक सबमिट किया गया!',
+    recFollowUp: '3-6 महीने में फ़ॉलो-अप',
+    recMonitoring: 'विशेषज्ञ निगरानी आवश्यक',
+    recFurtherEval: 'तत्काल अग्रिम मूल्यांकन / लेजर',
+    recNoAction: 'आगे किसी कार्रवाई की आवश्यकता नहीं',
+
+    activeSpecialistReferrals: 'सक्रिय विशेषज्ञ रेफ़रल',
+    noReferralsYet: 'अभी कोई रेफ़रल नहीं',
+    noReferralsDesc: 'जब मरीज़ों को विशेषज्ञ की आवश्यकता होगी, तो रेफ़रल यहाँ दिखाई देंगे।',
+    performRetinalScreening: 'रेटिना स्क्रीनिंग करें',
+    openInSpecialistMode: 'विशेषज्ञ मोड में खोलें',
+    referralsMasterAudit: 'रेफ़रल मास्टर ऑडिट',
+    referralsMasterAuditDesc: 'क्लिनिक से नेत्र रोग विशेषज्ञ तक क्लिनिकल रेफ़रल कार्यप्रवाह का ऑडिट करें।',
+    referringNurse: 'रेफ़रिंग नर्स',
+    reason: 'कारण',
+    referredSpecialist: 'रेफ़र किए गए विशेषज्ञ',
+    specialistReviewStatus: 'विशेषज्ञ समीक्षा स्थिति',
+    viewDetails: 'विवरण देखें',
+
+    reportsMasterAudit: 'रिपोर्ट मास्टर ऑडिट',
+    reportsMasterAuditDesc: 'सभी स्क्रीनिंग में उत्पन्न नैदानिक रिपोर्टों का ऑडिट करें।',
+    screeningDate: 'स्क्रीनिंग तिथि',
+    reportStatus: 'रिपोर्ट स्थिति',
+    sentToPatient: 'मरीज़ को भेजा गया',
+    generated: 'तैयार किया गया',
+    downloadPdf: 'पीडीएफ डाउनलोड करें',
+    generatingPdf: 'पीडीएफ तैयार हो रही है...',
+    sendReport: 'रिपोर्ट भेजें',
+    resendReport: 'रिपोर्ट पुनः भेजें',
+    aiAssistedReport: 'एआई-सहायता प्राप्त रेटिना स्क्रीनिंग रिपोर्ट',
+    officialDiagnosticReport: 'आधिकारिक क्लिनिकल स्क्रीनिंग सारांश',
+
+    adminUsersTitle: 'सिस्टम उपयोगकर्ता प्रबंधन',
+    adminUsersSubtitle: 'टेली-ऑप्थल्मोलॉजी खातों और क्रेडेंशियल्स का प्रावधान और प्रबंधन करें।',
+    addUser: 'नया उपयोगकर्ता जोड़ें',
+    emailOrUserId: 'ईमेल / उपयोगकर्ता आईडी',
+    password: 'पासवर्ड',
+    activeStatus: 'सक्रिय',
+    inactiveStatus: 'निष्क्रिय',
+    toggleActive: 'निष्क्रिय करें',
+    toggleInactive: 'सक्रिय करें',
+    deleteUser: 'उपयोगकर्ता हटाएं',
+    deleteUserConfirmTitle: 'उपयोगकर्ता खाता हटाएं?',
+    deleteUserConfirmDesc: 'यह सिस्टम से इस उपयोगकर्ता खाते को स्थायी रूप से हटा देगा।',
+    userCreatedSuccess: 'उपयोगकर्ता खाता डेटाबेस में सफलतापूर्वक बनाया गया!',
+    userDeletedSuccess: 'उपयोगकर्ता खाता सफलतापूर्वक हटा दिया गया।',
+
+    networkSyncStatus: 'नेटवर्क और सिंक स्थिति',
+    clinicStationProfile: 'क्लिनिक स्टेशन प्रोफ़ाइल',
+    facilityName: 'संस्थान / क्लिनिक का नाम',
+    cameraModel: 'फंडस कैमरा मॉडल',
+    onlineModeDesc: 'रिकॉर्ड स्वचालित रूप से केंद्रीय क्लाउड रजिस्ट्री के साथ सिंक होते हैं।',
+    offlineModeDesc: 'कनेक्टिविटी फिर से शुरू होने तक रिकॉर्ड इस डिवाइस पर एन्क्रिप्टेड रहते हैं।',
+    pendingLocalSync: 'लंबित स्थानीय सिंक',
+    lastCloudSync: 'अंतिम क्लाउड सिंक',
+    syncSuccessMsg: 'सभी ऑफ़लाइन स्क्रीनिंग रिकॉर्ड केंद्रीय सर्वर के साथ सिंक हो गए!',
+    resetAllData: 'सभी डेटा रीसेट करें',
+    resetDataConfirmTitle: 'एप्लिकेशन डेटा रीसेट करें?',
+    resetDataConfirmDesc: 'यह सभी स्थानीय डेटा को साफ़ करेगा और मानक डेमो स्थिति को पुनर्स्थापित करेगा।',
+
+    loginTitle: 'लॉग इन',
+    loginButton: 'लॉग इन करें',
+    authenticating: 'प्रमाणीकरण हो रहा है...',
+    quickFillCredentials: 'त्वरित क्रेडेंशियल्स भरें',
+    twoStepVerification: 'दो-चरणीय सत्यापन',
+    enterTotpCode: 'अपने Google Authenticator ऐप से 6-अंकों का कोड दर्ज करें।',
+    signingInAs: 'लॉग इन किया जा रहा है बतौर',
+    verifyAndProceed: 'सत्यापित करें और आगे बढ़ें',
+    backToLogin: 'लॉगिन पर वापस जाएं',
+    setupMfaTitle: 'दो-चरणीय सत्यापन सेट करें',
+    setupMfaDesc: 'दो-चरणीय सत्यापन सक्षम करने के लिए Google Authenticator से यह क्यूआर कोड स्कैन करें।',
+    mfaScanInstruction: 'अपने मोबाइल पर Google Authenticator खोलें और क्यूआर कोड स्कैन करें।',
+    completeSetup: 'सेटअप पूरा करें और जारी रखें',
+    retrySetup: 'सेटअप पुनः प्रयास करें',
+
+    noDR: 'कोई डीआर नहीं',
+    mildDR: 'हल्का',
+    moderateDR: 'मध्यम',
+    severeDR: 'गंभीर',
+    proliferativeDR: 'पीडीआर (प्रोलिफ़ेरेटिव)',
+
+    // AI Assistant Chatbot UI
+    aiAssistant: 'एआई सहायक',
+    retinaXAiAssistant: 'RETINA-X एआई सहायक',
+    aiAssistantReady: 'एआई सहायक इंटरफ़ेस तैयार है।',
+    aiBackendFutureVersion: 'बैकएंड कनेक्शन भविष्य के संस्करण में उपलब्ध होगा।',
+    typeYourMessage: 'अपना संदेश लिखें...',
+    send: 'भेजें',
+    closeChat: 'चैट बंद करें',
+    minimizeChat: 'छोटा करें',
+    interfaceReady: 'इंटरफ़ेस तैयार',
+    noMessagesYet: 'अभी कोई संदेश नहीं है। इंटरफ़ेस का परीक्षण करने के लिए नीचे संदेश लिखें।',
+    chatDisclaimer: 'क्लिनिकल सहायक इंटरफ़ेस पूर्वावलोकन। कोई नेटवर्क या एआई सेवा कनेक्ट नहीं है।',
+    clearChat: 'साफ़ करें',
+    you: 'आप',
+
+    // Restored UI Elements
+    reports: "रिपोर्ट्स",
+    screeningId: "जांच आईडी",
+    roleAdmin: "व्यवस्थापक",
+    roleSpecialist: "विशेषज्ञ",
+    roleNurse: "नर्स",
+    addNewUser: "नया उपयोगकर्ता जोड़ें",
+    allStatus: "सभी",
+    userIdEmail: "उपयोगकर्ता आईडी / ईमेल",
+    dateAdded: "जोड़े जाने की तारीख",
+    active: "सक्रिय",
+    inactive: "निष्क्रिय",
+    deactivate: "निष्क्रिय करें",
+    activate: "सक्रिय करें",
+    permanentDeletion: "यह कार्रवाई उपयोगकर्ता को सिस्टम से स्थायी रूप से हटा देगी।",
+    aiExplanation: "एआई व्याख्या",
+    xaiFeatureAttribution: "एक्सएआई फीचर एट्रिब्यूशन",
+    detailedModelExplanation: "विस्तृत मॉडल व्याख्या",
+    clinicalReferences: "नैदानिक संदर्भ",
+    keyVisualEvidence: "प्रमुख दृश्य साक्ष्य",
+    spatialFeatureAttribution: "स्थानिक फीचर विशेषता",
+    differentialStagingReasoning: "विभेदक स्टेजिंग तर्क",
+    peerReviewedGuidelines: "समीक्षित दिशानिर्देश",
+    clinicalAdvisory: "नैदानिक सलाह",
+    clinicalAdvisoryDesc: "एआई विश्लेषण एक निर्णय-सहायता उपकरण है और योग्य नैदानिक निदान का विकल्प नहीं है।",
+    captureWithCamera: "कैमरे से कैप्चर करें",
+    launchCamera: "कैमरा शुरू करें",
+    diabetesDurationYears: "मधुमेह की अवधि (वर्ष)",
+    years: "वर्ष",
+    referralStatus: "रेफरल स्थिति",
+    qualityValidation: "गुणवत्ता सत्यापन",
+    completed: "पूर्ण",
+    specialistReview: "विशेषज्ञ समीक्षा",
+    assessment: "मूल्यांकन",
+    clinicalFindings: "नैदानिक निष्कर्ष",
+    recommendation: "सिफारिश",
+    referredDate: "रेफर करने की तारीख",
+    assignSpecialist: "विशेषज्ञ असाइन करें",
+    reasonForReferral: "रेफरल का कारण",
+    diagnosis: "निदान",
+    noReportsYet: "अभी तक कोई रिपोर्ट नहीं बनाई गई है।",
+    priorityLevel: "प्राथमिकता स्तर",
+    highPriority: "उच्च",
+    mediumPriority: "मध्यम",
+    lowPriority: "कम",
+    keyFindings: "प्रमुख निष्कर्ष",
+    optional: "वैकल्पिक",
+    savedSuccessfully: "सफलतापूर्वक सहेजा गया",
+    severity: "गंभीरता",
+    allGrades: "सभी ग्रेड",
+    noDr: "कोई डी.आर. नहीं",
+    mild: "हल्का",
+    moderate: "मध्यम",
+    severe: "गंभीर",
+    pdr: "पीडीआर",
+    eye: "आँख",
+    referral: "रेफरल",
+    screenings: "जांच",
+    users: "उपयोगकर्ता",
+    activeRole: "सक्रिय भूमिका",
+    signOut: "साइन आउट",
+  },
+
+  mr: {
+    appName: 'RETINA-X',
+    appSubtitle: 'एआय-सहाय्यित रेटिना तपासणी',
+    dashboard: 'डॅशबोर्ड',
+    patients: 'रुग्ण',
+    newScreening: 'नवीन तपासणी',
+    screeningHistory: 'तपासणी इतिहास',
+    referrals: 'रेफरल्स',
+    settings: 'सेटिंग्ज',
+    casesReviews: 'प्रकरणे / पुनरावलोकन',
+    online: 'ऑनलाइन',
+    allDataSynced: 'सर्व डेटा समक्रमित झाला',
+    offline: 'ऑफलाइन',
+    workingOffline: 'ऑफलाइन कार्य करत आहे',
+    recordsWaitingToSync: 'समक्रमणाची वाट पाहणाऱ्या नोंदी',
+    syncNow: 'आता सिंक करा',
+    searchPlaceholder: 'रुग्णाचे नाव किंवा आयडी शोधा...',
+    search: 'शोधा',
+    filter: 'फिल्टर',
+    all: 'सर्व',
+    none: 'काहीही नाही',
+    date: 'दिनांक',
+    result: 'निकाल',
+    status: 'स्थिती',
+    action: 'कृती',
+    actions: 'कृती',
+    yes: 'होय',
+    no: 'नाही',
+    cancel: 'रद्द करा',
+    save: 'जतन करा',
+    delete: 'हटवा',
+    edit: 'संपादित करा',
+    view: 'पहा',
+    close: 'बंद करा',
+    back: 'मागे',
+    download: 'डाउनलोड',
+    print: 'प्रिंट',
+    priority: 'प्राधान्य',
+    high: 'उच्च',
+    medium: 'मध्यम',
+    low: 'कमी',
+    totalRecords: 'एकूण नोंदी',
+    noRecordsFound: 'प्रणालीमध्ये कोणत्याही नोंदी आढळल्या नाहीत.',
+    accessDenied: 'प्रवेश नाकारला',
+    accessDeniedDesc: 'तुम्हाला या पृष्ठावर प्रवेश करण्याची परवानगी नाही.',
+
+    adminRole: 'प्रशासक',
+    nurseRole: 'नर्स / आरोग्य कार्यकर्ता',
+    specialistRole: 'सल्लागार नेत्ररोग तज्ज्ञ',
+
+    logout: 'लॉग आउट',
+    switchRole: 'भूमिका बदला',
+    selectLanguage: 'भाषा निवडा',
+    selectLanguageDesc: 'अनुप्रयोगासाठी आपली पसंतीची भाषा निवडा.',
+
+    systemOverview: 'प्रणाली विहंगावलोकन',
+    adminSubtitle: 'संपूर्ण टेली-ऑप्थॅल्मोलॉजी प्रशासन आणि ऑडिट नियंत्रण.',
+    manageSystemUsers: 'प्रणाली वापरकर्ते व्यवस्थापित करा',
+    totalPatients: 'एकूण रुग्ण',
+    totalNurses: 'एकूण नर्सेस',
+    totalSpecialists: 'एकूण तज्ज्ञ',
+    totalScreenings: 'एकूण तपासण्या',
+    totalReferrals: 'एकूण रेफरल्स',
+    totalReports: 'एकूण अहवाल',
+    pendingReviews: 'प्रलंबित पुनरावलोकन',
+    patientsDirectory: 'रुग्ण निर्देशिका',
+    patientsDirectoryDesc: 'सर्व रुग्ण वैद्यकीय नोंदी, तपासण्या आणि नियुक्त नर्सेस तपासा.',
+    registeredPatients: 'नोंदणीकृत रुग्ण',
+    screeningOperations: 'तपासणी कार्यप्रणाली',
+    screeningOperationsDesc: 'प्रणाली-व्यापी एआय-सहाय्यित डोळ्यांच्या तपासण्या आणि निष्कर्षांचे ऑडिट करा.',
+    conductedScreenings: 'केलेल्या तपासण्या',
+    userManagement: 'वापरकर्ता व्यवस्थापन',
+    userManagementDesc: 'नर्सेस, तज्ज्ञ आणि प्रशासक खाती व्यवस्थापित करा.',
+    activeSystemUsers: 'सक्रिय वापरकर्ते',
+
+    goodMorning: 'शुभ सकाळ',
+    togetherVision: 'निरोगी दृष्टीसाठी एकत्र कार्य करूया.',
+    startNewScreening: 'नवीन तपासणी सुरू करा',
+    todaysScreenings: 'आजच्या तपासण्या',
+    awaitingReview: 'पुनरावलोकन प्रलंबित',
+    pendingSync: 'प्रलंबित सिंक',
+    recentScreenings: 'अलीकडील तपासण्या',
+    viewAll: 'सर्व पहा',
+    noScreeningsYet: 'अद्याप कोणतीही तपासणी नाही',
+    noScreeningsDesc: 'रुग्ण जोडून आणि नवीन तपासणी तयार करून सुरुवात करा.',
+    addPatient: 'रुग्ण जोडा',
+    noPatientsYet: 'अद्याप कोणतेही रुग्ण जोडलेले नाहीत',
+    noPatientsDesc: 'रेटिना तपासणी सुरू करण्यासाठी रुग्ण जोडा.',
+    addNewPatient: 'नवीन रुग्ण जोडा',
+    viewReport: 'अहवाल पहा',
+    viewProfile: 'प्रोफाइल पहा',
+
+    welcomeSpecialist: 'स्वागत आहे',
+    specialistSubtitle: 'ऑप्थॅल्मोलॉजी ट्रायज आणि एआई-सहाय्यित दुय्यम पुनरावलोकन.',
+    reviewPendingCases: 'प्रलंबित प्रकरणांचे पुनरावलोकन करा',
+    urgentCases: 'तातडीची प्रकरणे',
+    reviewedCases: 'तपासलेली प्रकरणे',
+    followUps: 'फॉलो-अप',
+    casesAwaitingReview: 'पुनरावलोकनाची वाट पाहणारी प्रकरणे',
+    actionNeeded: 'कारवाई आवश्यक',
+    noCasesAwaitingReview: 'कोणतेही प्रकरण प्रलंबित नाही',
+    noCasesDesc: 'तज्ज्ञ पुनरावलोकनासाठी पाठवलेल्या तपासण्या येथे दिसतील.',
+    reviewCase: 'प्रकरणाचे पुनरावलोकन करा',
+    returnToDashboard: 'डॅशबोर्डवर परत जा',
+
+    patientId: 'रुग्ण आयडी',
+    fullName: 'पूर्ण नाव',
+    age: 'वय',
+    gender: 'लिंग',
+    phone: 'फोन नंबर',
+    diabetesDuration: 'मधुमेहाचा कालावधी (वर्षे)',
+    knownDR: 'ज्ञात डायबेटिक रेटिनोपॅथी',
+    savePatient: 'रुग्ण जतन करा',
+    registeredInSystem: 'प्रणालीत नोंदणीकृत',
+    searchPatientPlaceholder: 'नाव, आयडी किंवा फोनद्वारे रुग्ण शोधा...',
+    noPatientsMatch: 'कोणतेही रुग्ण जुळत नाहीत',
+    startScreening: 'तपासणी सुरू करा',
+    backToPatients: 'रुग्णांकडे परत जा',
+    deletePatient: 'रुग्ण हटवा',
+    deletePatientConfirmTitle: 'रुग्ण हटवायचा का?',
+    deletePatientConfirmDesc: 'हे या रुग्णाला आणि त्याच्याशी संबंधित सर्व तपासण्या, निष्कर्ष, रेफरल्स आणि अहवाल कायमस्वरूपी काढून टाकेल.',
+    deleting: 'हटवत आहे...',
+    deleteSuccess: 'रुग्ण यशस्वीरित्या हटवला गेला.',
+    patientProfile: 'रुग्ण प्रोफाइल',
+    clinicalBaseline: 'क्लिनिकल तपशील',
+    registeredOn: 'नोंदणी',
+    assistedBy: 'मदतनीस',
+    reportsAndDocuments: 'अहवाल आणि दस्तऐवज',
+
+    selectPatient: 'रुग्ण निवडा',
+    selectPatientDesc: 'विद्यमान रुग्ण शोधा किंवा नवीन जोडा.',
+    selectEye: 'डोळा निवडा',
+    rightEye: 'उजवा डोळा',
+    leftEye: 'डावा डोळा',
+    chooseImageSource: 'प्रतिमा स्रोत निवडा',
+    captureImage: 'प्रतिमा कॅप्चर करा',
+    captureDesc: 'फंडस कॅमेरा किंवा स्मार्टफोन अ‍ॅडॉप्टर वापरा',
+    uploadImage: 'प्रतिमा अपलोड करा',
+    uploadDesc: 'विद्यमान फंडस प्रतिमा अपलोड करा',
+    captureFundusImage: 'फंडस प्रतिमा कॅप्चर करा',
+    alignRetina: 'रेटिना संरेखित करा आणि स्पष्ट प्रतिमा कॅप्चर करा.',
+    cameraSteady: 'कॅमेरा स्थिर ठेवा',
+    properLighting: 'योग्य प्रकाश सुनिश्चित करा',
+    retinaCentered: 'रेटिना मध्यभागी ठेवा',
+    fullFieldView: 'पूर्ण दृश्य क्षेत्र कॅप्चर करा',
+    captureBtn: 'कॅप्चर',
+    dragDropImage: 'प्रतिमा येथे ड्रॅग आणि ड्रॉप करा',
+    chooseFile: 'फाइल निवडा',
+    imageQualityAssessment: 'प्रतिमा गुणवत्ता मूल्यांकन',
+    checkingImage: 'प्रतिमा विश्लेषणासाठी योग्य आहे का ते तपासत आहे.',
+    focusSharpness: 'फोकस / तीक्ष्णता',
+    illumination: 'प्रकाश',
+    fieldOfView: 'दृश्य क्षेत्र',
+    retinalVisibility: 'रेटिना दृश्यमानता',
+    imageSuitable: 'प्रतिमा गुणवत्ता: योग्य',
+    imageSuitableDesc: 'ही प्रतिमा एआय-सहाय्यित तपासणीसाठी योग्य आहे.',
+    continueToResult: 'तपासणी निकालावर पुढे जा',
+    aiScreeningResult: 'एआय तपासणी निकाल',
+    drSeverity: 'डीआर तीव्रता',
+    confidence: 'आत्मविश्वास',
+    aiDetectedFindings: 'एआय-शोधलेले निष्कर्ष',
+    microaneurysms: 'मायक्रोअ‍ॅन्युरिझम्स',
+    hemorrhages: 'रक्तस्राव (Hemorrhages)',
+    hardExudates: 'हार्ड एक्स्युडेट्स',
+    heatmapOpacity: 'हीटमॅप अपारदर्शकता',
+    whyThisResult: 'हा निकाल का?',
+    referralRecommendation: 'रेफरल शिफारस',
+    specialistReviewRecommended: 'तज्ज्ञ पुनरावलोकन शिफारसीय',
+    specialistReviewDesc: 'एआय निष्कर्षांवर आधारित, या रुग्णाचे नेत्ररोग तज्ज्ञांकडून मूल्यांकन केले पाहिजे.',
+    generateReferralReport: 'रेफरल अहवाल तयार करा',
+    shareWithSpecialist: 'तज्ज्ञांसोबत शेअर करा',
+    screeningReport: 'तपासणी अहवाल',
+    viewFullReport: 'पूर्ण अहवाल पहा',
+    noHistoryYet: 'अद्याप कोणताही तपासणी इतिहास नाही.',
+    noHistoryDesc: 'निकाल पाहण्यासाठी तपासणी पूर्ण करा.',
+
+    specialistAssessment: 'तज्ज्ञ मूल्यांकन',
+    clinicalNotes: 'तज्ज्ञ क्लिनिकल नोट्स',
+    notesPlaceholder: 'तपशीलवार क्लिनिकल निरीक्षणे जोडा...',
+    clinicalRecommendation: 'क्लिनिकल शिफारस',
+    submitAssessment: 'तज्ज्ञ मूल्यांकन सबमिट करा',
+    assessmentSubmitted: 'मूल्यांकन यशस्वीरित्या सबमिट झाले!',
+    recFollowUp: '3-6 महिन्यांत फॉलो-अप',
+    recMonitoring: 'तज्ज्ञ निरीक्षण आवश्यक',
+    recFurtherEval: 'त्वरित पुढील तपासणी / लेसर',
+    recNoAction: 'पुढील कारवाईची आवश्यकता नाही',
+
+    activeSpecialistReferrals: 'सक्रिय तज्ज्ञ रेफरल्स',
+    noReferralsYet: 'अद्याप कोणतेही रेफरल्स नाहीत',
+    noReferralsDesc: 'जेव्हा रुग्णांना तज्ज्ञांची आवश्यकता असते, तेव्हा रेफरल्स येथे दिसतील.',
+    performRetinalScreening: 'रेटिना तपासणी करा',
+    openInSpecialistMode: 'तज्ज्ञ मोडमध्ये उघडा',
+    referralsMasterAudit: 'रेफरल्स मास्टर ऑडिट',
+    referralsMasterAuditDesc: 'क्लिनिक ते नेत्रतज्ज्ञ रेफरल कार्यप्रवाहाचे ऑडिट करा.',
+    referringNurse: 'रेफर करणारी नर्स',
+    reason: 'कारण',
+    referredSpecialist: 'रेफर केलेले तज्ज्ञ',
+    specialistReviewStatus: 'तज्ज्ञ पुनरावलोकन स्थिती',
+    viewDetails: 'तपशील पहा',
+
+    reportsMasterAudit: 'अहवाल मास्टर ऑडिट',
+    reportsMasterAuditDesc: 'सर्व तपासण्यांमध्ये तयार केलेल्या वैद्यकीय अहवालांचे ऑडिट करा.',
+    screeningDate: 'तपासणी तारीख',
+    reportStatus: 'अहवाल स्थिती',
+    sentToPatient: 'रुग्णाला पाठवले',
+    generated: 'तयार झाले',
+    downloadPdf: 'पीडीएफ डाउनलोड करा',
+    generatingPdf: 'पीडीएफ तयार होत आहे...',
+    sendReport: 'अहवाल पाठवा',
+    resendReport: 'अहवाल पुन्हा पाठवा',
+    aiAssistedReport: 'एआय-सहाय्यित रेटिना तपासणी अहवाल',
+    officialDiagnosticReport: 'अधिकृत क्लिनिकल तपासणी सारांश',
+
+    adminUsersTitle: 'प्रणाली वापरकर्ता व्यवस्थापन',
+    adminUsersSubtitle: 'टेली-ऑप्थॅल्मोलॉजी खाती आणि क्रेडेंशियल्स व्यवस्थापित करा.',
+    addUser: 'नवीन वापरकर्ता जोडा',
+    emailOrUserId: 'ईमेल / वापरकर्ता आयडी',
+    password: 'पासवर्ड',
+    activeStatus: 'सक्रिय',
+    inactiveStatus: 'निष्क्रिय',
+    toggleActive: 'निष्क्रिय करा',
+    toggleInactive: 'सक्रिय करा',
+    deleteUser: 'वापरकर्ता हटवा',
+    deleteUserConfirmTitle: 'वापरकर्ता खाते हटवायचे का?',
+    deleteUserConfirmDesc: 'हे प्रणालीमधून हे वापरकर्ता खाते कायमस्वरूपी काढून टाकेल.',
+    userCreatedSuccess: 'वापरकर्ता खाते डेटाबेसमध्ये यशस्वीरित्या तयार झाले!',
+    userDeletedSuccess: 'वापरकर्ता खाते यशस्वीरित्या हटवले गेले.',
+
+    networkSyncStatus: 'नेटवर्क आणि सिंक स्थिती',
+    clinicStationProfile: 'क्लिनिक स्टेशन प्रोफाइल',
+    facilityName: 'संस्था / क्लिनिकचे नाव',
+    cameraModel: 'फंडस कॅमेरा मॉडेल',
+    onlineModeDesc: 'नोंदी आपोआप मध्यवर्ती क्लाउड नोंदणीशी समक्रमित होतात.',
+    offlineModeDesc: 'कनेक्टिव्हिटी पुन्हा सुरू होईपर्यंत नोंदी या उपकरणावर सुरक्षित राहतात.',
+    pendingLocalSync: 'प्रलंबित स्थानिक सिंक',
+    lastCloudSync: 'शेवटचे क्लाउड सिंक',
+    syncSuccessMsg: 'सर्व ऑफलाइन नोंदी मध्यवर्ती सर्व्हरशी समक्रमित झाल्या!',
+    resetAllData: 'सर्व डेटा रीसेट करा',
+    resetDataConfirmTitle: 'डेटा रीसेट करायचा का?',
+    resetDataConfirmDesc: 'हे सर्व स्थानिक डेटा साफ करेल आणि डेमो स्थिती पुनर्संचयित करेल.',
+
+    loginTitle: 'लॉग इन',
+    loginButton: 'लॉग इन करा',
+    authenticating: 'प्रमाणीकरण होत आहे...',
+    quickFillCredentials: 'त्वरित क्रेडेंशियल्स भरा',
+    twoStepVerification: 'दोन-चरण पडताळणी',
+    enterTotpCode: 'आपल्या Google Authenticator अॅपमधून 6-अंकी कोड प्रविष्ट करा.',
+    signingInAs: 'लॉग इन करत आहे म्हणून',
+    verifyAndProceed: 'पडताळणी करा आणि पुढे जा',
+    backToLogin: 'लॉगिनवर परत जा',
+    setupMfaTitle: 'दोन-चरण पडताळणी सेट करा',
+    setupMfaDesc: 'दोन-चरण पडताळणी सक्षम करण्यासाठी Google Authenticator सह हा क्यूआर कोड स्कॅन करा.',
+    mfaScanInstruction: 'आपल्या मोबाइलवर Google Authenticator उघडा आणि क्यूआर कोड स्कॅन करा.',
+    completeSetup: 'सेटअप पूर्ण करा आणि सुरू ठेवा',
+    retrySetup: 'पुन्हा प्रयत्न करा',
+
+    noDR: 'डीआर नाही',
+    mildDR: 'सौम्य',
+    moderateDR: 'मध्यम',
+    severeDR: 'गंभीर',
+    proliferativeDR: 'पीडीआर (प्रोलिफेरेटिव्ह)',
+
+    // AI Assistant Chatbot UI
+    aiAssistant: 'एआय सहाय्यक',
+    retinaXAiAssistant: 'RETINA-X एआय सहाय्यक',
+    aiAssistantReady: 'एआय सहाय्यक इंटरफेस तयार आहे.',
+    aiBackendFutureVersion: 'बॅकएंड कनेक्शन भविष्यातील आवृत्तीमध्ये उपलब्ध होईल.',
+    typeYourMessage: 'तुमचा संदेश टाइप करा...',
+    send: 'पाठवा',
+    closeChat: 'चॅट बंद करा',
+    minimizeChat: 'लहान करा',
+    interfaceReady: 'इंटरफेस सज्ज',
+    noMessagesYet: 'अद्याप कोणतेही संदेश नाहीत. इंटरफेसची चाचणी घेण्यासाठी खाली संदेश टाइप करा.',
+    chatDisclaimer: 'क्लिनिकल सहाय्यक इंटरफेस पूर्वावलोकन. कोणतेही नेटवर्क किंवा एआय सेवा जोडलेली नाही.',
+    clearChat: 'साफ करा',
+    you: 'तुम्ही',
+
+    // Restored UI Elements
+    reports: "अहवाल",
+    screeningId: "तपासणी आयडी",
+    roleAdmin: "प्रशासक",
+    roleSpecialist: "तज्ज्ञ",
+    roleNurse: "परिचारिका (नर्स)",
+    addNewUser: "नवीन वापरकर्ता जोडा",
+    allStatus: "सर्व",
+    userIdEmail: "वापरकर्ता आयडी / ईमेल",
+    dateAdded: "जोडल्याची तारीख",
+    active: "सक्रिय",
+    inactive: "निष्क्रिय",
+    deactivate: "निष्क्रिय करा",
+    activate: "सक्रिय करा",
+    permanentDeletion: "ही कृती वापरकर्त्याला सिस्टममधून कायमचे काढून टाकेल.",
+    aiExplanation: "एआय स्पष्टीकरण",
+    xaiFeatureAttribution: "XAI वैशिष्ट्य विशेषता",
+    detailedModelExplanation: "तपशीलवार मॉडेल स्पष्टीकरण",
+    clinicalReferences: "क्लिनिकल संदर्भ",
+    keyVisualEvidence: "महत्वाचे दृश्य पुरावे",
+    spatialFeatureAttribution: "स्थानिक वैशिष्ट्य विशेषता",
+    differentialStagingReasoning: "भिन्न स्टेजिंग तर्क",
+    peerReviewedGuidelines: "पुनरावलोकन केलेली मार्गदर्शक तत्त्वे",
+    clinicalAdvisory: "क्लिनिकल सल्ला",
+    clinicalAdvisoryDesc: "एआय विश्लेषण हे निर्णय-समर्थन साधन आहे आणि पात्र क्लिनिकल निदानाची जागा घेत नाही.",
+    captureWithCamera: "कॅमेऱ्याने कॅप्चर करा",
+    launchCamera: "कॅमेरा सुरू करा",
+    diabetesDurationYears: "मधुमेहाचा कालावधी (वर्षे)",
+    years: "वर्षे",
+    referralStatus: "संदर्भ (रेफरल) स्थिती",
+    qualityValidation: "गुणवत्ता प्रमाणीकरण",
+    completed: "पूर्ण झाले",
+    specialistReview: "तज्ज्ञ पुनरावलोकन",
+    assessment: "मूल्यमापन",
+    clinicalFindings: "क्लिनिकल निष्कर्ष",
+    recommendation: "शिफारस",
+    referredDate: "संदर्भित तारीख",
+    assignSpecialist: "तज्ज्ञ नियुक्त करा",
+    reasonForReferral: "रेफरलचे कारण",
+    diagnosis: "निदान",
+    noReportsYet: "अद्याप कोणतेही अहवाल तयार केलेले नाहीत.",
+    priorityLevel: "प्राधान्यता पातळी",
+    highPriority: "उच्च",
+    mediumPriority: "मध्यम",
+    lowPriority: "कमी",
+    keyFindings: "प्रमुख निष्कर्ष",
+    optional: "पर्यायी",
+    savedSuccessfully: "यशस्वीरीत्या सेव्ह केले",
+    severity: "तीव्रता",
+    allGrades: "सर्व ग्रेड",
+    noDr: "डीआर नाही",
+    mild: "सौम्य",
+    moderate: "मध्यम",
+    severe: "गंभीर",
+    pdr: "पीडीआर",
+    eye: "डोळा",
+    referral: "रेफरल",
+    screenings: "तपासण्या",
+    users: "वापरकर्ते",
+    activeRole: "सक्रिय भूमिका",
+    signOut: "साइन आउट",
+  },
+
+  ta: {
+    appName: 'RETINA-X',
+    appSubtitle: 'AI-உதவி விழித்திரை பரிசோதனை',
+    dashboard: 'டாஷ்போர்டு',
+    patients: 'நோயாளிகள்',
+    newScreening: 'புதிய பரிசோதனை',
+    screeningHistory: 'பரிசோதனை வரலாறு',
+    referrals: 'பரிந்துரைகள்',
+    settings: 'அமைப்புகள்',
+    casesReviews: 'வழக்குகள் / மதிப்பாய்வு',
+    online: 'ஆன்லைன்',
+    allDataSynced: 'அனைத்து தரவும் ஒத்திசைக்கப்பட்டது',
+    offline: 'ஆஃப்லைன்',
+    workingOffline: 'ஆஃப்லைனில் வேலை செய்கிறது',
+    recordsWaitingToSync: 'ஒத்திசைவுக்காக காத்திருக்கும் பதிவுகள்',
+    syncNow: 'இப்போது ஒத்திசைக்கவும்',
+    searchPlaceholder: 'பெயர் அல்லது ஐடி மூலம் நோயாளியைத் தேடவும்...',
+    search: 'தேடு',
+    filter: 'வடிகட்டு',
+    all: 'அனைத்தும்',
+    none: 'எதுவுமில்லை',
+    date: 'தேதி',
+    result: 'முடிவு',
+    status: 'நிலை',
+    action: 'செயல்பாடு',
+    actions: 'செயல்கள்',
+    yes: 'ஆம்',
+    no: 'இல்லை',
+    cancel: 'ரத்துசெய்',
+    save: 'சேமி',
+    delete: 'நீக்கு',
+    edit: 'திருத்து',
+    view: 'பார்வை',
+    close: 'மூடு',
+    back: 'பின்செல்',
+    download: 'பதிவிறக்கு',
+    print: 'அச்சிடு',
+    priority: 'முன்னுரிமை',
+    high: 'அதிமுக்கியம்',
+    medium: 'நடுத்தரம்',
+    low: 'குறைவு',
+    totalRecords: 'மொத்த பதிவுகள்',
+    noRecordsFound: 'அமைப்பில் பதிவுகள் எதுவும் காணப்படவில்லை.',
+    accessDenied: 'அனுமதி மறுக்கப்பட்டது',
+    accessDeniedDesc: 'இந்த பக்கத்தை அணுக உங்களுக்கு அனுமதி இல்லை.',
+
+    adminRole: 'நிர்வாகி',
+    nurseRole: 'செவிலியர் / சுகாதார பணியாளர்',
+    specialistRole: 'கண் மருத்துவ நிபுணர்',
+
+    logout: 'வெளியேறு',
+    switchRole: 'பங்கை மாற்றவும்',
+    selectLanguage: 'மொழியைத் தேர்ந்தெடுக்கவும்',
+    selectLanguageDesc: 'பயன்பாட்டிற்கான உங்கள் விருப்ப மொழியைத் தேர்ந்தெடுக்கவும்.',
+
+    systemOverview: 'அமைப்பு மேலோட்டம்',
+    adminSubtitle: 'முழு தொலை-கண்ணியல் நிர்வாகம் மற்றும் தணிக்கை கட்டுப்பாடு.',
+    manageSystemUsers: 'பயனர்களை நிர்வகிக்கவும்',
+    totalPatients: 'மொத்த நோயாளிகள்',
+    totalNurses: 'மொத்த செவிலியர்கள்',
+    totalSpecialists: 'மொத்த நிபுணர்கள்',
+    totalScreenings: 'மொத்த பரிசோதனைகள்',
+    totalReferrals: 'மொத்த பரிந்துரைகள்',
+    totalReports: 'மொத்த அறிக்கைகள்',
+    pendingReviews: 'நிலுவையிலுள்ள மதிப்பாய்வுகள்',
+    patientsDirectory: 'நோயாளிகள் அடைவு',
+    patientsDirectoryDesc: 'அனைத்து நோயாளி பதிவுகள், பரிசோதனைகள் மற்றும் செவிலியர்களைப் பார்க்கவும்.',
+    registeredPatients: 'பதிவுசெய்யப்பட்ட நோயாளிகள்',
+    screeningOperations: 'பரிசோதனை செயல்பாடுகள்',
+    screeningOperationsDesc: 'AI-உதவி கண் பரிசோதனைகள் மற்றும் முடிவுகளைத் தணிக்கை செய்யவும்.',
+    conductedScreenings: 'நடத்தப்பட்ட பரிசோதனைகள்',
+    userManagement: 'பயனர் மேலாண்மை',
+    userManagementDesc: 'செவிலியர், நிபுணர் மற்றும் நிர்வாகி கணக்குகளை நிர்வகிக்கவும்.',
+    activeSystemUsers: 'செயலில் உள்ள பயனர்கள்',
+
+    goodMorning: 'காலை வணக்கம்',
+    togetherVision: 'ஆரோக்கியமான பார்வைக்காக ஒன்றிணைவோம்.',
+    startNewScreening: 'புதிய பரிசோதனையைத் தொடங்கவும்',
+    todaysScreenings: 'இன்றைய பரிசோதனைகள்',
+    awaitingReview: 'மதிப்பாய்வுக்காக காத்திருக்கிறது',
+    pendingSync: 'நிலுவையிலுள்ள ஒத்திசைவு',
+    recentScreenings: 'சமீபத்திய பரிசோதனைகள்',
+    viewAll: 'அனைத்தையும் காட்டு',
+    noScreeningsYet: 'இதுவரை பரிசோதனைகள் இல்லை',
+    noScreeningsDesc: 'நோயாளியைச் சேர்த்து புதிய பரிசோதனையை உருவாக்கவும்.',
+    addPatient: 'நோயாளியைச் சேர்',
+    noPatientsYet: 'இதுவரை நோயாளிகள் சேர்க்கப்படவில்லை',
+    noPatientsDesc: 'பரிசோதனையைத் தொடங்க ஒரு நோயாளியைச் சேர்க்கவும்.',
+    addNewPatient: 'புதிய நோயாளியைச் சேர்',
+    viewReport: 'அறிக்கையைப் பார்',
+    viewProfile: 'சுயவிவரத்தைப் பார்',
+
+    welcomeSpecialist: 'வரவேற்கிறோம்',
+    specialistSubtitle: 'கண்ணியல் முன்னுரிமை மற்றும் AI-உதவி இரண்டாம் நிலை மதிப்பாய்வு.',
+    reviewPendingCases: 'நிலுவை வழக்குகளை மதிப்பாய்வு செய்யவும்',
+    urgentCases: 'அவசர வழக்குகள்',
+    reviewedCases: 'மதிப்பாய்வு செய்யப்பட்டவை',
+    followUps: 'பின்தொடர்தல்கள்',
+    casesAwaitingReview: 'மதிப்பாய்வுக்காக காத்திருக்கும் வழக்குகள்',
+    actionNeeded: 'நடவடிக்கை தேவை',
+    noCasesAwaitingReview: 'மதிப்பாய்வுக்காக எந்த வழக்கும் காத்திருக்கவில்லை',
+    noCasesDesc: 'நிபுணர் மதிப்பாய்வுக்கு அனுப்பப்பட்ட பரிசோதனைகள் இங்கு தோன்றும்.',
+    reviewCase: 'வழக்கை மதிப்பாய்வு செய்யவும்',
+    returnToDashboard: 'டாஷ்போர்டுக்குத் திரும்பு',
+
+    patientId: 'நோயாளி ஐடி',
+    fullName: 'முழு பெயர்',
+    age: 'வயது',
+    gender: 'பாலினம்',
+    phone: 'தொலைபேசி எண்',
+    diabetesDuration: 'நீரிழிவு காலம் (ஆண்டுகள்)',
+    knownDR: 'அறியப்பட்ட நீரிழிவு ரெட்டினோபதி',
+    savePatient: 'நோயாளியைச் சேமி',
+    registeredInSystem: 'அமைப்பில் பதிவு செய்யப்பட்டது',
+    searchPatientPlaceholder: 'பெயர், ஐடி அல்லது தொலைபேசி மூலம் தேடவும்...',
+    noPatientsMatch: 'பொருந்தும் நோயாளிகள் இல்லை',
+    startScreening: 'பரிசோதனையைத் தொடங்கு',
+    backToPatients: 'நோயாளிகளுக்குத் திரும்பு',
+    deletePatient: 'நோயாளியை நீக்கு',
+    deletePatientConfirmTitle: 'நோயாளியை நீக்கவா?',
+    deletePatientConfirmDesc: 'இது இந்த நோயாளி மற்றும் தொடர்புடைய அனைத்து பரிசோதனைகள், அறிக்கைகளை நிரந்தரமாக நீக்கும்.',
+    deleting: 'நீக்குகிறது...',
+    deleteSuccess: 'நோயாளி வெற்றிகரமாக நீக்கப்பட்டார்.',
+    patientProfile: 'நோயாளி சுயவிவரம்',
+    clinicalBaseline: 'மருத்துவ விவரங்கள்',
+    registeredOn: 'பதிவு செய்யப்பட்டது',
+    assistedBy: 'உதவியாளர்',
+    reportsAndDocuments: 'அறிக்கைகள் & ஆவணங்கள்',
+
+    selectPatient: 'நோயாளியைத் தேர்ந்தெடுக்கவும்',
+    selectPatientDesc: 'நோயாளியைத் தேடவும் அல்லது புதியவரைச் சேர்க்கவும்.',
+    selectEye: 'கண்ணைத் தேர்ந்தெடுக்கவும்',
+    rightEye: 'வலது கண்',
+    leftEye: 'இடது கண்',
+    chooseImageSource: 'பட மூலத்தைத் தேர்ந்தெடுக்கவும்',
+    captureImage: 'படம் எடுக்கவும்',
+    captureDesc: 'ஃபண்டஸ் கேமரா அல்லது மொபைல் அடாப்டரைப் பயன்படுத்தவும்',
+    uploadImage: 'படத்தை பதிவேற்றவும்',
+    uploadDesc: 'ஏற்கனவே உள்ள ஃபண்டஸ் படத்தை பதிவேற்றவும்',
+    captureFundusImage: 'ஃபண்டஸ் படம் எடுக்கவும்',
+    alignRetina: 'விழித்திரையை சீரமைத்து தெளிவான படத்தை எடுக்கவும்.',
+    cameraSteady: 'கேமராவை நிலையாக வைக்கவும்',
+    properLighting: 'சரியான வெளிச்சத்தை உறுதிப்படுத்தவும்',
+    retinaCentered: 'விழித்திரையை மையத்தில் வைக்கவும்',
+    fullFieldView: 'முழு காட்சிப் புலத்தையும் பிடிக்கவும்',
+    captureBtn: 'படம் எடு',
+    dragDropImage: 'படத்தை இங்கே இழுத்துப் போடவும்',
+    chooseFile: 'கோப்பைத் தேர்ந்தெடு',
+    imageQualityAssessment: 'படத் தர மதிப்பீடு',
+    checkingImage: 'படம் பகுப்பாய்விற்கு ஏற்றதா என சரிபார்க்கிறது.',
+    focusSharpness: 'கவனம் / தெளிவு',
+    illumination: 'வெளிச்சம்',
+    fieldOfView: 'பார்வை புலம்',
+    retinalVisibility: 'விழித்திரை தெரிவுநிலை',
+    imageSuitable: 'படத் தரம்: பொருத்தமானது',
+    imageSuitableDesc: 'இந்த படம் AI-உதவி பரிசோதனைக்கு ஏற்றது.',
+    continueToResult: 'பரிசோதனை முடிவுக்குச் செல்லவும்',
+    aiScreeningResult: 'AI பரிசோதனை முடிவு',
+    drSeverity: 'DR தீவிரம்',
+    confidence: 'நம்பகத்தன்மை',
+    aiDetectedFindings: 'AI கண்டறிந்த முடிவுகள்',
+    microaneurysms: 'மைக்ரோஅனுரிஸம்ஸ்',
+    hemorrhages: 'இரத்தக்கசிவு (Hemorrhages)',
+    hardExudates: 'ஹார்ட் எக்ஸுடேட்ஸ்',
+    heatmapOpacity: 'ஹீட்மேப் ஒளிபுகாநிலை',
+    whyThisResult: 'இந்த முடிவு ஏன்?',
+    referralRecommendation: 'பரிந்துரை பரிந்துரைப்பு',
+    specialistReviewRecommended: 'நிபுணர் மதிப்பாய்வு பரிந்துரைக்கப்படுகிறது',
+    specialistReviewDesc: 'AI முடிவுகளின் அடிப்படையில், இந்த நோயாளி கண் மருத்துவ நிபுணரால் பரிசோதிக்கப்பட வேண்டும்.',
+    generateReferralReport: 'பரிந்துரை அறிக்கையை உருவாக்கவும்',
+    shareWithSpecialist: 'நிபுணருடன் பகிரவும்',
+    screeningReport: 'பரிசோதனை அறிக்கை',
+    viewFullReport: 'முழு அறிக்கையைப் பார்க்கவும்',
+    noHistoryYet: 'இதுவரை பரிசோதனை வரலாறு இல்லை.',
+    noHistoryDesc: 'முடிவுகளைக் காண பரிசோதனையை முடிக்கவும்.',
+
+    specialistAssessment: 'நிபுணர் மதிப்பீடு',
+    clinicalNotes: 'நிபுணர் மருத்துவக் குறிப்புகள்',
+    notesPlaceholder: 'விரிவான மருத்துவக் குறிப்புகளைச் சேர்க்கவும்...',
+    clinicalRecommendation: 'மருத்துவப் பரிந்துரை',
+    submitAssessment: 'நிபுணர் மதிப்பீட்டைச் சமர்ப்பிக்கவும்',
+    assessmentSubmitted: 'மதிப்பீடு வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!',
+    recFollowUp: '3-6 மாதங்களில் பின்தொடர்தல்',
+    recMonitoring: 'நிபுணர் கண்காணிப்பு தேவை',
+    recFurtherEval: 'உடனடி கூடுதல் பரிசோதனை / லேசர்',
+    recNoAction: 'கூடுதல் நடவடிக்கை தேவையில்லை',
+
+    activeSpecialistReferrals: 'செயலில் உள்ள பரிந்துரைகள்',
+    noReferralsYet: 'இதுவரை பரிந்துரைகள் இல்லை',
+    noReferralsDesc: 'நோயாளிகளுக்கு நிபுணர் பரிந்துரை தேவைப்படும் போது, அவை இங்கு தோன்றும்.',
+    performRetinalScreening: 'விழித்திரை பரிசோதனை செய்யவும்',
+    openInSpecialistMode: 'நிபுணர் பயன்முறையில் திறக்கவும்',
+    referralsMasterAudit: 'பரிந்துரைகள் தணிக்கை',
+    referralsMasterAuditDesc: 'மருத்துவமனையிலிருந்து நிபுணர் பரிந்துரை பணிப்பாய்வுகளைத் தணிக்கை செய்யவும்.',
+    referringNurse: 'பரிந்துரைத்த செவிலியர்',
+    reason: 'காரணம்',
+    referredSpecialist: 'பரிந்துரைக்கப்பட்ட நிபுணர்',
+    specialistReviewStatus: 'நிபுணர் மதிப்பாய்வு நிலை',
+    viewDetails: 'விவரங்களைப் பார்',
+
+    reportsMasterAudit: 'அறிக்கைகள் தணிக்கை',
+    reportsMasterAuditDesc: 'உருவாக்கப்பட்ட அனைத்து மருத்துவ அறிக்கைகளையும் தணிக்கை செய்யவும்.',
+    screeningDate: 'பரிசோதனை தேதி',
+    reportStatus: 'அறிக்கை நிலை',
+    sentToPatient: 'நோயாளிக்கு அனுப்பப்பட்டது',
+    generated: 'உருவாக்கப்பட்டது',
+    downloadPdf: 'PDF பதிவிறக்கவும்',
+    generatingPdf: 'PDF உருவாக்கப்படுகிறது...',
+    sendReport: 'அறிக்கையை அனுப்பு',
+    resendReport: 'அறிக்கையை மீண்டும் அனுப்பு',
+    aiAssistedReport: 'AI-உதவி விழித்திரை பரிசோதனை அறிக்கை',
+    officialDiagnosticReport: 'அதிகாரப்பூர்வ மருத்துவ சுருக்கம்',
+
+    adminUsersTitle: 'பயனர் மேலாண்மை',
+    adminUsersSubtitle: 'தொலை-கண்ணியல் கணக்குகளை நிர்வகிக்கவும் கட்டமைக்கவும்.',
+    addUser: 'புதிய பயனரைச் சேர்',
+    emailOrUserId: 'மின்னஞ்சல் / பயனர் ஐடி',
+    password: 'கடவுச்சொல்',
+    activeStatus: 'செயலில்',
+    inactiveStatus: 'செயலற்றது',
+    toggleActive: 'செயலிழக்கச் செய்',
+    toggleInactive: 'செயல்படுத்து',
+    deleteUser: 'பயனரை நீக்கு',
+    deleteUserConfirmTitle: 'பயனர் கணக்கை நீக்கவா?',
+    deleteUserConfirmDesc: 'இது கணினியிலிருந்து இந்த பயனர் கணக்கை நிரந்தரமாக நீக்கும்.',
+    userCreatedSuccess: 'பயனர் கணக்கு வெற்றிகரமாக உருவாக்கப்பட்டது!',
+    userDeletedSuccess: 'பயனர் கணக்கு வெற்றிகரமாக நீக்கப்பட்டது.',
+
+    networkSyncStatus: 'பிணையம் & ஒத்திசைவு நிலை',
+    clinicStationProfile: 'நிலைய சுயவிவரம்',
+    facilityName: 'மருத்துவமனை / மையம் பெயர்',
+    cameraModel: 'ஃபண்டஸ் கேமரா மாதிரி',
+    onlineModeDesc: 'பதிவுகள் தானாகவே மேகக்கணி சேவையகத்துடன் ஒத்திசைக்கப்படுகின்றன.',
+    offlineModeDesc: 'இணைப்பு கிடைக்கும் வரை பதிவுகள் சாதனத்தில் பாதுகாப்பாக சேமிக்கப்படுகின்றன.',
+    pendingLocalSync: 'நிலுவையிலுள்ள ஒத்திசைவு',
+    lastCloudSync: 'கடைசி ஒத்திசைவு',
+    syncSuccessMsg: 'அனைத்து பதிவுகளும் வெற்றிகரமாக ஒத்திசைக்கப்பட்டன!',
+    resetAllData: 'அனைத்து தரவையும் மீட்டமை',
+    resetDataConfirmTitle: 'தரவை மீட்டமைக்கவா?',
+    resetDataConfirmDesc: 'இது அனைத்து உள்ளூர் தரவையும் அழித்து மாதிரி நிலையை மீட்டமைக்கும்.',
+
+    loginTitle: 'உள்நுழைவு',
+    loginButton: 'உள்நுழைக',
+    authenticating: 'சரிபார்க்கிறது...',
+    quickFillCredentials: 'விரைவு உள்நுழைவு',
+    twoStepVerification: 'இருபடி சரிபார்ப்பு',
+    enterTotpCode: 'Google Authenticator பயன்பாட்டிலிருந்து 6-இலக்க குறியீட்டை உள்ளிடவும்.',
+    signingInAs: 'உள்நுழைகிறீர்கள் என',
+    verifyAndProceed: 'சரிபார்த்து தொடரவும்',
+    backToLogin: 'உள்நுழைவுக்குத் திரும்பு',
+    setupMfaTitle: 'இருபடி சரிபார்ப்பை அமைக்கவும்',
+    setupMfaDesc: 'இருபடி சரிபார்ப்பை இயக்க Google Authenticator மூலம் இந்த QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    mfaScanInstruction: 'Google Authenticator பயன்பாட்டைத் திறந்து QR குறியீட்டை ஸ்கேன் செய்யவும்.',
+    completeSetup: 'அமைப்பை முடித்து தொடரவும்',
+    retrySetup: 'மீண்டும் முயற்சிக்கவும்',
+
+    noDR: 'DR இல்லை',
+    mildDR: 'லேசான',
+    moderateDR: 'நடுத்தர',
+    severeDR: 'கடுமையான',
+    proliferativeDR: 'PDR (தீவிர நிலை)',
+
+    // AI Assistant Chatbot UI
+    aiAssistant: 'AI உதவியாளர்',
+    retinaXAiAssistant: 'RETINA-X AI உதவியாளர்',
+    aiAssistantReady: 'AI உதவியாளர் இடைமுகம் தயாராக உள்ளது.',
+    aiBackendFutureVersion: 'பின்னணி இணைப்பு எதிர்கால பதிப்பில் கிடைக்கும்.',
+    typeYourMessage: 'உங்கள் செய்தியை தட்டச்சு செய்யவும்...',
+    send: 'அனுப்பு',
+    closeChat: 'அரட்டையை மூடு',
+    minimizeChat: 'சிறிதாக்கு',
+    interfaceReady: 'இடைமுகம் தயார்',
+    noMessagesYet: 'இன்னும் செய்திகள் எதுவும் இல்லை. இடைமுகத்தை சோதிக்க கீழே தட்டச்சு செய்யவும்.',
+    chatDisclaimer: 'மருத்துவ உதவியாளர் இடைமுக முன்னோட்டம். நெட்வொர்க் அல்லது AI சேவை எதுவும் இணைக்கப்படவில்லை.',
+    clearChat: 'அழி',
+    you: 'நீங்கள்',
+
+    // Restored UI Elements
+    reports: "அறிக்கைகள்",
+    screeningId: "பரிசோதனை ஐடி",
+    roleAdmin: "நிர்வாகி",
+    roleSpecialist: "நிபுணர்",
+    roleNurse: "செவிலியர்",
+    addNewUser: "புதிய பயனரைச் சேர்க்கவும்",
+    allStatus: "அனைத்தும்",
+    userIdEmail: "பயனர் ஐடி / மின்னஞ்சல்",
+    dateAdded: "சேர்க்கப்பட்ட தேதி",
+    active: "செயலில்",
+    inactive: "செயலற்றது",
+    deactivate: "செயலிழக்கச் செய்",
+    activate: "செயல்படுத்து",
+    permanentDeletion: "இந்த நடவடிக்கை பயனரை கணினியிலிருந்து நிரந்தரமாக நீக்கும்.",
+    aiExplanation: "AI விளக்கம்",
+    xaiFeatureAttribution: "XAI அம்சப் பண்புக்கூறு",
+    detailedModelExplanation: "விரிவான மாதிரி விளக்கம்",
+    clinicalReferences: "மருத்துவ குறிப்புகள்",
+    keyVisualEvidence: "முக்கிய காட்சி சான்றுகள்",
+    spatialFeatureAttribution: "இடஞ்சார்ந்த அம்சம்",
+    differentialStagingReasoning: "வேறுபட்ட நிலை நியாயப்படுத்தல்",
+    peerReviewedGuidelines: "வழிகாட்டுதல்கள்",
+    clinicalAdvisory: "மருத்துவ ஆலோசனை",
+    clinicalAdvisoryDesc: "AI பகுப்பாய்வு ஒரு முடிவு-ஆதரவு கருவியாகும் மற்றும் தகுதியான மருத்துவ நோயறிதலை மாற்றாது.",
+    captureWithCamera: "கேமரா மூலம் எடுக்கவும்",
+    launchCamera: "கேமராவைத் தொடங்கவும்",
+    diabetesDurationYears: "நீரிழிவு காலம் (ஆண்டுகள்)",
+    years: "ஆண்டுகள்",
+    referralStatus: "பரிந்துரை நிலை",
+    qualityValidation: "தர சரிபார்ப்பு",
+    completed: "முடிந்தது",
+    specialistReview: "நிபுணர் மதிப்பாய்வு",
+    assessment: "மதிப்பீடு",
+    clinicalFindings: "மருத்துவ கண்டுபிடிப்புகள்",
+    recommendation: "பரிந்துரை",
+    referredDate: "பரிந்துரைக்கப்பட்ட தேதி",
+    assignSpecialist: "நிபுணரை நியமிக்கவும்",
+    reasonForReferral: "பரிந்துரைக்கான காரணம்",
+    diagnosis: "நோயறிதல்",
+    noReportsYet: "இன்னும் எந்த அறிக்கைகளும் உருவாக்கப்படவில்லை.",
+    priorityLevel: "முன்னுரிமை நிலை",
+    highPriority: "அதிகம்",
+    mediumPriority: "நடுத்தரம்",
+    lowPriority: "குறைவு",
+    keyFindings: "முக்கிய கண்டுபிடிப்புகள்",
+    optional: "விருப்பத்திற்குரியது",
+    savedSuccessfully: "வெற்றிகரமாக சேமிக்கப்பட்டது",
+    severity: "தீவிரம்",
+    allGrades: "அனைத்து நிலைகளும்",
+    noDr: "DR இல்லை",
+    mild: "லேசானது",
+    moderate: "மிதமானது",
+    severe: "கடுமையானது",
+    pdr: "PDR",
+    eye: "கண்",
+    referral: "பரிந்துரை",
+    screenings: "பரிசோதனைகள்",
+    users: "பயனர்கள்",
+    activeRole: "செயலில் உள்ள பங்கு",
+    signOut: "வெளியேறு",
+  },
+
+  te: {
+    appName: 'RETINA-X',
+    appSubtitle: 'AI-సహాయక రెటీనా స్క్రీనింగ్',
+    dashboard: 'డాష్‌బోర్డ్',
+    patients: 'రోగులు',
+    newScreening: 'కొత్త స్క్రీనింగ్',
+    screeningHistory: 'స్క్రీనింగ్ చరిత్ర',
+    referrals: 'రిఫరల్స్',
+    settings: 'సెట్టింగ్‌లు',
+    casesReviews: 'కేసులు / సమీక్షలు',
+    online: 'ఆన్‌లైన్',
+    allDataSynced: 'మొత్తం డేటా సమకాలీకరించబడింది',
+    offline: 'ఆఫ్‌లైన్',
+    workingOffline: 'ఆఫ్‌లైన్‌లో పని చేస్తోంది',
+    recordsWaitingToSync: 'సమకాలీకరణ కోసం వేచి ఉన్న రికార్డులు',
+    syncNow: 'ఇప్పుడే సింక్ చేయండి',
+    searchPlaceholder: 'పేరు లేదా ఐడీ ద్వారా రోగిని శోధించండి...',
+    search: 'శోధించండి',
+    filter: 'ఫిల్టర్',
+    all: 'అన్నీ',
+    none: 'ఏదీ లేదు',
+    date: 'తేదీ',
+    result: 'ఫలితం',
+    status: 'స్థితి',
+    action: 'చర్య',
+    actions: 'చర్యలు',
+    yes: 'అవును',
+    no: 'కాదు',
+    cancel: 'రద్దు చేయి',
+    save: 'సేవ్ చేయి',
+    delete: 'తొలగించు',
+    edit: 'సవరించు',
+    view: 'చూడండి',
+    close: 'మూసివేయి',
+    back: 'వెనుకకు',
+    download: 'డౌన్‌లోడ్',
+    print: 'ప్రింట్',
+    priority: 'ప్రాధాన్యత',
+    high: 'అధిక',
+    medium: 'మధ్యస్థ',
+    low: 'తక్కువ',
+    totalRecords: 'మొత్తం రికార్డులు',
+    noRecordsFound: 'సిస్టమ్‌లో రికార్డులేవీ కనుగొనబడలేదు.',
+    accessDenied: 'యాక్సెస్ నిరాకరించబడింది',
+    accessDeniedDesc: 'ఈ పేజీని యాక్సెస్ చేయడానికి మీకు అనుమతి లేదు.',
+
+    adminRole: 'నిర్వాహకుడు',
+    nurseRole: 'నర్సు / ఆరోగ్య కార్యకర్త',
+    specialistRole: 'కంటి నిపుణుడు',
+
+    logout: 'లాగ్ అవుట్',
+    switchRole: 'పాత్రను మార్చండి',
+    selectLanguage: 'భాషను ఎంచుకోండి',
+    selectLanguageDesc: 'అప్లికేషన్ కోసం మీకు కావలసిన భాషను ఎంచుకోండి.',
+
+    systemOverview: 'సిస్టమ్ అవలోకనం',
+    adminSubtitle: 'పూర్తి టెలి-నేత్ర వైద్య పరిపాలన మరియు ఆడిట్ నియంత్రణ.',
+    manageSystemUsers: 'సిస్టమ్ వినియోగదారులను నిర్వహించండి',
+    totalPatients: 'మొత్తం రోగులు',
+    totalNurses: 'మొత్తం నర్సులు',
+    totalSpecialists: 'మొత్తం నిపుణులు',
+    totalScreenings: 'మొత్తం స్క్రీనింగ్‌లు',
+    totalReferrals: 'మొత్తం రిఫరల్స్',
+    totalReports: 'మొత్తం నివేదికలు',
+    pendingReviews: 'పెండింగ్ సమీక్షలు',
+    patientsDirectory: 'రోగుల డైరెక్టరీ',
+    patientsDirectoryDesc: 'అన్ని రోగి రికార్డులు, స్క్రీనింగ్‌లు మరియు నర్సులను బ్రౌజ్ చేయండి.',
+    registeredPatients: 'నమోదైన రోగులు',
+    screeningOperations: 'స్క్రీనింగ్ కార్యకలాపాలు',
+    screeningOperationsDesc: 'సిస్టమ్-వైడ్ AI-సహాయక కంటి పరీక్షలు మరియు ఫలితాలను ఆడిట్ చేయండి.',
+    conductedScreenings: 'నిర్వహించిన స్క్రీనింగ్‌లు',
+    userManagement: 'వినియోగదారు నిర్వహణ',
+    userManagementDesc: 'నర్సులు, నిపుణులు మరియు నిర్వాహక ఖాతాలను నిర్వహించండి.',
+    activeSystemUsers: 'క్రియాశీల వినియోగదారులు',
+
+    goodMorning: 'శుభోదయం',
+    togetherVision: 'ఆరోగ్యకరమైన దృష్టి కోసం కలిసి పనిచేద్దాం.',
+    startNewScreening: 'కొత్త స్క్రీనింగ్ ప్రారంభించండి',
+    todaysScreenings: 'నేటి స్క్రీనింగ్‌లు',
+    awaitingReview: 'సమీక్ష కోసం వేచి ఉంది',
+    pendingSync: 'పెండింగ్ సింక్',
+    recentScreenings: 'ఇటీవలి స్క్రీనింగ్‌లు',
+    viewAll: 'అన్నీ చూడండి',
+    noScreeningsYet: 'ఇంకా స్క్రీనింగ్‌లు లేవు',
+    noScreeningsDesc: 'రోగిని జోడించి కొత్త స్క్రీనింగ్ ప్రారంభించండి.',
+    addPatient: 'రోగిని జోడించండి',
+    noPatientsYet: 'ఇంకా రోగులు జోడించబడలేదు',
+    noPatientsDesc: 'స్క్రీనింగ్ ప్రారంభించడానికి రోగిని జోడించండి.',
+    addNewPatient: 'కొత్త రోగిని జోడించండి',
+    viewReport: 'నివేదికను చూడండి',
+    viewProfile: 'ప్రొఫైల్ చూడండి',
+
+    welcomeSpecialist: 'స్వాగతం',
+    specialistSubtitle: 'నేత్ర వైద్య ట్రయాజ్ మరియు AI-సహాయక ద్వితీయ సమీక్ష.',
+    reviewPendingCases: 'పెండింగ్ కేసులను సమీక్షించండి',
+    urgentCases: 'అత్యవసర కేసులు',
+    reviewedCases: 'సమీక్షించిన కేసులు',
+    followUps: 'ఫాలో-అప్‌లు',
+    casesAwaitingReview: 'సమీక్ష కోసం వేచి ఉన్న కేసులు',
+    actionNeeded: 'చర్య అవసరం',
+    noCasesAwaitingReview: 'సమీక్ష కోసం ఏ కేసులూ లేవు',
+    noCasesDesc: 'నిపుణుల సమీక్ష కోసం పంపిన స్క్రీనింగ్‌లు ఇక్కడ కనిపిస్తాయి.',
+    reviewCase: 'కేసును సమీక్షించండి',
+    returnToDashboard: 'డాష్‌బోర్డ్‌కు తిరిగి వెళ్లండి',
+
+    patientId: 'రోగి ఐడీ',
+    fullName: 'పూర్తి పేరు',
+    age: 'వయస్సు',
+    gender: 'లింగం',
+    phone: 'ఫోన్ నంబర్',
+    diabetesDuration: 'మధుమేహం వ్యవధి (సంవత్సరాలు)',
+    knownDR: 'తెలిసిన డయాబెటిక్ రెటినోపతి',
+    savePatient: 'రోగిని సేవ్ చేయండి',
+    registeredInSystem: 'సిస్టమ్‌లో నమోదైంది',
+    searchPatientPlaceholder: 'పేరు, ఐడీ లేదా ఫోన్ ద్వారా రోగిని శోధించండి...',
+    noPatientsMatch: 'రోగులెవరూ సరిపోలడం లేదు',
+    startScreening: 'స్క్రీనింగ్ ప్రారంభించండి',
+    backToPatients: 'రోగుల వద్దకు తిరిగి వెళ్లండి',
+    deletePatient: 'రోగిని తొలగించండి',
+    deletePatientConfirmTitle: 'రోగిని తొలగించాలా?',
+    deletePatientConfirmDesc: 'ఇది ఈ రోగిని మరియు సంబంధిత అన్ని స్క్రీనింగ్‌లు, నివేదికలను శాశ్వతంగా తొలగిస్తుంది.',
+    deleting: 'తొలగిస్తోంది...',
+    deleteSuccess: 'రోగి విజయవంతంగా తొలగించబడ్డారు.',
+    patientProfile: 'రోగి ప్రొఫైల్',
+    clinicalBaseline: 'క్లినికల్ వివరాలు',
+    registeredOn: 'నమోదైన తేదీ',
+    assistedBy: 'సహాయకుడు',
+    reportsAndDocuments: 'నివేదికలు & పత్రాలు',
+
+    selectPatient: 'రోగిని ఎంచుకోండి',
+    selectPatientDesc: 'రోగిని శోధించండి లేదా కొత్త రోగిని జోడించండి.',
+    selectEye: 'కన్ను ఎంచుకోండి',
+    rightEye: 'కుడి కన్ను',
+    leftEye: 'ఎడమ కన్ను',
+    chooseImageSource: 'చిత్ర మూలాన్ని ఎంచుకోండి',
+    captureImage: 'చిత్రాన్ని క్యాప్చర్ చేయండి',
+    captureDesc: 'ఫండస్ కెమెరా లేదా స్మార్ట్‌ఫోన్ అడాప్టర్‌ను ఉపయోగించండి',
+    uploadImage: 'చిత్రాన్ని అప్‌లోడ్ చేయండి',
+    uploadDesc: 'ఇప్పటికే ఉన్న ఫండస్ చిత్రాన్ని అప్‌లోడ్ చేయండి',
+    captureFundusImage: 'ఫండస్ చిత్రాన్ని క్యాప్చర్ చేయండి',
+    alignRetina: 'రెటీనాను సరిగ్గా ఉంచి స్పష్టమైన చిత్రాన్ని తీయండి.',
+    cameraSteady: 'కెమెరాను స్థిరంగా ఉంచండి',
+    properLighting: 'సరైన వెలుతురును నిర్ధారించండి',
+    retinaCentered: 'రెటీనాను మధ్యలో ఉంచండి',
+    fullFieldView: 'పూర్తి వీక్షణను క్యాప్చర్ చేయండి',
+    captureBtn: 'క్యాప్చర్',
+    dragDropImage: 'చిత్రాన్ని ఇక్కడకు లాగండి',
+    chooseFile: 'ఫైల్ ఎంచుకోండి',
+    imageQualityAssessment: 'చిత్ర నాణ్యత అంచనా',
+    checkingImage: 'చిత్రం విశ్లేషణకు అనుకూలంగా ఉందో లేదో తనిఖీ చేస్తోంది.',
+    focusSharpness: 'ఫోకస్ / స్పష్టత',
+    illumination: 'వెలుతురు',
+    fieldOfView: 'వీక్షణ క్షేత్రం',
+    retinalVisibility: 'రెటీనా దృశ్యమానత',
+    imageSuitable: 'చిత్ర నాణ్యత: అనుకూలమైనది',
+    imageSuitableDesc: 'ఈ చిత్రం AI-సహాయక స్క్రీనింగ్‌కు సరిపోతుంది.',
+    continueToResult: 'స్క్రీనింగ్ ఫలితానికి కొనసాగండి',
+    aiScreeningResult: 'AI స్క్రీనింగ్ ఫలితం',
+    drSeverity: 'DR తీవ్రత',
+    confidence: 'విశ్వసనీయత',
+    aiDetectedFindings: 'AI గుర్తించిన వివరాలు',
+    microaneurysms: 'మైక్రోఅనూరిజమ్స్',
+    hemorrhages: 'రక్తస్రావాలు (Hemorrhages)',
+    hardExudates: 'హార్డ్ ఎక్సుడేట్స్',
+    heatmapOpacity: 'హీట్‌మ్యాప్ అస్పష్టత',
+    whyThisResult: 'ఈ ఫలితం ఎందుకు?',
+    referralRecommendation: 'రిఫరల్ సిఫార్సు',
+    specialistReviewRecommended: 'నిపుణుల సమీక్ష సిఫార్సు చేయబడింది',
+    specialistReviewDesc: 'AI పరిశీలనల ఆధారంగా, ఈ రోగిని కంటి నిపుణుడు పరిశీలించాలి.',
+    generateReferralReport: 'రిఫరల్ నివేదికను రూపొందించండి',
+    shareWithSpecialist: 'నిపుణుడితో పంచుకోండి',
+    screeningReport: 'స్క్రీనింగ్ నివేదిక',
+    viewFullReport: 'పూర్తి నివేదికను చూడండి',
+    noHistoryYet: 'ఇంకా స్క్రీనింగ్ చరిత్ర లేదు.',
+    noHistoryDesc: 'ఫలితాలను చూడటానికి స్క్రీనింగ్ పూర్తి చేయండి.',
+
+    specialistAssessment: 'నిపుణుల అంచనా',
+    clinicalNotes: 'నిపుణుల క్లినికల్ నోట్స్',
+    notesPlaceholder: 'వివరమైన క్లినికల్ వ్యాఖ్యలను జోడించండి...',
+    clinicalRecommendation: 'క్లినికల్ సిఫార్సు',
+    submitAssessment: 'అంచనాను సమర్పించండి',
+    assessmentSubmitted: 'అంచనా విజయవంతంగా సమర్పించబడింది!',
+    recFollowUp: '3-6 నెలల్లో ఫాలో-అప్',
+    recMonitoring: 'నిపుణుల పర్యవేక్షణ అవసరం',
+    recFurtherEval: 'వెంటనే తదుపరి పరీక్ష / లేజర్',
+    recNoAction: 'తదుపరి చర్య అవసరం లేదు',
+
+    activeSpecialistReferrals: 'క్రియాశీల రిఫరల్స్',
+    noReferralsYet: 'ఇంకా రిఫరల్స్ లేవు',
+    noReferralsDesc: 'రోగులకు నిపుణుల అవసరం వచ్చినప్పుడు రిఫరల్స్ ఇక్కడ కనిపిస్తాయి.',
+    performRetinalScreening: 'రెటీనా స్క్రీనింగ్ చేయండి',
+    openInSpecialistMode: 'నిపుణుల మోడ్‌లో తెరవండి',
+    referralsMasterAudit: 'రిఫరల్స్ ఆడిట్',
+    referralsMasterAuditDesc: 'క్లినిక్ నుండి నిపుణులకు రిఫరల్ ప్రక్రియను ఆడిట్ చేయండి.',
+    referringNurse: 'రిఫర్ చేసిన నర్సు',
+    reason: 'కారణం',
+    referredSpecialist: 'రిఫర్ చేయబడిన నిపుణుడు',
+    specialistReviewStatus: 'నిపుణుల సమీక్ష స్థితి',
+    viewDetails: 'వివరాలు చూడండి',
+
+    reportsMasterAudit: 'నివేదికల ఆడిట్',
+    reportsMasterAuditDesc: 'రూపొందించిన అన్ని క్లినికల్ నివేదికలను ఆడిట్ చేయండి.',
+    screeningDate: 'స్క్రీనింగ్ తేదీ',
+    reportStatus: 'నివేదిక స్థితి',
+    sentToPatient: 'రోగికి పంపబడింది',
+    generated: 'రూపొందించబడింది',
+    downloadPdf: 'PDF డౌన్‌లోడ్ చేయండి',
+    generatingPdf: 'PDF రూపొందించబడుతోంది...',
+    sendReport: 'నివేదిక పంపండి',
+    resendReport: 'నివేదికను మళ్లీ పంపండి',
+    aiAssistedReport: 'AI-సహాయక రెటీనా స్క్రీనింగ్ నివేదిక',
+    officialDiagnosticReport: 'అధికారిక క్లినికల్ సారాంశం',
+
+    adminUsersTitle: 'వినియోగదారు నిర్వహణ',
+    adminUsersSubtitle: 'టెలి-నేత్ర వైద్య ఖాతాలను నిర్వహించండి మరియు కాన్ఫిగర్ చేయండి.',
+    addUser: 'కొత్త వినియోగదారుని జోడించండి',
+    emailOrUserId: 'ఇమెయిల్ / వినియోగదారు ఐడీ',
+    password: 'పాస్‌వర్డ్',
+    activeStatus: 'క్రియాశీలం',
+    inactiveStatus: 'నిష్క్రియం',
+    toggleActive: 'నిష్క్రియం చేయి',
+    toggleInactive: 'క్రియాశీలం చేయి',
+    deleteUser: 'వినియోగదారుని తొలగించు',
+    deleteUserConfirmTitle: 'వినియోగదారు ఖాతాను తొలగించాలా?',
+    deleteUserConfirmDesc: 'ఇది సిస్టమ్ నుండి ఈ ఖాతాను శాశ్వతంగా తొలగిస్తుంది.',
+    userCreatedSuccess: 'వినియోగదారు ఖాతా విజయవంతంగా సృష్టించబడింది!',
+    userDeletedSuccess: 'వినియోగదారు ఖాతా విజయవంతంగా తొలగించబడింది.',
+
+    networkSyncStatus: 'నెట్‌వర్క్ & సింక్ స్థితి',
+    clinicStationProfile: 'క్లినిక్ స్టేషన్ ప్రొఫైల్',
+    facilityName: 'కేంద్రం / క్లినిక్ పేరు',
+    cameraModel: 'ఫండస్ కెమెరా మోడల్',
+    onlineModeDesc: 'రికార్డులు స్వయంచాలకంగా క్లౌడ్ సర్వర్‌తో సమకాలీకరించబడతాయి.',
+    offlineModeDesc: 'కనెక్టివిటీ పునరుద్ధరించబడే వరకు రికార్డులు పరికరంలో సురక్షితంగా ఉంటాయి.',
+    pendingLocalSync: 'పెండింగ్ సింక్',
+    lastCloudSync: 'చివరి సింక్',
+    syncSuccessMsg: 'అన్ని రికార్డులు విజయవంతంగా సమకాలీకరించబడ్డాయి!',
+    resetAllData: 'మొత్తం డేటాను రీసెట్ చేయండి',
+    resetDataConfirmTitle: 'డేటాను రీసెట్ చేయాలా?',
+    resetDataConfirmDesc: 'ఇది స్థానిక డేటాను క్లియర్ చేసి డెమో స్థితిని పునరుద్ధరిస్తుంది.',
+
+    loginTitle: 'లాగిన్',
+    loginButton: 'లాగిన్ అవ్వండి',
+    authenticating: 'ధృవీకరిస్తోంది...',
+    quickFillCredentials: 'త్వరిత లాగిన్ వివరాలు',
+    twoStepVerification: 'రెండు-దశల ధృవీకరణ',
+    enterTotpCode: 'మీ Google Authenticator యాప్ నుండి 6-అంకెల కోడ్‌ను నమోదు చేయండి.',
+    signingInAs: 'లాగిన్ అవుతున్నారు ఇలా',
+    verifyAndProceed: 'ధృవీకరించి కొనసాగించండి',
+    backToLogin: 'లాగిన్‌కు తిరిగి వెళ్లండి',
+    setupMfaTitle: 'రెండు-దశల ధృవీకరణను సెటప్ చేయండి',
+    setupMfaDesc: 'రెండు-దశల ధృవీకరణను ప్రారంభించడానికి Google Authenticator తో ఈ QR కోడ్‌ను స్కాన్ చేయండి.',
+    mfaScanInstruction: 'మీ ఫోన్‌లో Google Authenticator తెరిచి QR కోడ్‌ను స్కాన్ చేయండి.',
+    completeSetup: 'సెటప్ పూర్తి చేసి కొనసాగండి',
+    retrySetup: 'మళ్లీ ప్రయత్నించండి',
+
+    noDR: 'DR లేదు',
+    mildDR: 'తేలికపాటి',
+    moderateDR: 'మధ్యస్థ',
+    severeDR: 'తీవ్రమైన',
+    proliferativeDR: 'PDR (ప్రొలిఫెరేటివ్)',
+
+    // AI Assistant Chatbot UI
+    aiAssistant: 'AI సహాయకుడు',
+    retinaXAiAssistant: 'RETINA-X AI సహాయకుడు',
+    aiAssistantReady: 'AI అసిస్టెంట్ ఇంటర్‌ఫేస్ సిద్ధంగా ఉంది.',
+    aiBackendFutureVersion: 'బ్యాకెండ్ కనెక్షన్ భవిష్యత్ వెర్షన్‌లో అందుబాటులో ఉంటుంది.',
+    typeYourMessage: 'మీ సందేశాన్ని టైప్ చేయండి...',
+    send: 'పంపు',
+    closeChat: 'చాట్ మూసివేయి',
+    minimizeChat: 'చిన్నది చేయి',
+    interfaceReady: 'ఇంటర్‌ఫేస్ సిద్ధం',
+    noMessagesYet: 'ఇంకా సందేశాలు లేవు. ఇంటర్‌ఫేస్‌ను పరీక్షించడానికి క్రింద టైప్ చేయండి.',
+    chatDisclaimer: 'క్లినికల్ అసిస్టెంట్ ఇంటర్‌ఫేస్ ప్రివ్యూ. ఏ నెట్‌వర్క్ లేదా AI సేవ కనెక్ట్ చేయబడలేదు.',
+    clearChat: 'క్లియర్',
+    you: 'మీరు',
+
+    // Restored UI Elements
+    reports: "నివేదికలు",
+    screeningId: "స్క్రీనింగ్ ID",
+    roleAdmin: "అడ్మిన్",
+    roleSpecialist: "స్పెషలిస్ట్",
+    roleNurse: "నర్సు",
+    addNewUser: "కొత్త వినియోగదారుని జోడించండి",
+    allStatus: "అన్నీ",
+    userIdEmail: "యూజర్ ID / ఈమెయిల్",
+    dateAdded: "జోడించిన తేదీ",
+    active: "యాక్టివ్",
+    inactive: "ఇన్‌యాక్టివ్",
+    deactivate: "డీయాక్టివేట్ చేయండి",
+    activate: "యాక్టివేట్ చేయండి",
+    permanentDeletion: "ఈ చర్య వినియోగదారుని సిస్టమ్ నుండి శాశ్వతంగా తొలగిస్తుంది.",
+    aiExplanation: "AI వివరణ",
+    xaiFeatureAttribution: "XAI ఫీచర్ అట్రిబ్యూషన్",
+    detailedModelExplanation: "వివరణాత్మక మోడల్ వివరణ",
+    clinicalReferences: "క్లినికల్ రిఫరెన్సులు",
+    keyVisualEvidence: "ముఖ్య దృశ్య ఆధారాలు",
+    spatialFeatureAttribution: "స్పేషియల్ ఫీచర్ అట్రిబ్యూషన్",
+    differentialStagingReasoning: "డిఫరెన్షియల్ స్టేజింగ్ రీజనింగ్",
+    peerReviewedGuidelines: "మార్గదర్శకాలు",
+    clinicalAdvisory: "క్లినికల్ సలహా",
+    clinicalAdvisoryDesc: "AI విశ్లేషణ నిర్ణయ-మద్దతు సాధనంగా రూపొందించబడింది మరియు క్లినికల్ రోగ నిర్ధారణను భర్తీ చేయదు.",
+    captureWithCamera: "కెమెరాతో క్యాప్చర్ చేయండి",
+    launchCamera: "కెమెరాను ప్రారంభించండి",
+    diabetesDurationYears: "డయాబెటిస్ వ్యవధి (సంవత్సరాలు)",
+    years: "సంవత్సరాలు",
+    referralStatus: "రిఫరల్ స్థితి",
+    qualityValidation: "నాణ్యత ధృవీకరణ",
+    completed: "పూర్తయింది",
+    specialistReview: "స్పెషలిస్ట్ సమీక్ష",
+    assessment: "అంచనా",
+    clinicalFindings: "క్లినికల్ ఫలితాలు",
+    recommendation: "సిఫార్సు",
+    referredDate: "రిఫర్ చేసిన తేదీ",
+    assignSpecialist: "స్పెషలిస్ట్‌ను కేటాయించండి",
+    reasonForReferral: "రిఫరల్ కారణం",
+    diagnosis: "రోగ నిర్ధారణ",
+    noReportsYet: "ఇంకా ఎలాంటి నివేదికలు రూపొందించబడలేదు.",
+    priorityLevel: "ప్రాధాన్యత స్థాయి",
+    highPriority: "అధిక",
+    mediumPriority: "మధ్యస్థ",
+    lowPriority: "తక్కువ",
+    keyFindings: "ముఖ్య ఫలితాలు",
+    optional: "ఐచ్ఛికం",
+    savedSuccessfully: "విజయవంతంగా సేవ్ చేయబడింది",
+    severity: "తీవ్రత",
+    allGrades: "అన్ని గ్రేడ్‌లు",
+    noDr: "DR లేదు",
+    mild: "తేలికపాటి",
+    moderate: "మధ్యస్థం",
+    severe: "తీవ్రమైన",
+    pdr: "PDR",
+    eye: "కన్ను",
+    referral: "రిఫరల్",
+    screenings: "స్క్రీనింగ్‌లు",
+    users: "వినియోగదారులు",
+    activeRole: "యాక్టివ్ రోల్",
+    signOut: "సైన్ అవుట్",
+  },
+
+  bn: {
+    appName: 'RETINA-X',
+    appSubtitle: 'এআই-সহায়তা প্রাপ্ত রেটিনা স্ক্রীনিং',
+    dashboard: 'ড্যাশবোর্ড',
+    patients: 'রোগী',
+    newScreening: 'নতুন স্ক্রীনিং',
+    screeningHistory: 'স্ক্রীনিং ইতিহাস',
+    referrals: 'রেফারেল',
+    settings: 'সেটিংস',
+    casesReviews: 'মামলা / পর্যালোচনা',
+    online: 'অনলাইন',
+    allDataSynced: 'সকল ডেটা সিঙ্ক হয়েছে',
+    offline: 'অফলাইন',
+    workingOffline: 'অফলাইনে কাজ চলছে',
+    recordsWaitingToSync: 'সিঙ্ক করার অপেক্ষায় থাকা রেকর্ড',
+    syncNow: 'এখনই সিঙ্ক করুন',
+    searchPlaceholder: 'রোগীর নাম বা আইডি অনুসন্ধান করুন...',
+    search: 'অনুসন্ধান',
+    filter: 'ফিল্টার',
+    all: 'সকল',
+    none: 'কিছুই না',
+    date: 'তারিখ',
+    result: 'ফলাফল',
+    status: 'অবস্থা',
+    action: 'পদক্ষেপ',
+    actions: 'পদক্ষেপসমূহ',
+    yes: 'হ্যাঁ',
+    no: 'না',
+    cancel: 'বাতিল',
+    save: 'সংরক্ষণ',
+    delete: 'মুছুন',
+    edit: 'সম্পাদনা',
+    view: 'দেখুন',
+    close: 'বন্ধ করুন',
+    back: 'ফিরে যান',
+    download: 'ডাউনলোড',
+    print: 'প্রিন্ট',
+    priority: 'অগ্রাধিকার',
+    high: 'উচ্চ',
+    medium: 'মাঝারি',
+    low: 'নিম্ন',
+    totalRecords: 'মোট রেকর্ড',
+    noRecordsFound: 'সিস্টেমে কোনো রেকর্ড পাওয়া যায়নি।',
+    accessDenied: 'প্রবেশাধিকার অস্বীকৃত',
+    accessDeniedDesc: 'এই পৃষ্ঠা দেখার অনুমতি আপনার নেই।',
+
+    adminRole: 'প্রশাসক',
+    nurseRole: 'নার্স / স্বাস্থ্যকর্মী',
+    specialistRole: 'চক্ষু বিশেষজ্ঞ',
+
+    logout: 'লগ আউট',
+    switchRole: 'ভূমিকা পরিবর্তন',
+    selectLanguage: 'ভাষা নির্বাচন করুন',
+    selectLanguageDesc: 'অ্যাপ্লিকেশনের জন্য আপনার পছন্দের ভাষা নির্বাচন করুন।',
+
+    systemOverview: 'সিস্টেম ওভারভিউ',
+    adminSubtitle: 'সম্পূর্ণ টেলি-চক্ষু চিকিৎসা প্রশাসন ও নিরীক্ষা নিয়ন্ত্রণ।',
+    manageSystemUsers: 'সিস্টেম ব্যবহারকারীদের পরিচালনা করুন',
+    totalPatients: 'মোট রোগী',
+    totalNurses: 'মোট নার্স',
+    totalSpecialists: 'মোট বিশেষজ্ঞ',
+    totalScreenings: 'মোট স্ক্রীনিং',
+    totalReferrals: 'মোট রেফারেল',
+    totalReports: 'মোট রিপোর্ট',
+    pendingReviews: 'অপেক্ষারত পর্যালোচনা',
+    patientsDirectory: 'রোগী ডিরেক্টরি',
+    patientsDirectoryDesc: 'সকল রোগীর মেডিকেল রেকর্ড, স্ক্রীনিং ও নার্সদের তালিকা দেখুন।',
+    registeredPatients: 'নিবন্ধিত রোগী',
+    screeningOperations: 'স্ক্রীনিং কার্যক্রম',
+    screeningOperationsDesc: 'সিস্টেম-ব্যাপী এআই-সহায়তা প্রাপ্ত চোখের স্ক্রীনিং ও ফলাফলের নিরীক্ষা করুন।',
+    conductedScreenings: 'সম্পন্ন স্ক্রীনিং',
+    userManagement: 'ব্যবহারকারী ব্যবস্থাপনা',
+    userManagementDesc: 'নার্স, বিশেষজ্ঞ এবং অ্যাডমিনের অ্যাকাউন্ট পরিচালনা করুন।',
+    activeSystemUsers: 'সক্রিয় ব্যবহারকারী',
+
+    goodMorning: 'শুভ সকাল',
+    togetherVision: 'সুস্থ দৃষ্টিশক্তির জন্য একসাথে কাজ করি।',
+    startNewScreening: 'নতুন স্ক্রীনিং শুরু করুন',
+    todaysScreenings: 'আজকের স্ক্রীনিং',
+    awaitingReview: 'পর্যালোচনার অপেক্ষায়',
+    pendingSync: 'অপেক্ষারত সিঙ্ক',
+    recentScreenings: 'সাম্প্রতিক স্ক্রীনিং',
+    viewAll: 'সকল দেখুন',
+    noScreeningsYet: 'এখনও কোনো স্ক্রীনিং নেই',
+    noScreeningsDesc: 'রোগী যোগ করে এবং নতুন স্ক্রীনিং তৈরি করে শুরু করুন।',
+    addPatient: 'রোগী যোগ করুন',
+    noPatientsYet: 'এখনও কোনো রোগী যোগ করা হয়নি',
+    noPatientsDesc: 'স্ক্রীনিং শুরু করতে একজন রোগী যোগ করুন।',
+    addNewPatient: 'নতুন রোগী যোগ করুন',
+    viewReport: 'রিপোর্ট দেখুন',
+    viewProfile: 'প্রোফাইল দেখুন',
+
+    welcomeSpecialist: 'স্বাগতম',
+    specialistSubtitle: 'চক্ষু বিজ্ঞান ট্রায়াজ এবং এআই-সহায়তা প্রাপ্ত পর্যালোচনা।',
+    reviewPendingCases: 'অপেক্ষারত মামলা পর্যালোচনা করুন',
+    urgentCases: 'জরুরী মামলা',
+    reviewedCases: 'পর্যালোচিত মামলা',
+    followUps: 'ফলো-আপ',
+    casesAwaitingReview: 'পর্যালোচনার জন্য অপেক্ষারত মামলা',
+    actionNeeded: 'পদক্ষেপ প্রয়োজন',
+    noCasesAwaitingReview: 'পর্যালোচনার জন্য কোনো মামলা নেই',
+    noCasesDesc: 'বিশেষজ্ঞ পর্যালোচনার জন্য পাঠানো স্ক্রীনিং এখানে প্রদর্শিত হবে।',
+    reviewCase: 'মামলা পর্যালোচনা করুন',
+    returnToDashboard: 'ড্যাশবোর্ডে ফিরে যান',
+
+    patientId: 'রোগী আইডি',
+    fullName: 'সম্পূর্ণ নাম',
+    age: 'বয়স',
+    gender: 'লিঙ্গ',
+    phone: 'ফোন নম্বর',
+    diabetesDuration: 'ডায়াবেটিসের মেয়াদ (বছর)',
+    knownDR: 'জানা ডায়াবেটিক রেটিনোপ্যাথি',
+    savePatient: 'রোগী সংরক্ষণ করুন',
+    registeredInSystem: 'সিস্টেমে নিবন্ধিত',
+    searchPatientPlaceholder: 'নাম, আইডি বা ফোন দিয়ে রোগী খুঁজুন...',
+    noPatientsMatch: 'কোনো রোগী মেলেনি',
+    startScreening: 'স্ক্রীনিং শুরু করুন',
+    backToPatients: 'রোগীদের তালিকায় ফিরে যান',
+    deletePatient: 'রোগী মুছুন',
+    deletePatientConfirmTitle: 'রোগী মুছে ফেলবেন?',
+    deletePatientConfirmDesc: 'এটি এই রোগী এবং সম্পর্কিত সমস্ত স্ক্রীনিং, রিপোর্ট স্থায়ীভাবে মুছে ফেলবে।',
+    deleting: 'মুছে ফেলা হচ্ছে...',
+    deleteSuccess: 'রোগী সফলভাবে মুছে ফেলা হয়েছে।',
+    patientProfile: 'রোগীর প্রোফাইল',
+    clinicalBaseline: 'ক্লিনিকাল বিবরণ',
+    registeredOn: 'নিবন্ধিত',
+    assistedBy: 'সহায়তাকারী',
+    reportsAndDocuments: 'রিপোর্ট এবং নথি',
+
+    selectPatient: 'রোগী নির্বাচন করুন',
+    selectPatientDesc: 'বিদ্যমান রোগী খুঁজুন বা নতুন যোগ করুন।',
+    selectEye: 'চোখ নির্বাচন করুন',
+    rightEye: 'ডান চোখ',
+    leftEye: 'বাম চোখ',
+    chooseImageSource: 'ছবির উৎস নির্বাচন করুন',
+    captureImage: 'ছবি তুলুন',
+    captureDesc: 'ফান্ডাস ক্যামেরা বা স্মার্টফোন অ্যাডাপ্টার ব্যবহার করুন',
+    uploadImage: 'ছবি আপলোড করুন',
+    uploadDesc: 'বিদ্যমান ফান্ডাস ছবি আপলোড করুন',
+    captureFundusImage: 'ফান্ডাস ছবি তুলুন',
+    alignRetina: 'রেটিনা সারিবদ্ধ করুন এবং স্পষ্ট ছবি তুলুন।',
+    cameraSteady: 'ক্যামেরা স্থির রাখুন',
+    properLighting: 'সঠিক আলো নিশ্চিত করুন',
+    retinaCentered: 'রেটিনা কেন্দ্রে রাখুন',
+    fullFieldView: 'সম্পূর্ণ দৃশ্য ক্যাপচার করুন',
+    captureBtn: 'ক্যাপচার',
+    dragDropImage: 'ছবি এখানে টেনে আনুন',
+    chooseFile: 'ফাইল নির্বাচন করুন',
+    imageQualityAssessment: 'ছবির গুণমান মূল্যায়ন',
+    checkingImage: 'ছবিটি বিশ্লেষণের জন্য উপযুক্ত কিনা তা যাচাই করা হচ্ছে।',
+    focusSharpness: 'ফোকাস / তীক্ষ্ণতা',
+    illumination: 'আলো',
+    fieldOfView: 'দৃশ্যমান ক্ষেত্র',
+    retinalVisibility: 'রেটিনা দৃশ্যমানতা',
+    imageSuitable: 'ছবির গুণমান: উপযুক্ত',
+    imageSuitableDesc: 'এই ছবিটি এআই-স্ক্রীনিংয়ের জন্য উপযুক্ত।',
+    continueToResult: 'স্ক্রীনিং ফলাফলে এগিয়ে যান',
+    aiScreeningResult: 'এআই স্ক্রীনিং ফলাফল',
+    drSeverity: 'ডিআর তীব্রতা',
+    confidence: 'বিশ্বাসযোগ্যতা',
+    aiDetectedFindings: 'এআই সনাক্ত করা তথ্য',
+    microaneurysms: 'মাইক্রোঅ্যানিউরিজম',
+    hemorrhages: 'রক্তক্ষরণ (Hemorrhages)',
+    hardExudates: 'হার্ড এক্সুডেটস',
+    heatmapOpacity: 'হিটম্যাপ অস্বচ্ছতা',
+    whyThisResult: 'কেন এই ফলাফল?',
+    referralRecommendation: 'রেফারেল সুপারিশ',
+    specialistReviewRecommended: 'বিশেষজ্ঞ পর্যালোচনা প্রস্তাবিত',
+    specialistReviewDesc: 'এআই ফলাফলের ভিত্তিতে, এই রোগীর চক্ষু বিশেষজ্ঞ দ্বারা পরীক্ষা করা উচিত।',
+    generateReferralReport: 'রেফারেল রিপোর্ট তৈরি করুন',
+    shareWithSpecialist: 'বিশেষজ্ঞের সাথে শেয়ার করুন',
+    screeningReport: 'স্ক্রীনিং রিপোর্ট',
+    viewFullReport: 'সম্পূর্ণ রিপোর্ট দেখুন',
+    noHistoryYet: 'এখনও কোনো স্ক্রীনিং ইতিহাস নেই।',
+    noHistoryDesc: 'ফলাফল দেখতে স্ক্রীনিং সম্পন্ন করুন।',
+
+    specialistAssessment: 'বিশেষজ্ঞ মূল্যায়ন',
+    clinicalNotes: 'বিশেষজ্ঞ ক্লিনিকাল নোট',
+    notesPlaceholder: 'বিস্তারিত ক্লিনিকাল মন্তব্য যোগ করুন...',
+    clinicalRecommendation: 'ক্লিনিকাল সুপারিশ',
+    submitAssessment: 'বিশেষজ্ঞ মূল্যায়ন জমা দিন',
+    assessmentSubmitted: 'মূল্যায়ন সফলভাবে জমা হয়েছে!',
+    recFollowUp: '৩-৬ মাসে ফলো-আপ',
+    recMonitoring: 'বিশেষজ্ঞ নজরদারি প্রয়োজন',
+    recFurtherEval: 'অবিলম্বে পরবর্তী পরীক্ষা / লেজার',
+    recNoAction: 'পরবর্তী কোনো পদক্ষেপের প্রয়োজন নেই',
+
+    activeSpecialistReferrals: 'সক্রিয় বিশেষজ্ঞ রেফারেল',
+    noReferralsYet: 'এখনও কোনো রেফারেল নেই',
+    noReferralsDesc: 'যখন রোগীদের বিশেষজ্ঞের কাছে রেফার করা হবে, তা এখানে দেখা যাবে।',
+    performRetinalScreening: 'রেটিনা স্ক্রীনিং করুন',
+    openInSpecialistMode: 'বিশেষজ্ঞ মোডে খুলুন',
+    referralsMasterAudit: 'রেফারেল অডিট',
+    referralsMasterAuditDesc: 'ক্লিনিক থেকে চক্ষু বিশেষজ্ঞের রেফারেল প্রক্রিয়া অডিট করুন।',
+    referringNurse: 'রেফারকারী নার্স',
+    reason: 'কারণ',
+    referredSpecialist: 'রেফার করা বিশেষজ্ঞ',
+    specialistReviewStatus: 'বিশেষজ্ঞ পর্যালোচনা অবস্থা',
+    viewDetails: 'বিস্তারিত দেখুন',
+
+    reportsMasterAudit: 'রিপোর্ট অডিট',
+    reportsMasterAuditDesc: 'তৈরি করা সমস্ত ক্লিনিকাল ডায়াগনস্টিক রিপোর্ট অডিট করুন।',
+    screeningDate: 'স্ক্রীনিং তারিখ',
+    reportStatus: 'রিপোর্ট অবস্থা',
+    sentToPatient: 'রোগীকে পাঠানো হয়েছে',
+    generated: 'তৈরি করা হয়েছে',
+    downloadPdf: 'পিডিএফ ডাউনলোড করুন',
+    generatingPdf: 'পিডিএফ তৈরি হচ্ছে...',
+    sendReport: 'রিপোর্ট পাঠান',
+    resendReport: 'রিপোর্ট পুনরায় পাঠান',
+    aiAssistedReport: 'এআই-সহায়তা প্রাপ্ত রেটিনা স্ক্রীনিং রিপোর্ট',
+    officialDiagnosticReport: 'অফিসিয়াল ক্লিনিকাল স্ক্রীনিং সারসংক্ষেপ',
+
+    adminUsersTitle: 'ব্যবহারকারী ব্যবস্থাপনা',
+    adminUsersSubtitle: 'টেলি-চক্ষু চিকিৎসা অ্যাকাউন্ট ও শংসাপত্র পরিচালনা করুন।',
+    addUser: 'নতুন ব্যবহারকারী যোগ করুন',
+    emailOrUserId: 'ইমেইল / ব্যবহারকারী আইডি',
+    password: 'পাসওয়ার্ড',
+    activeStatus: 'সক্রিয়',
+    inactiveStatus: 'নিষ্ক্রিয়',
+    toggleActive: 'নিষ্ক্রিয় করুন',
+    toggleInactive: 'সক্রিয় করুন',
+    deleteUser: 'ব্যবহারকারী মুছুন',
+    deleteUserConfirmTitle: 'ব্যবহারকারী অ্যাকাউন্ট মুছে ফেলবেন?',
+    deleteUserConfirmDesc: 'এটি সিস্টেম থেকে এই অ্যাকাউন্টটি স্থায়ীভাবে সরিয়ে দেবে।',
+    userCreatedSuccess: 'ব্যবহারকারী অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!',
+    userDeletedSuccess: 'ব্যবহারকারী অ্যাকাউন্ট সফলভাবে মুছে ফেলা হয়েছে।',
+
+    networkSyncStatus: 'নেটওয়ার্ক ও সিঙ্ক অবস্থা',
+    clinicStationProfile: 'ক্লিনিক স্টেশন প্রোফাইল',
+    facilityName: 'প্রতিষ্ঠান / ক্লিনিকের নাম',
+    cameraModel: 'ফান্ডাস ক্যামেরা মডেল',
+    onlineModeDesc: 'রেকর্ডগুলি স্বয়ংক্রিয়ভাবে কেন্দ্রীয় ক্লাউড রেজিস্ট্রির সাথে সিঙ্ক হয়।',
+    offlineModeDesc: 'সংযোগ পুনঃস্থাপিত না হওয়া পর্যন্ত রেকর্ডগুলি ডিভাইসে সংরক্ষিত থাকে।',
+    pendingLocalSync: 'অপেক্ষারত সিঙ্ক',
+    lastCloudSync: 'সর্বশেষ ক্লাউড সিঙ্ক',
+    syncSuccessMsg: 'সমস্ত অফলাইন রেকর্ড সফলভাবে সিঙ্ক হয়েছে!',
+    resetAllData: 'সমস্ত ডেটা রিসেট করুন',
+    resetDataConfirmTitle: 'ডেটা রিসেট করবেন?',
+    resetDataConfirmDesc: 'এটি স্থানীয় সমস্ত ডেটা মুছে ডেমো অবস্থা ফিরিয়ে আনবে।',
+
+    loginTitle: 'লগ ইন',
+    loginButton: 'লগ ইন করুন',
+    authenticating: 'যাচাই করা হচ্ছে...',
+    quickFillCredentials: 'দ্রুত লগইন শংসাপত্র',
+    twoStepVerification: 'দ্বি-পদক্ষেপ যাচাইকরণ',
+    enterTotpCode: 'আপনার Google Authenticator অ্যাপ থেকে ৬-সংখ্যার কোডটি লিখুন।',
+    signingInAs: 'লগ ইন করা হচ্ছে হিসাবে',
+    verifyAndProceed: 'যাচাই করে এগিয়ে যান',
+    backToLogin: 'লগইনে ফিরে যান',
+    setupMfaTitle: 'দ্বি-পদক্ষেপ যাচাইকরণ সেট আপ করুন',
+    setupMfaDesc: 'দ্বি-পদক্ষেপ যাচাইকরণ সক্ষম করতে Google Authenticator দিয়ে এই QR কোডটি স্ক্যান করুন।',
+    mfaScanInstruction: 'আপনার ফোনে Google Authenticator খুলুন এবং QR কোডটি স্ক্যান করুন।',
+    completeSetup: 'সেটআপ সম্পন্ন করে এগিয়ে যান',
+    retrySetup: 'আবার চেষ্টা করুন',
+
+    noDR: 'ডিআর নেই',
+    mildDR: 'মৃদু',
+    moderateDR: 'মাঝারি',
+    severeDR: 'গুরুতর',
+    proliferativeDR: 'পিডিআর (প্রলিফারেটিভ)',
+
+    // AI Assistant Chatbot UI
+    aiAssistant: 'এআই সহকারী',
+    retinaXAiAssistant: 'RETINA-X এআই সহকারী',
+    aiAssistantReady: 'এআই সহকারী ইন্টারফেস প্রস্তুত।',
+    aiBackendFutureVersion: 'ব্যাকএন্ড সংযোগ ভবিষ্যতের সংস্করণে উপলব্ধ হবে।',
+    typeYourMessage: 'আপনার বার্তা লিখুন...',
+    send: 'পাঠান',
+    closeChat: 'চ্যাট বন্ধ করুন',
+    minimizeChat: 'ছোট করুন',
+    interfaceReady: 'ইন্টারফেস প্রস্তুত',
+    noMessagesYet: 'এখনো কোনো বার্তা নেই। ইন্টারফেস পরীক্ষা করতে নিচে লিখুন।',
+    chatDisclaimer: 'ক্লিনিকাল সহকারী ইন্টারফেস প্রিভিউ। কোনো নেটওয়ার্ক বা এআই পরিষেবা সংযুক্ত নেই।',
+    clearChat: 'মুছুন',
+    you: 'আপনি',
+
+    // Restored UI Elements
+    reports: "রিপোর্টসমূহ",
+    screeningId: "স্ক্রিনিং আইডি",
+    roleAdmin: "অ্যাডমিন",
+    roleSpecialist: "বিশেষজ্ঞ",
+    roleNurse: "নার্স",
+    addNewUser: "নতুন ব্যবহারকারী যোগ করুন",
+    allStatus: "সমস্ত",
+    userIdEmail: "ইউজার আইডি / ইমেইল",
+    dateAdded: "যোগ করার তারিখ",
+    active: "সক্রিয়",
+    inactive: "নিষ্ক্রিয়",
+    deactivate: "নিষ্ক্রিয় করুন",
+    activate: "সক্রিয় করুন",
+    permanentDeletion: "এই কাজটি ব্যবহারকারীকে সিস্টেম থেকে স্থায়ীভাবে মুছে ফেলবে।",
+    aiExplanation: "এআই ব্যাখ্যা",
+    xaiFeatureAttribution: "এক্সএআই ফিচার অ্যাট্রিবিউশন",
+    detailedModelExplanation: "বিস্তারিত মডেল ব্যাখ্যা",
+    clinicalReferences: "ক্লিনিকাল রেফারেন্স",
+    keyVisualEvidence: "মূল দৃশ্য প্রমাণ",
+    spatialFeatureAttribution: "স্থানিক ফিচার অ্যাট্রিবিউশন",
+    differentialStagingReasoning: "ডিফারেনশিয়াল স্টেজিং যুক্তি",
+    peerReviewedGuidelines: "পর্যালোচিত নির্দেশিকা",
+    clinicalAdvisory: "ক্লিনিকাল পরামর্শ",
+    clinicalAdvisoryDesc: "এআই বিশ্লেষণ একটি সিদ্ধান্ত-সহায়ক সরঞ্জাম এবং যোগ্য ক্লিনিকাল নির্ণয়ের বিকল্প নয়।",
+    captureWithCamera: "ক্যামেরা দিয়ে ক্যাপচার করুন",
+    launchCamera: "ক্যামেরা চালু করুন",
+    diabetesDurationYears: "ডায়াবেটিসের সময়কাল (বছর)",
+    years: "বছর",
+    referralStatus: "রেফারেল স্থিতি",
+    qualityValidation: "গুণমান যাচাইকরণ",
+    completed: "সম্পন্ন",
+    specialistReview: "বিশেষজ্ঞ পর্যালোচনা",
+    assessment: "মূল্যায়ন",
+    clinicalFindings: "ক্লিনিকাল ফলাফল",
+    recommendation: "সুপারিশ",
+    referredDate: "রেফার করার তারিখ",
+    assignSpecialist: "বিশেষজ্ঞ বরাদ্দ করুন",
+    reasonForReferral: "রেফারের কারণ",
+    diagnosis: "রোগ নির্ণয়",
+    noReportsYet: "এখনও কোনো রিপোর্ট তৈরি হয়নি।",
+    priorityLevel: "অগ্রাধিকার স্তর",
+    highPriority: "উচ্চ",
+    mediumPriority: "মাঝারি",
+    lowPriority: "নিম্ন",
+    keyFindings: "মূল ফলাফল",
+    optional: "ঐচ্ছিক",
+    savedSuccessfully: "সফলভাবে সংরক্ষিত হয়েছে",
+    severity: "তীব্রতা",
+    allGrades: "সমস্ত গ্রেড",
+    noDr: "কোনো ডিআর নেই",
+    mild: "হালকা",
+    moderate: "মাঝারি",
+    severe: "গুরুতর",
+    pdr: "পিডিআর",
+    eye: "চোখ",
+    referral: "রেফারেল",
+    screenings: "স্ক্রিনিং",
+    users: "ব্যবহারকারীগণ",
+    activeRole: "সক্রিয় ভূমিকা",
+    signOut: "সাইন আউট",
+  },
+};

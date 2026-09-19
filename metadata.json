@@ -1,0 +1,6 @@
+{
+  "name": "RETINA-X",
+  "description": "AI-assisted retinal screening and explainable diagnostic support frontend application.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
