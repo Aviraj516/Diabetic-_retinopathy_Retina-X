@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Camera,
   Upload,
@@ -17,11 +17,24 @@ import {
   Loader2,
   RefreshCw,
   Activity,
+  Maximize2,
+  ShieldCheck,
+  Sparkles,
+  Layers,
+  UserPlus,
+  PlusCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { FundusRetinaCanvas } from './FundusRetinaCanvas';
-import { EyeSelection, ScreeningRecord } from '../types';
+import { EyeSelection, ScreeningRecord, Patient } from '../types';
+import drImg from '../assets/conditions/diabetic_retinopathy.jpg';
 import { XaiTab } from '../data/retinaImages';
+import {
+  extractLesionItems,
+  generateDrClinicalSummary,
+  DR_LESION_DEFINITIONS,
+  ProcessedLesionItem,
+} from '../utils/drClinicalExplanations';
 
 // ============================================================
 // Types for ML API response
@@ -63,17 +76,23 @@ interface MLLesionInfo {
 
 interface MLTrinayResult {
   anatomy: {
-    blood_vessels: { pixels: number; detected: boolean };
+    blood_vessels: { pixels: number; detected: boolean; density?: number; macular_density?: number };
     optic_disc:    { pixels: number; detected: boolean };
-    fovea:         { x: number; y: number };
+    fovea:         { x: number; y: number; disc_distance?: number };
     macula:        { detected: boolean };
     retinal_background: { detected: boolean };
+    measurements?: {
+      vessel_density_pct?: number;
+      macular_vessel_density_pct?: number;
+      disc_fovea_distance_px?: number;
+    };
   };
   lesions: Record<string, MLLesionInfo>;
   findings: string[];
   visualizations: {
     canonical: string;
     anatomy:   string;
+    debug_anatomy?: string;
     lesion:    string;
     combined:  string;
   };
@@ -99,28 +118,11 @@ interface MLAnalysisResult {
   xai?:      MLXaiResult | null;
   xaiError?: string;
   error?:    string;
+  reportId?: string;
 }
 
 // ============================================================
-// ML API call
-// ============================================================
-async function callMLAnalyze(file: File): Promise<MLAnalysisResult> {
-  const form = new FormData();
-  form.append('image', file, file.name);
-
-  const res = await fetch('/api/ml/analyze', { method: 'POST', body: form });
-
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      const body = await res.json();
-      msg = body.error || msg;
-    } catch { /* ignore */ }
-    throw new Error(msg);
-  }
-
-  return res.json() as Promise<MLAnalysisResult>;
-}
+import { analyzeRetinalImage, b64ToPngUrl } from '../services/mlService';
 
 // ============================================================
 // Component
@@ -128,6 +130,9 @@ async function callMLAnalyze(file: File): Promise<MLAnalysisResult> {
 export const NewScreeningFlow: React.FC = () => {
   const {
     patients,
+    screenings,
+    referrals,
+    openPatientProfile,
     createScreening,
     setActivePage,
     setIsAddPatientModalOpen,
@@ -150,31 +155,59 @@ export const NewScreeningFlow: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [step, setStep] = useState<
-    'select-patient' | 'image-source' | 'capture' | 'upload' | 'quality' | 'result'
-  >(() => {
-    if (!screeningWizard.selectedPatient) return 'select-patient';
-    if (screeningWizard.activeResult)    return 'result';
-    if (screeningWizard.imageSource === 'upload' && screeningWizard.imageFile)  return 'quality';
-    if (screeningWizard.imageSource === 'capture' && screeningWizard.capturedImage) return 'quality';
-    if (screeningWizard.imageSource)    return screeningWizard.imageSource;
-    return 'image-source';
-  });
+  
+  // Patient & Image selection state.
+  // P0: when launched from generic New Screening, the explicitly chosen
+  // patient arrives via the shared wizard context and must be preserved.
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(
+    screeningWizard.selectedPatient
+  );
 
-  const [activeXaiTab, setActiveXaiTab]     = useState<XaiTab>('Original');
+  useEffect(() => {
+    if (screeningWizard.selectedPatient) {
+      setSelectedPatient(screeningWizard.selectedPatient);
+    } else if (!selectedPatient && patients.length > 0) {
+      const realPatients = patients.filter(
+        (p) =>
+          p.fullName &&
+          p.fullName !== 'Walk-in Patient' &&
+          p.fullName !== 'Patient information unavailable' &&
+          !p.id.startsWith('PX-')
+      );
+      if (realPatients.length === 1) {
+        setSelectedPatient(realPatients[0]);
+        setWizardPatient(realPatients[0]);
+      }
+    }
+  }, [screeningWizard.selectedPatient, patients, selectedPatient, setWizardPatient]);
+
+  const [selectedEye, setSelectedEye] = useState<EyeSelection>('Right Eye');
+  const [patientSearchStr, setPatientSearchStr] = useState('');
+  
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageMetadata, setImageMetadata] = useState<any | null>(null);
+  
+  
+  // Processing state (maps to existing mlLoading)
+  const [mlLoading, setMlLoading] = useState(false);
+  const [mlError, setMlError] = useState<string | null>(null);
+  const [mlResult, setMlResult] = useState<MLAnalysisResult | null>(null);
+  const [activeXaiTab, setActiveXaiTab] = useState<XaiTab>('Original');
   const [heatmapOpacity, setHeatmapOpacity] = useState<number>(70);
-  const [patientSearch, setPatientSearch]   = useState('');
+  const [highlightedLesion, setHighlightedLesion] = useState<'MA' | 'HE' | 'EX' | 'SE' | null>(null);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const canvasSectionRef = useRef<HTMLDivElement>(null);
 
-  // ML state
-  const [mlLoading, setMlLoading]         = useState(false);
-  const [mlError, setMlError]             = useState<string | null>(null);
-  const [mlResult, setMlResult]           = useState<MLAnalysisResult | null>(null);
+  const handleViewOnImage = (code: 'MA' | 'HE' | 'EX' | 'SE') => {
+    setActiveXaiTab('Lesions');
+    setHighlightedLesion(code);
+    if (canvasSectionRef.current) {
+      canvasSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
-  const imageFile = screeningWizard.imageFile;
-
-  // Kick off ML analysis when we enter the quality step
   const runAnalysis = useCallback(async () => {
-    if (!imageFile?.actualFile) {
+    if (!screeningWizard.imageFile?.actualFile) {
       setMlError('No image file available for analysis. Please re-upload the image.');
       return;
     }
@@ -182,11 +215,68 @@ export const NewScreeningFlow: React.FC = () => {
     setMlError(null);
     setMlResult(null);
     try {
-      const result = await callMLAnalyze(imageFile.actualFile);
+      // P0: screening must be attributed to the EXPLICITLY selected patient.
+      // Never silently substitute patients[0] — that mixes Patient A/B data.
+      const patient = selectedPatient || null;
+      const result = await analyzeRetinalImage(screeningWizard.imageFile.actualFile, {
+        patientId: patient?.id,
+        patientName: patient?.fullName,
+        patientAge: patient?.age,
+        patientGender: patient?.gender,
+        patientPhone: patient?.phoneNumber,
+        eyeSide: selectedEye,
+      });
       if (result.error) {
         setMlError(result.error);
       } else {
+        const severityStr = result.severity?.drSeverity || 'No DR';
+        // Use the backend-persisted session id when available (from session_id, id, screening_id, or screening_session_id)
+        // so refetch/realtime dedups by id and only one unified report is created.
+        const backendSessionId =
+          (result as any).session_id ||
+          (result as any).id ||
+          result.screening_id ||
+          result.screening_session_id ||
+          undefined;
+        const screeningRecord = createScreening({
+          ...(backendSessionId ? { id: backendSessionId, reportId: backendSessionId } : {}),
+          patientId: patient?.id || 'Walk-in',
+          patientName: patient?.fullName || 'Walk-in Patient',
+          patientAge: patient?.age || 55,
+          patientGender: patient?.gender || 'Other',
+          patientPhone: patient?.phoneNumber || '',
+          eye: selectedEye,
+          imageQuality: result.quality?.quality === 'Good' ? 'Good' : 'Unsuitable',
+          drSeverity: severityStr as any,
+          drSeverityLevel: result.severity?.drSeverityLevel || 'No DR (Level 0)',
+          confidence: result.severity?.confidence || 95,
+          findings: result.trinay?.lesions 
+             ? Object.entries(result.trinay.lesions).filter(([, info]) => info.detected).map(([name]) => name)
+             : [],
+          recommendation: result.severity?.recommendation || 'Routine annual screening.',
+          status: severityStr === 'No DR' ? 'Completed' : 'Referred',
+          imageFileName: result.imageInfo?.filename,
+          imageFileSize: result.imageInfo?.fileSize,
+        }, {
+          imageOriginal: result.trinay?.visualizations?.canonical ? b64ToPngUrl(result.trinay.visualizations.canonical) : undefined,
+          imageGradCam: result.xai?.combined ? b64ToPngUrl(result.xai.combined) : undefined,
+          imageLesions: result.trinay?.visualizations?.lesion ? b64ToPngUrl(result.trinay.visualizations.lesion) : undefined,
+          imageAnatomy: result.trinay?.visualizations?.anatomy ? b64ToPngUrl(result.trinay.visualizations.anatomy) : undefined,
+          imageCombined: result.trinay?.visualizations?.combined ? b64ToPngUrl(result.trinay.visualizations.combined) : undefined,
+          imageDebugAnatomy: result.trinay?.visualizations?.debug_anatomy ? b64ToPngUrl(result.trinay.visualizations.debug_anatomy) : undefined,
+          anatomyData: result.trinay?.anatomy,
+          lesionData: result.trinay?.lesions,
+          imageResolution: result.imageInfo?.resolution,
+        });
+
+        result.reportId = screeningRecord.reportId;
+        
         setMlResult(result);
+        // Link the wizard result so header, View Report, and explanation
+        // modals operate on the CURRENT screening (previously stayed null,
+        // which sent View Report to the generic list and left date blank).
+        setWizardActiveResult(screeningRecord);
+        setWizardQualityPassed(true);
         setActiveCase(result);
       }
     } catch (err: any) {
@@ -194,710 +284,341 @@ export const NewScreeningFlow: React.FC = () => {
     } finally {
       setMlLoading(false);
     }
-  }, [imageFile, setActiveCase]);
+  }, [screeningWizard.imageFile, selectedPatient, selectedEye, setActiveCase, setWizardActiveResult, setWizardQualityPassed, createScreening]);
 
-  // Auto-run when reaching the quality step
-  React.useEffect(() => {
-    if (step === 'quality' && !mlResult && !mlLoading && !mlError) {
-      runAnalysis();
+
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setWizardImageFile({
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(0)} KB`,
+      previewUrl: URL.createObjectURL(file),
+      actualFile: file,
+    });
+    
+    setPreviewUrl(URL.createObjectURL(file));
+    setImageMetadata({
+      filename: file.name,
+      fileSize: file.size > 1024 * 1024 ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` : `${(file.size / 1024).toFixed(0)} KB`,
+      resolution: '... Measuring'
+    });
+
+    setMlResult(null);
+    setMlError(null);
+  };
+
+  const handleReset = () => {
+    setWizardImageFile(null);
+    setPreviewUrl(null);
+    setImageMetadata(null);
+    setMlResult(null);
+    setMlError(null);
+    resetWizard();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const filteredPatients = patients.filter(
+    (p) =>
+      p.fullName &&
+      p.fullName !== 'Walk-in Patient' &&
+      p.fullName !== 'Patient information unavailable' &&
+      !p.id.startsWith('PX-') &&
+      (p.fullName.toLowerCase().includes(patientSearchStr.toLowerCase()) ||
+       p.id.toLowerCase().includes(patientSearchStr.toLowerCase()))
+  );
+
+  const handleStartScreening = async () => {
+    if (!screeningWizard.imageFile?.actualFile) {
+      setMlError('Please upload a retinal fundus image first.');
+      return;
     }
-  }, [step, mlResult, mlLoading, mlError, runAnalysis]);
 
-  // ============================================================
-  // STEP 1: SELECT PATIENT
-  // ============================================================
-  if (step === 'select-patient' || !screeningWizard.selectedPatient) {
-    const filtered = patients.filter(
-      (p) =>
-        p.fullName.toLowerCase().includes(patientSearch.toLowerCase()) ||
-        p.id.toLowerCase().includes(patientSearch.toLowerCase()) ||
-        p.phoneNumber.includes(patientSearch)
-    );
+    // P0: preserve the explicitly selected patient (or null for walk-in).
+    setWizardPatient(selectedPatient);
+    setWizardEye(selectedEye);
 
+    await runAnalysis();
+    // Note: runAnalysis sets wizard active result + quality-passed on success.
+  };
+
+  // Dynamic metrics computed from real database state (no hardcoding)
+  const totalPatientsCount = patients.length;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayScreeningsCount = screenings.filter(
+    (s) => (s.date && s.date.includes(todayStr)) || (s.createdAt && s.createdAt.includes(todayStr))
+  ).length || screenings.length;
+  const pendingReviewsCount = referrals.filter(
+    (r) => !r.disease || r.disease === 'dr' || r.urgency === 'Urgent'
+  ).length;
+  const completedScreeningsCount = screenings.filter(
+    (s) => s.status === 'Completed' || s.drSeverity === 'No DR'
+  ).length || screenings.length;
+
+  const handleSelectPatientForScreening = (p: Patient) => {
+    setSelectedPatient(p);
+    setWizardPatient(p);
+    const elem = document.getElementById('dr-upload-section');
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Build the Single Page Layout replacing the wizard
+  if (!mlResult && !mlLoading) {
     return (
-      <div className="space-y-6 max-w-4xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t.selectPatient}</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{t.selectPatientDesc}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsAddPatientModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E60D5] hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t.addNewPatient}</span>
-          </button>
-        </div>
-
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-          {patients.length === 0 ? (
-            <div className="py-16 px-6 text-center">
-              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3.5 rounded-full bg-slate-100 text-slate-400">
-                <Users className="w-8 h-8" />
-              </div>
-              <h3 className="text-base font-semibold text-slate-800">{t.noPatientsYet}</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-6">{t.noPatientsDesc}</p>
-              <button
-                type="button"
-                onClick={() => setIsAddPatientModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>{t.addNewPatient}</span>
-              </button>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              <div className="p-4 bg-slate-50/50">
-                <input
-                  type="text"
-                  value={patientSearch}
-                  onChange={(e) => setPatientSearch(e.target.value)}
-                  placeholder={t.searchPatientPlaceholder}
-                  className="w-full max-w-md px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500"
-                />
-              </div>
-              {filtered.map((pt) => {
-                const initials = pt.fullName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
-                return (
-                  <button
-                    key={pt.id}
-                    type="button"
-                    onClick={() => { setWizardPatient(pt); setStep('image-source'); }}
-                    className="w-full flex items-center justify-between p-4 hover:bg-blue-50/40 text-left transition-colors group"
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200">
-                        {initials}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600">{pt.fullName}</h4>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {pt.id} • {t.age} {pt.age} • {pt.gender} • {t.phone}: {pt.phoneNumber}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                      {t.selectPatient} →
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const patient = screeningWizard.selectedPatient;
-  const initials = patient.fullName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
-
-  // ============================================================
-  // STEP 2: IMAGE SOURCE SELECTION
-  // ============================================================
-  if (step === 'image-source') {
-    return (
-      <div className="space-y-6 max-w-4xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t.newScreening}</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{t.chooseImageSource}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setStep('select-patient')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t.backToPatients}</span>
-          </button>
-        </div>
-
-        {/* Patient banner */}
-        <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-3.5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-100">
-              {initials}
-            </div>
+      <div className="space-y-6 max-w-6xl mx-auto pb-12 animate-in fade-in duration-200">
+        {/* Top Header Card */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <img
+              src={drImg}
+              alt="Diabetic Retinopathy Retina"
+              className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shadow-2xs shrink-0"
+            />
             <div>
-              <h3 className="text-sm font-bold text-slate-900">{patient.fullName}</h3>
-              <p className="text-xs text-slate-500">
-                {patient.id} • {patient.age} {t.age} • {patient.gender} • {t.phone}: {patient.phoneNumber}
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Diabetic Retinopathy Screening
+              </h1>
+              <p className="text-slate-500 text-xs md:text-sm mt-1 max-w-2xl leading-relaxed">
+                Automated lesion detection, severity grading, and comprehensive anatomical analysis for early DR intervention.
               </p>
             </div>
           </div>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-            {t.selectPatient}
-          </span>
-        </div>
 
-        {/* Eye selection */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-          <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">{t.selectEye}</label>
-          <div className="grid grid-cols-2 gap-4">
-            {(['Right Eye', 'Left Eye'] as EyeSelection[]).map((eye) => (
-              <button
-                key={eye}
-                type="button"
-                onClick={() => setWizardEye(eye)}
-                className={`p-4 rounded-xl border text-center font-bold text-sm transition-all ${
-                  screeningWizard.selectedEye === eye
-                    ? 'border-blue-600 bg-blue-50/60 text-blue-700 ring-2 ring-blue-500/20 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
-                }`}
-              >
-                <Eye className="w-5 h-5 mx-auto mb-1.5 text-blue-600" />
-                <span>{eye === 'Right Eye' ? t.rightEye : t.leftEye}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Source cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div
-            onClick={() => { setWizardImageSource('capture'); setStep('capture'); }}
-            className="p-6 bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:border-blue-500 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 text-blue-600 mb-4 group-hover:bg-[#1E60D5] group-hover:text-white transition-colors">
-                <Camera className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{t.captureWithCamera}</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t.captureDesc}</p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-blue-600">
-              <span>{t.launchCamera}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-
-          <div
-            onClick={() => { setWizardImageSource('upload'); setStep('upload'); }}
-            className="p-6 bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:border-blue-500 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-50 text-blue-600 mb-4 group-hover:bg-[#1E60D5] group-hover:text-white transition-colors">
-                <Upload className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{t.uploadImage}</h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">{t.uploadDesc}</p>
-            </div>
-            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-blue-600">
-              <span>{t.chooseFile}</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={() => setStep('select-patient')}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t.backToPatients}</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================================
-  // STEP 3: CAPTURE
-  // ============================================================
-  if (step === 'capture') {
-    return (
-      <div className="space-y-6 max-w-3xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t.captureWithCamera}</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{t.alignRetina}</p>
-          </div>
-          <button type="button" onClick={() => setStep('image-source')} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900">
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t.back}</span>
-          </button>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs space-y-5">
-          <div className="relative aspect-4/3 w-full max-w-lg mx-auto bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center">
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-56 h-56 rounded-full border-2 border-dashed border-blue-400/50 flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full border border-blue-300/40 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-                </div>
-              </div>
-            </div>
-            <div className="text-center p-6 z-10">
-              <Camera className="w-12 h-12 text-slate-600 mx-auto mb-2" />
-              <p className="text-xs font-semibold text-slate-300">{t.alignRetina}</p>
-              <p className="text-[11px] text-slate-500 mt-1">{t.retinaCentered}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <button type="button" onClick={() => setStep('image-source')} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900">
-              <ArrowLeft className="w-4 h-4" />
-              <span>{t.back}</span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsAddPatientModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs md:text-sm font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4 text-slate-500" />
+              <span>+ Add Patient</span>
             </button>
+
             <button
               type="button"
               onClick={() => {
-                setWizardCapturedImage('live_capture_ok');
-                setWizardImageFile({
-                  name: `capture_${screeningWizard.selectedEye.toLowerCase().replace(' ', '_')}.jpg`,
-                  size: '3.1 MB',
-                });
-                setStep('quality');
+                setSelectedPatient(null);
+                setWizardPatient(null);
+                handleReset();
+                const elem = document.getElementById('dr-upload-section');
+                if (elem) elem.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1E60D5] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0284C7] hover:bg-sky-700 text-white text-xs md:text-sm font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
             >
-              <Camera className="w-4 h-4" />
-              <span>{t.captureBtn}</span>
+              <PlusCircle className="w-4 h-4" />
+              <span>+ New Screening</span>
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
 
-  // ============================================================
-  // STEP 4: UPLOAD
-  // ============================================================
-  if (step === 'upload') {
-    const handleFileSelect = (file: File) => {
-      const previewUrl = URL.createObjectURL(file);
-      const sizeFormatted =
-        file.size > 1024 * 1024
-          ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-          : `${(file.size / 1024).toFixed(0)} KB`;
-
-      setWizardImageFile({
-        name: file.name,
-        size: sizeFormatted,
-        previewUrl,
-        actualFile: file,   // ← REAL File object for ML upload
-      });
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) handleFileSelect(file);
-    };
-
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files?.[0];
-      if (file) handleFileSelect(file);
-    };
-
-    return (
-      <div className="space-y-6 max-w-3xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t.uploadImage}</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{t.uploadDesc}</p>
-          </div>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-            {screeningWizard.selectedEye === 'Right Eye' ? t.rightEye : t.leftEye}
-          </span>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs space-y-5">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-            className="hidden"
-          />
-
-          {!screeningWizard.imageFile ? (
-            <div
-              onDrop={handleDrop}
-              onDragOver={(e) => e.preventDefault()}
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-slate-50/60 rounded-xl p-10 text-center cursor-pointer transition-colors"
-            >
-              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3.5 rounded-full bg-blue-50 text-blue-600">
-                <Upload className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-semibold text-slate-800">{t.dragDropImage}</p>
-              <p className="text-xs text-slate-400 my-1.5">{t.none}</p>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                className="px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg shadow-2xs inline-block"
-              >
-                {t.chooseFile}
-              </button>
-              <p className="text-[11px] text-slate-400 mt-3">JPG, PNG</p>
-            </div>
-          ) : (
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Selected Image</span>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs font-semibold text-blue-600 hover:text-blue-800">
-                    {t.chooseFile}
-                  </button>
-                  <span className="text-slate-300">|</span>
-                  <button type="button" onClick={() => setWizardImageFile(null)} className="text-xs font-semibold text-red-600 hover:text-red-800">
-                    {t.delete}
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-lg overflow-hidden bg-black shrink-0 border border-slate-300">
-                  {screeningWizard.imageFile.previewUrl ? (
-                    <img src={screeningWizard.imageFile.previewUrl} alt="Selected fundus" className="w-full h-full object-cover" />
-                  ) : (
-                    <FundusRetinaCanvas mode="Original" className="w-full h-full" />
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-slate-900 truncate max-w-sm">{screeningWizard.imageFile.name}</p>
-                  <p className="text-xs text-slate-500">{screeningWizard.imageFile.size}</p>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    <Check className="w-3 h-3 text-emerald-600" />
-                    <span>Ready to analyse</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="pt-4 flex items-center justify-between border-t border-slate-100">
-            <button type="button" onClick={() => setStep('image-source')} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900">
-              <ArrowLeft className="w-4 h-4" />
-              <span>{t.back}</span>
-            </button>
-            <button
-              type="button"
-              disabled={!screeningWizard.imageFile}
-              onClick={() => { setMlResult(null); setMlError(null); setStep('quality'); }}
-              className={`inline-flex items-center gap-2 px-6 py-2.5 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors ${
-                screeningWizard.imageFile ? 'bg-[#1E60D5] hover:bg-blue-700' : 'bg-slate-300 cursor-not-allowed'
-              }`}
-            >
-              <span>Analyse Image →</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ============================================================
-  // STEP 5: QUALITY ASSESSMENT — calls real ML pipeline
-  // ============================================================
-  if (step === 'quality') {
-    const quality = mlResult?.quality;
-
-    const isGood  = quality?.quality === 'Good';
-    const isBad   = quality && !isGood;
-
-    // Build a plain-language explanation dynamically from real pipeline data
-    const buildExplanation = (sev: MLSeverityResult, trinayResult: MLTrinayResult): string => {
-      const dr = sev.drSeverity;
-      const level = sev.drSeverityLevel;
-      const detectedLesions = Object.entries(trinayResult.lesions)
-        .filter(([, info]) => info.detected)
-        .map(([name]) => name.toLowerCase());
-
-      const anatomy = trinayResult.anatomy;
-      const foveaSpared = anatomy.macula?.detected !== false;
-
-      let intro = '';
-      if (dr === 'No DR') {
-        intro = `The screening algorithm found no signs of diabetic retinopathy (${level}). The retinal vasculature, optic disc, and macular zone appear within normal limits for AI-assisted primary screening.`;
-      } else if (dr === 'Mild') {
-        intro = `The screening algorithm detected early signs consistent with Mild Non-Proliferative Diabetic Retinopathy (${level}).`;
-      } else if (dr === 'Moderate') {
-        intro = `The screening algorithm detected visual evidence consistent with Moderate Non-Proliferative Diabetic Retinopathy (${level}).`;
-      } else if (dr === 'Severe') {
-        intro = `The screening algorithm detected significant changes consistent with Severe Non-Proliferative Diabetic Retinopathy (${level}). Timely specialist evaluation is strongly recommended.`;
-      } else {
-        intro = `The screening algorithm detected changes consistent with Proliferative Diabetic Retinopathy (${level}). Urgent ophthalmology referral is advised.`;
-      }
-
-      let lesionSentence = '';
-      if (detectedLesions.length > 0) {
-        const formatted = detectedLesions.slice(0, -1).join(', ') + (detectedLesions.length > 1 ? ', and ' : '') + detectedLesions[detectedLesions.length - 1];
-        lesionSentence = ` The AI identified the following lesion types: ${formatted}.`;
-      }
-
-      let anatomySentence = '';
-      const detected: string[] = [];
-      if (anatomy.blood_vessels?.detected) detected.push('retinal blood vessels');
-      if (anatomy.optic_disc?.detected) detected.push('optic disc');
-      if (detected.length > 0) {
-        anatomySentence = ` Anatomical landmarks detected include the ${detected.join(' and ')}.`;
-      }
-
-      let foveaSentence = foveaSpared
-        ? ' The central foveal zone appears to be identified by the model.'
-        : '';
-
-      let followUp = dr === 'No DR'
-        ? ' Annual monitoring is recommended as per standard diabetic eye care guidelines.'
-        : ' Timely specialist ophthalmology evaluation is recommended to prevent progression.';
-
-      return intro + lesionSentence + anatomySentence + foveaSentence + followUp;
-    };
-
-    const handleContinueToResult = () => {
-      if (!mlResult?.severity || !mlResult?.trinay) return;
-
-      const severity  = mlResult.severity;
-      const findings  = mlResult.trinay.findings || [];
-      const trinay    = mlResult.trinay;
-      const xai       = mlResult.xai;
-
-      // Map DR severity to ScreeningRecord type
-      const drSeverityMap: Record<string, any> = {
-        'No DR':            'No DR',
-        'Mild':             'Mild',
-        'Moderate':         'Moderate',
-        'Severe':           'Severe',
-        'Proliferative DR': 'PDR',
-      };
-
-      // Build lesion data map from trinay results
-      const lesionData: Record<string, { detected: boolean; regions?: number; pixels?: number }> = {};
-      if (trinay.lesions) {
-        for (const [name, info] of Object.entries(trinay.lesions) as [string, MLLesionInfo][]) {
-          lesionData[name] = {
-            detected: (info as MLLesionInfo).detected,
-            regions: (info as MLLesionInfo).regions,
-            pixels: (info as MLLesionInfo).pixels,
-          };
-        }
-      }
-
-      // Generate plain-language explanation from real data
-      const explanation = buildExplanation(severity, trinay);
-
-      const newScreeningRecord = createScreening(
-        {
-          patientId:      patient.id,
-          patientName:    patient.fullName,
-          patientAge:     patient.age,
-          patientGender:  patient.gender,
-          patientPhone:   patient.phoneNumber,
-          eye:            screeningWizard.selectedEye,
-          imageQuality:   'Good',
-          imageFileName:  mlResult.imageInfo.filename,
-          imageFileSize:  mlResult.imageInfo.fileSize,
-          imageUrl:       imageFile?.previewUrl,
-          drSeverity:     drSeverityMap[severity.drSeverity] || 'No DR',
-          drSeverityLevel: severity.drSeverityLevel,
-          confidence:     Math.round(severity.confidence),
-          findings,
-          recommendation: severity.recommendation,
-          status:         'Review',
-        },
-        {
-          // Canonical / original fundus
-          imageOriginal: trinay.visualizations.canonical,
-          // XAI heatmap (prefer combined XAI, fallback to trinay combined overlay)
-          imageGradCam:  xai?.combined || trinay.visualizations.combined,
-          // Lesion overlay
-          imageLesions:  trinay.visualizations.lesion,
-          // Anatomy overlay
-          imageAnatomy:  trinay.visualizations.anatomy,
-          // Combined anatomy+lesion overlay
-          imageCombined: trinay.visualizations.combined,
-          // Image metadata
-          imageResolution: mlResult.imageInfo.resolution,
-          // Anatomy detection results & measurements
-          anatomyData: trinay.anatomy,
-          // Lesion detection results
-          lesionData,
-          // Auto-generated explanation
-          plainLanguageExplanation: explanation,
-        }
-      );
-
-      setWizardActiveResult(newScreeningRecord);
-      setWizardQualityPassed(true);
-      setStep('result');
-    };
-
-    const featureRows = quality?.features
-      ? [
-          { label: 'Sharpness',    value: quality.features.sharpness.toFixed(1) },
-          { label: 'Brightness',   value: quality.features.brightness.toFixed(1) },
-          { label: 'Illumination', value: quality.features.illumination.toFixed(1) },
-          { label: 'Contrast',     value: quality.features.contrast.toFixed(1) },
-          { label: 'Noise',        value: quality.features.noise.toFixed(2) },
-          { label: 'FOV',          value: (quality.features.fov * 100).toFixed(1) + '%' },
-        ]
-      : [];
-
-    return (
-      <div className="space-y-6 max-w-4xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t.imageQualityAssessment}</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{t.checkingImage}</p>
-          </div>
-          <button type="button" onClick={() => setStep(screeningWizard.imageSource || 'upload')} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900">
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t.back}</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs items-start">
-          {/* Image preview */}
-          <div className="aspect-square rounded-xl overflow-hidden bg-black border border-slate-300">
-            {imageFile?.previewUrl ? (
-              <img src={imageFile.previewUrl} alt="Uploaded scan" className="w-full h-full object-cover" />
-            ) : (
-              <FundusRetinaCanvas mode="Original" className="w-full h-full" />
-            )}
-          </div>
-
-          {/* Quality results panel */}
-          <div className="space-y-4">
-            {/* Loading state */}
-            {mlLoading && (
-              <div className="flex flex-col items-center justify-center py-10 gap-3">
-                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                <p className="text-sm font-semibold text-slate-700">Running quality analysis…</p>
-                <p className="text-xs text-slate-400">This may take a few seconds</p>
-              </div>
-            )}
-
-            {/* Error state */}
-            {mlError && !mlLoading && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-bold text-red-900">ML Server Error</p>
-                    <p className="text-[11px] text-red-700 mt-0.5 break-words">{mlError}</p>
-                    <p className="text-[11px] text-red-500 mt-1">
-                      Make sure <code className="bg-red-100 px-1 rounded">ml_server.py</code> is running:<br />
-                      <code className="bg-red-100 px-1 rounded">.venv/bin/python ml_server.py</code>
-                    </p>
-                  </div>
-                </div>
+        <div id="dr-upload-section" className="grid grid-cols-1 lg:grid-cols-3 gap-6 scroll-mt-6">
+          {/* Patient Selection & Eye selection */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="w-4.5 h-4.5 text-teal-600" />
+                1. Select Patient
+              </h2>
+              {selectedPatient && (
                 <button
-                  type="button"
-                  onClick={runAnalysis}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
+                  onClick={() => {
+                    setSelectedPatient(null);
+                    setWizardPatient(null);
+                  }}
+                  className="text-sm font-semibold text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
-                  <RefreshCw className="w-3 h-3" />
-                  Retry
-                </button>
-              </div>
-            )}
-
-            {/* Real quality results */}
-            {mlResult && !mlLoading && (
-              <>
-                {/* Image info */}
-                {mlResult.imageInfo && (
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
-                    <p className="font-bold text-slate-700 text-[11px] uppercase tracking-wider">Image Info</p>
-                    <p className="text-slate-600"><span className="font-medium">File:</span> {mlResult.imageInfo.filename}</p>
-                    <p className="text-slate-600"><span className="font-medium">Size:</span> {mlResult.imageInfo.fileSize}</p>
-                    <p className="text-slate-600"><span className="font-medium">Resolution:</span> {mlResult.imageInfo.resolution}</p>
-                  </div>
-                )}
-
-                {/* Feature values */}
-                {featureRows.length > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Quality Features</p>
-                    {featureRows.map((row) => (
-                      <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-slate-100 text-xs">
-                        <span className="font-medium text-slate-600">{row.label}</span>
-                        <span className="font-mono text-slate-800">{row.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Quality verdict banner */}
-                {isGood ? (
-                  <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-bold text-emerald-900">
-                        Quality: <span className="text-emerald-700">Good</span>
-                        {quality?.confidence?.Good !== undefined && (
-                          <span className="ml-2 font-normal text-emerald-600">
-                            ({(quality.confidence.Good * 100).toFixed(0)}% confidence)
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-[11px] text-emerald-700 mt-0.5">
-                        Image quality is sufficient. Proceeding to full AI analysis.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-bold text-red-900">
-                        Quality: <span className="text-red-700">{quality?.quality || 'Ungradable'}</span>
-                      </p>
-                      <p className="text-[11px] text-red-700 mt-0.5">
-                        Image quality is insufficient. Please retake or upload a clearer retinal image.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => { setMlResult(null); setMlError(null); setWizardImageFile(null); setStep('upload'); }}
-                        className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-100 hover:bg-red-200 rounded-lg transition-colors"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Upload a different image
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Action buttons */}
-            <div className="pt-4 flex items-center justify-between border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setStep(screeningWizard.imageSource || 'upload')}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{t.back}</span>
-              </button>
-
-              {isGood && mlResult?.severity && (
-                <button
-                  type="button"
-                  onClick={handleContinueToResult}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1E60D5] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
-                >
-                  <span>View Full Results →</span>
+                  Clear
                 </button>
               )}
             </div>
+
+            {selectedPatient ? (
+              <div className="p-4 bg-teal-50/50 border border-teal-200 rounded-xl">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-slate-800 text-base">{selectedPatient.fullName}</p>
+                    <p className="text-sm text-slate-500 mt-1">
+                      ID: <span className="text-teal-600 font-mono font-bold">{selectedPatient.id}</span>
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 bg-teal-100 text-teal-800 text-xs font-bold rounded-md">Selected</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Search registered patients..."
+                  value={patientSearchStr}
+                  onChange={(e) => setPatientSearchStr(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#F8F9FA] border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+
+                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                  {filteredPatients.length > 0 ? (
+                    filteredPatients.map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setSelectedPatient(p);
+                          setWizardPatient(p);
+                        }}
+                        className="p-3 bg-white hover:bg-[#F8F9FA] border border-slate-200 hover:border-teal-300 rounded-xl cursor-pointer transition-all flex justify-between items-center text-sm"
+                      >
+                        <div>
+                          <p className="font-semibold text-slate-800">{p.fullName}</p>
+                          <p className="text-xs text-slate-500 font-mono">{p.id}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3.5 bg-slate-50 rounded-xl text-center text-sm text-slate-500">
+                      No patients found. Screening will run as <span className="text-teal-600 font-bold">Walk-in Patient</span>.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Eye Selection */}
+            <div className="pt-2 border-t border-slate-200">
+              <label className="text-sm font-bold text-slate-700 block mb-2">
+                2. Target Eye
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['Right Eye', 'Left Eye'] as EyeSelection[]).map((eye) => (
+                  <button
+                    key={eye}
+                    type="button"
+                    onClick={() => setSelectedEye(eye)}
+                    className={`py-2.5 px-3 rounded-xl text-sm font-semibold border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      selectedEye === eye
+                        ? 'bg-teal-50 text-teal-800 border-teal-300 font-bold shadow-2xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Eye className="w-4 h-4" />
+                    {eye} ({eye === 'Right Eye' ? 'OD' : 'OS'})
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Upload Area */}
+          <div className="lg:col-span-2 bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Camera className="w-4.5 h-4.5 text-teal-600" />
+                  3. Upload Retinal Fundus Image
+                </h2>
+                <span className="text-sm text-slate-500">Supports JPG, PNG, TIFF, DICOM</span>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="dr-file-upload"
+              />
+
+              {!previewUrl ? (
+                <label
+                  htmlFor="dr-file-upload"
+                  className="border-2 border-dashed border-slate-300 hover:border-teal-400 bg-slate-50 hover:bg-teal-50/50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all group min-h-[360px]"
+                >
+                  <div className="w-16 h-16 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform mb-3">
+                    <Upload className="w-8 h-8" />
+                  </div>
+                  <p className="font-bold text-slate-800 text-base">
+                    Click to browse or drop retinal fundus photograph here
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Standard 45°/50° macular or optic disc centered fundus photograph
+                  </p>
+                </label>
+              ) : (
+                <div className="flex flex-col h-full space-y-6">
+                  <div className="relative rounded-xl overflow-hidden bg-[#F8F9FA] flex items-center justify-center min-h-[300px] h-[360px] border border-slate-200">
+                    <img
+                      src={previewUrl}
+                      alt="Fundus preview"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-800 shadow-sm border border-slate-200">
+                      Preview Ready
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+                      <div className="flex items-center gap-1.5">
+                        <Camera className="w-4 h-4 text-slate-400" />
+                        <span className="truncate max-w-[150px] font-medium">{imageMetadata?.filename}</span>
+                      </div>
+                      <div className="w-px h-4 bg-slate-300" />
+                      <span>{imageMetadata?.fileSize}</span>
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <button
+                        onClick={handleReset}
+                        className="px-4.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-base font-semibold transition-colors flex items-center gap-2 cursor-pointer"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        Change
+                      </button>
+                      <button
+                        onClick={handleStartScreening}
+                        className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white shadow-md text-base font-bold transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-5 h-5 text-teal-100 group-hover:text-white" />
+                        Run AI Screening
+                        <ArrowRight className="w-4.5 h-4.5 ml-1 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            {mlError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2 mt-4">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{mlError}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // ============================================================
-  // STEP 6: SCREENING RESULT & XAI VIEWER
-  // ============================================================
+  if (mlLoading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-6 shadow-sm">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-100 text-teal-600 border border-teal-200 animate-pulse">
+            <Activity className="w-8 h-8 animate-spin" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800">Evaluating Retinal Clinical Indicators</h3>
+            <p className="text-slate-500 text-xs mt-1">Executing lesion detection and anatomical validation</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  // Wizard record for header/modals; fall back to the ML-derived record
+  // held in local state so actions keep working even if wizard sync lags.
   const result = screeningWizard.activeResult;
 
   const handleOpenExplanation = () => {
@@ -911,7 +632,8 @@ export const NewScreeningFlow: React.FC = () => {
   };
 
   const handleOpenDetailedReport = () => {
-    if (result?.reportId) openReportDetail(result.reportId);
+    const targetReportId = result?.reportId || mlResult?.reportId;
+    if (targetReportId) openReportDetail(targetReportId);
     else setActivePage('reports');
   };
 
@@ -925,58 +647,57 @@ export const NewScreeningFlow: React.FC = () => {
   const xai       = mlResult?.xai;
   const severity  = mlResult?.severity;
 
-  const getXaiImage = (tab: XaiTab): string | undefined => {
-    if (!trinay && !xai) return undefined;
-    switch (tab) {
-      case 'Original':   return trinay?.visualizations.canonical;
-      case 'Grad-CAM++': return xai?.combined         || trinay?.visualizations.combined;
-      case 'Lesions':    return trinay?.visualizations.lesion;
-      case 'Anatomy':    return trinay?.visualizations.anatomy;
-      case 'Combined':   return trinay?.visualizations.combined;
-      default:           return trinay?.visualizations.canonical;
-    }
-  };
-
-  const lesionItems: [string, MLLesionInfo][] = trinay?.lesions
-    ? (Object.entries(trinay.lesions) as [string, MLLesionInfo][]).filter(([, info]) => info.detected)
-    : result?.findings?.map((f) => [f, { detected: true }] as [string, MLLesionInfo]) || [];
-
   const confidenceValue = severity?.confidence ?? result?.confidence ?? 0;
 
+  // Extract structured findings with medical explanations
+  const structuredLesions = extractLesionItems(trinay?.lesions);
+
+  // Generate dynamic patient-specific AI clinical summary from current screening findings
+  const clinicalSummary = generateDrClinicalSummary({
+    lesionData: trinay?.lesions,
+    drSeverity: severity?.drSeverity || result?.drSeverity,
+    drSeverityLevel: severity?.drSeverityLevel || result?.drSeverityLevel,
+    confidence: confidenceValue,
+    vesselDensity: trinay?.anatomy?.blood_vessels?.density ?? trinay?.anatomy?.measurements?.vessel_density_pct,
+    vesselPixels: trinay?.anatomy?.blood_vessels?.pixels,
+  });
+
+  // P0: header reflects the CURRENT screening's patient only.
+  const headerPatient = selectedPatient || screeningWizard.selectedPatient || result || null;
+  const headerName = (headerPatient as any)?.fullName || (headerPatient as any)?.patientName || 'Walk-in Patient';
+  const headerId = (headerPatient as any)?.id || (headerPatient as any)?.patientId || '—';
+  const headerDate =
+    result?.date ||
+    result?.createdAt ||
+    new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t.aiScreeningResult}</h1>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t.aiScreeningResult}</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {patient.fullName} ({patient.id}) •{' '}
+            {headerName} ({headerId}) •{' '}
             {screeningWizard.selectedEye === 'Right Eye' ? t.rightEye : t.leftEye} •{' '}
-            {result?.date || t.date}
+            {headerDate}
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
             type="button"
-            onClick={() => setStep('quality')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shadow-2xs"
+            onClick={handleReset}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl shadow-2xs cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{t.back}</span>
           </button>
-          <button
-            type="button"
-            onClick={handleOpenReferral}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors"
-          >
-            <Send className="w-3.5 h-3.5 text-amber-500" />
-            <span>{t.referrals}</span>
-          </button>
+
           <button
             type="button"
             onClick={handleOpenDetailedReport}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-xs shadow-blue-500/20 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#0284C7] hover:bg-sky-600 active:bg-sky-700 rounded-xl shadow-xs transition-colors cursor-pointer"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>{t.viewReport}</span>
@@ -984,35 +705,417 @@ export const NewScreeningFlow: React.FC = () => {
         </div>
       </div>
 
-      {/* Main grid */}
+      {/* 1. LARGE PRIMARY RETINAL AI VISUALIZATION PANEL */}
+      <div ref={canvasSectionRef} className="bg-slate-950 p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-xl space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                RETINAL AI VISUALIZATION
+              </h2>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Complete fundus field • Object-fit: contain • Optical axis & microvascular layers aligned
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Mode tabs */}
+            <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-medium">
+              {(['Original', 'Grad-CAM++', 'Lesions', 'Anatomy', 'Combined'] as XaiTab[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => {
+                    setActiveXaiTab(mode);
+                    if (mode !== 'Lesions') setHighlightedLesion(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+                    activeXaiTab === mode
+                      ? 'bg-[#0284C7] text-white font-bold shadow-xs'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+
+            {/* Inspect Fullscreen button */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreenOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 transition-colors cursor-pointer"
+              title="Inspect Fullscreen"
+            >
+              <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Inspect Fullscreen</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Large Canvas Area */}
+        <div className="relative w-full h-[520px] sm:h-[600px] md:h-[680px] rounded-xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center p-2">
+          <FundusRetinaCanvas
+            mode={activeXaiTab}
+            opacity={heatmapOpacity}
+            className="w-full h-full"
+            imageOriginal={trinay?.visualizations.canonical}
+            imageGradCam={xai?.combined}
+            imageLesions={trinay?.visualizations.lesion}
+            imageAnatomy={trinay?.visualizations.anatomy}
+            imageCombined={trinay?.visualizations.combined}
+            imageDebugAnatomy={trinay?.visualizations.debug_anatomy}
+            highlightLesion={highlightedLesion}
+            onInspectFullscreen={() => setIsFullscreenOpen(true)}
+          />
+        </div>
+
+        {/* Controls and Reference Bar */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-2 text-xs text-slate-300">
+          {(activeXaiTab === 'Grad-CAM++' || activeXaiTab === 'Combined') ? (
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <span className="text-slate-400 text-xs font-medium shrink-0">{t.heatmapOpacity}:</span>
+              <div className="flex items-center gap-2 flex-1 md:w-60">
+                <input
+                  type="range"
+                  min={10}
+                  max={100}
+                  value={heatmapOpacity}
+                  onChange={(e) => setHeatmapOpacity(Number(e.target.value))}
+                  className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                />
+                <span className="w-8 font-mono text-[11px] text-slate-400 text-right">{heatmapOpacity}%</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 text-[11px] text-slate-400 overflow-x-auto w-full md:w-auto">
+              <span className="font-semibold text-slate-300">Retinal Landmarks:</span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" /> Optic Disc Localized
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-sky-400" /> Macula & Fovea Centered
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-red-400" /> Microvascular Architecture
+              </span>
+            </div>
+          )}
+
+          {/* Lesion legend color pills */}
+          <div className="flex items-center gap-2 text-[10px] overflow-x-auto w-full md:w-auto justify-start md:justify-end">
+            <span className="font-semibold text-slate-400 mr-1">Overlays:</span>
+            <span className="px-2 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-800/80 font-mono">MA (Red)</span>
+            <span className="px-2 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/80 font-mono">HE (Purple)</span>
+            <span className="px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-800/80 font-mono">EX (Yellow)</span>
+            <span className="px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 font-mono">SE (Green)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. CLINICAL BREAKDOWN & AI FINDINGS GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: XAI Viewer */}
-        <div className="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">{t.aiDetectedFindings}</span>
-            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{activeXaiTab}</span>
+        {/* Left Column (7 cols): AI Clinical Summary + Detailed Finding Cards + Quantitative Measurements */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* AI Clinical Summary Card */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#0284C7]" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  AI CLINICAL SUMMARY
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                Patient-Specific Inference
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-700 leading-relaxed font-normal">
+              {clinicalSummary.summaryParagraph}
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 border-t border-slate-100">
+              <span className="font-medium text-slate-700">Quantified Lesion Load:</span>
+              <span className="font-mono font-bold text-slate-900">{clinicalSummary.totalLesionPixels.toLocaleString()} px</span>
+              <span className="text-slate-300">•</span>
+              <span className="font-medium text-slate-700">Validated Staging:</span>
+              <span className="font-semibold text-slate-900">{clinicalSummary.classifierVerdict}</span>
+            </div>
           </div>
 
-          {/* Mode tabs */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100/80 rounded-lg overflow-x-auto text-xs font-medium">
-            {(['Original', 'Grad-CAM++', 'Lesions', 'Anatomy', 'Combined'] as XaiTab[]).map((mode) => (
+          {/* AI-Detected Findings: Doctor-Friendly Cards */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3.5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#0284C7]" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  AI-DETECTED RETINAL FINDINGS
+                </h3>
+              </div>
+              <span className="text-[11px] text-slate-500 font-medium">
+                {structuredLesions.filter(l => l.detected).length} of 4 lesion types observed
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {structuredLesions.map((item) => {
+                const isDet = item.detected && item.pixels > 0;
+                return (
+                  <div
+                    key={item.code}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      isDet
+                        ? 'bg-slate-50/70 border-slate-200 shadow-2xs'
+                        : 'bg-white border-slate-100 opacity-75'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-3.5 h-3.5 rounded-sm shrink-0 border"
+                          style={{ backgroundColor: item.def.colorHex, borderColor: item.def.colorHex }}
+                        />
+                        <span className="text-xs font-bold text-slate-900">
+                          {item.def.fullName}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {isDet ? (
+                          <span className="font-mono text-xs font-bold px-2 py-0.5 rounded border bg-white text-slate-800 border-slate-200 shadow-2xs">
+                            {item.pixels.toLocaleString()} px
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-medium text-slate-400">
+                            Not observed
+                          </span>
+                        )}
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
+                            isDet
+                              ? `${item.def.badgeBg} ${item.def.badgeBorder} ${item.def.badgeText}`
+                              : 'bg-slate-50 border-slate-200 text-slate-400'
+                          }`}
+                        >
+                          {isDet ? 'DETECTED' : 'NOT OBSERVED'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Explanatory content */}
+                    <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-2 border-t border-slate-200/60">
+                      <div>
+                        <span className="font-semibold text-slate-700 block">What is it?</span>
+                        <p className="text-slate-600 mt-0.5 leading-snug">{item.def.whatIsIt}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-slate-700 block">Why it matters:</span>
+                        <p className="text-slate-600 mt-0.5 leading-snug">{item.def.whyItMatters}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                      <p className="text-slate-500 italic">
+                        <strong className="font-semibold text-slate-700 not-italic">Clinical note: </strong>
+                        {item.def.clinicalInterpretation}
+                      </p>
+
+                      {isDet && (
+                        <button
+                          type="button"
+                          onClick={() => handleViewOnImage(item.code)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-[#0284C7] hover:text-white bg-sky-50 hover:bg-[#0284C7] rounded-lg border border-sky-200 transition-colors shrink-0 cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View on Image</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Real Quantitative Anatomical Measurements */}
+          {trinay?.anatomy && (
+            <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                <Activity className="w-3.5 h-3.5 text-sky-600" />
+                <span>Quantitative Anatomical Localization</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Vessel Density</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">
+                    {trinay.anatomy.blood_vessels?.density ?? trinay.anatomy.measurements?.vessel_density_pct ?? '—'}%
+                  </span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">
+                    {trinay.anatomy.blood_vessels?.pixels?.toLocaleString()} px
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Macular Density</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">
+                    {trinay.anatomy.blood_vessels?.macular_density ?? trinay.anatomy.measurements?.macular_vessel_density_pct ?? '—'}%
+                  </span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">ROI (11%)</span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Fovea (X, Y)</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">
+                    ({Math.round(trinay.anatomy.fovea.x)}, {Math.round(trinay.anatomy.fovea.y)})
+                  </span>
+                  <span className="text-[10px] text-slate-500 block mt-0.5">
+                    OD Dist: {trinay.anatomy.fovea.disc_distance ?? trinay.anatomy.measurements?.disc_fovea_distance_px ?? '—'} px
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Optic Disc Area</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">
+                    {trinay.anatomy.optic_disc?.pixels?.toLocaleString()} px
+                  </span>
+                  <span className="text-[10px] text-emerald-700 block font-semibold mt-0.5">
+                    {trinay.anatomy.optic_disc?.detected ? 'Localized ✓' : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column (5 cols): Diagnostic Status, Guidance, Actions */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Classification Banner (from validated severity classifier) */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3.5">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">{t.drSeverity}</span>
+                <h3 className="text-xl font-extrabold text-slate-900 mt-0.5">
+                  {severity?.drSeverity || result?.drSeverity || 'No DR'}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                  {severity?.drSeverityLevel || result?.drSeverityLevel || 'No DR (Level 0)'}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 block font-semibold">{t.confidence}</span>
+                <span className="text-2xl font-black text-sky-700">{confidenceValue}%</span>
+              </div>
+            </div>
+
+            {(severity?.recommendation || result?.recommendation) && (
+              <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
+                {severity?.recommendation || result?.recommendation}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleOpenExplanation}
+              className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-xl transition-colors border border-sky-200 cursor-pointer"
+            >
+              <Info className="w-4 h-4" />
+              <span>{t.whyThisResult}</span>
+            </button>
+          </div>
+
+          {/* Clinical Interpretation & Guidance Summary */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3 text-xs">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <h4 className="font-bold text-slate-800 uppercase tracking-wider">
+                Doctor's Clinical Triage Summary
+              </h4>
+            </div>
+
+            <p className="text-slate-600 leading-relaxed">
+              {severity?.drSeverity === 'No DR'
+                ? 'Retinal microvasculature demonstrates normal caliber and uniform perfusion across the posterior pole. No microaneurysms, hemorrhages, or exudates observed. Continue routine annual preventive screening.'
+                : `Retinal screening findings demonstrate features consistent with ${severity?.drSeverity || 'Diabetic Retinopathy'}. Capillary abnormalities present. Vitreo-retinal specialist consultation recommended for dilated biomicroscopy and optical coherence tomography (OCT).`}
+            </p>
+
+            <div className="p-3 bg-amber-50/70 border border-amber-200/70 rounded-xl space-y-1.5 text-[11px] text-amber-900">
+              <span className="font-bold block flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                Clinical Precautions
+              </span>
+              <ul className="space-y-1 list-disc list-inside text-amber-800">
+                <li>Correlate findings with clinical slit-lamp examination.</li>
+                <li>Review patient glycemic and blood pressure records.</li>
+                <li>Promptly refer for comprehensive specialist examination.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
+            <button
+              type="button"
+              onClick={handleOpenDetailedReport}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#0284C7] hover:bg-sky-600 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+            >
+              <FileText className="w-4 h-4" />
+              <span>{t.viewReport}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleFinishScreening}
+              className="w-full py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-colors text-center cursor-pointer"
+            >
+              {t.returnToDashboard}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. FULLSCREEN INSPECTION MODAL */}
+      {isFullscreenOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col p-4 backdrop-blur-md">
+          {/* Fullscreen header */}
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-white">
+            <div>
+              <h2 className="text-sm font-bold tracking-wide">
+                FULLSCREEN RETINAL INSPECTION — {screeningWizard.selectedEye === 'Right Eye' ? 'OD (Right Eye)' : 'OS (Left Eye)'}
+              </h2>
+              <p className="text-xs text-slate-400">
+                {headerName} • ID: {headerId}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Mode switch */}
+              <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs">
+                {(['Original', 'Grad-CAM++', 'Lesions', 'Anatomy', 'Combined'] as XaiTab[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setActiveXaiTab(mode)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
+                      activeXaiTab === mode ? 'bg-[#0284C7] text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+
               <button
-                key={mode}
                 type="button"
-                onClick={() => setActiveXaiTab(mode)}
-                className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
-                  activeXaiTab === mode
-                    ? 'bg-white text-blue-600 font-bold shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                }`}
+                onClick={() => setIsFullscreenOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
+                title="Exit Fullscreen"
               >
-                {mode}
+                <X className="w-5 h-5" />
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* Canvas — real ML images */}
-          <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-black border border-slate-200 shadow-inner">
+          {/* Fullscreen Image Container with object-contain */}
+          <div className="flex-1 w-full h-full flex items-center justify-center p-2 overflow-hidden">
             <FundusRetinaCanvas
               mode={activeXaiTab}
               opacity={heatmapOpacity}
@@ -1022,234 +1125,12 @@ export const NewScreeningFlow: React.FC = () => {
               imageLesions={trinay?.visualizations.lesion}
               imageAnatomy={trinay?.visualizations.anatomy}
               imageCombined={trinay?.visualizations.combined}
+              imageDebugAnatomy={trinay?.visualizations.debug_anatomy}
+              highlightLesion={highlightedLesion}
             />
           </div>
-
-          {/* Opacity slider for heatmap modes */}
-          {(activeXaiTab === 'Grad-CAM++' || activeXaiTab === 'Combined') && (
-            <div className="flex items-center justify-between gap-4 px-2 py-1 text-xs">
-              <span className="text-slate-500 font-medium">{t.heatmapOpacity}:</span>
-              <div className="flex items-center gap-2 flex-1 max-w-xs">
-                <input
-                  type="range"
-                  min={10}
-                  max={100}
-                  value={heatmapOpacity}
-                  onChange={(e) => setHeatmapOpacity(Number(e.target.value))}
-                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-                <span className="w-8 font-mono text-[11px] text-slate-600 text-right">{heatmapOpacity}%</span>
-              </div>
-            </div>
-          )}
-
-          {/* Clinical Lesion Legend (visible on Lesions & Combined modes) */}
-          {(activeXaiTab === 'Lesions' || activeXaiTab === 'Combined') && (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
-                <Info className="w-3.5 h-3.5 text-blue-600" />
-                <span>What do the markings mean?</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div className="flex items-start gap-1.5 p-1.5 bg-white rounded border border-slate-200/70 shadow-2xs">
-                  <span className="w-3 h-3 rounded-xs bg-[#DC2626] shrink-0 mt-0.5 border border-red-700" />
-                  <div>
-                    <strong className="text-slate-900 block font-semibold">MA — Microaneurysm</strong>
-                    <span className="text-slate-500 text-[10px]">Capillary outpouchings</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-1.5 p-1.5 bg-white rounded border border-slate-200/70 shadow-2xs">
-                  <span className="w-3 h-3 rounded-xs bg-[#7C3AED] shrink-0 mt-0.5 border border-purple-800" />
-                  <div>
-                    <strong className="text-slate-900 block font-semibold">HE — Haemorrhage</strong>
-                    <span className="text-slate-500 text-[10px]">Retinal blood leakage</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-1.5 p-1.5 bg-white rounded border border-slate-200/70 shadow-2xs">
-                  <span className="w-3 h-3 rounded-xs bg-[#EAB308] shrink-0 mt-0.5 border border-amber-600" />
-                  <div>
-                    <strong className="text-slate-900 block font-semibold">EX — Hard Exudate</strong>
-                    <span className="text-slate-500 text-[10px]">Lipid-protein deposits</span>
-                  </div>
-                </div>
-                <div className="flex items-start gap-1.5 p-1.5 bg-white rounded border border-slate-200/70 shadow-2xs">
-                  <span className="w-3 h-3 rounded-xs bg-[#10B981] shrink-0 mt-0.5 border border-emerald-600" />
-                  <div>
-                    <strong className="text-slate-900 block font-semibold">SE — Soft Exudate</strong>
-                    <span className="text-slate-500 text-[10px]">Cotton-wool ischemia</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Real Quantitative Measurements Cards */}
-          {trinay?.anatomy && (
-            <div className="space-y-2 pt-1 border-t border-slate-100">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wider">
-                <Activity className="w-3.5 h-3.5 text-blue-600" />
-                <span>Real Model Measurements</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Vessel Density</span>
-                  <span className="font-mono font-bold text-slate-900 text-xs">
-                    {trinay.anatomy.blood_vessels?.density ?? trinay.anatomy.measurements?.vessel_density_pct ?? '—'}%
-                  </span>
-                  <span className="text-[10px] text-slate-500 block">
-                    {trinay.anatomy.blood_vessels?.pixels?.toLocaleString()} px
-                  </span>
-                </div>
-                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Macular Density</span>
-                  <span className="font-mono font-bold text-slate-900 text-xs">
-                    {trinay.anatomy.blood_vessels?.macular_density ?? trinay.anatomy.measurements?.macular_vessel_density_pct ?? '—'}%
-                  </span>
-                  <span className="text-[10px] text-slate-500 block">ROI (11%)</span>
-                </div>
-                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Fovea (X, Y)</span>
-                  <span className="font-mono font-bold text-slate-900 text-xs">
-                    ({Math.round(trinay.anatomy.fovea.x)}, {Math.round(trinay.anatomy.fovea.y)})
-                  </span>
-                  <span className="text-[10px] text-slate-500 block">
-                    OD Dist: {trinay.anatomy.fovea.disc_distance ?? trinay.anatomy.measurements?.disc_fovea_distance_px ?? '—'} px
-                  </span>
-                </div>
-                <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
-                  <span className="text-slate-400 block text-[10px] uppercase font-semibold">Optic Disc Area</span>
-                  <span className="font-mono font-bold text-slate-900 text-xs">
-                    {trinay.anatomy.optic_disc?.pixels?.toLocaleString()} px
-                  </span>
-                  <span className="text-[10px] text-emerald-700 block font-medium">
-                    {trinay.anatomy.optic_disc?.detected ? 'Localized ✓' : '—'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* XAI error notice */}
-          {mlResult?.xaiError && (
-            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-xs">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-amber-700">XAI partially failed: {mlResult.xaiError}</p>
-            </div>
-          )}
         </div>
-
-        {/* Right: Diagnosis & Findings */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Classification banner */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">{t.drSeverity}</span>
-                <h3 className="text-lg font-black text-slate-900 mt-0.5">
-                  {severity?.drSeverity || result?.drSeverity || 'No DR'}
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  {severity?.drSeverityLevel || result?.drSeverityLevel}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-slate-400 block font-semibold">{t.confidence}</span>
-                <span className="text-2xl font-black text-blue-700">{confidenceValue}%</span>
-              </div>
-            </div>
-
-            {(severity?.recommendation || result?.recommendation) && (
-              <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
-                {severity?.recommendation || result?.recommendation}
-              </p>
-            )}
-
-            <button
-              type="button"
-              onClick={handleOpenExplanation}
-              className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
-            >
-              <Info className="w-4 h-4" />
-              <span>{t.whyThisResult}</span>
-            </button>
-          </div>
-
-          {/* Detected lesions */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
-            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">{t.aiDetectedFindings}</span>
-
-            {/* Image info from ML */}
-            {mlResult?.imageInfo && (
-              <div className="pb-2 border-b border-slate-100 text-xs space-y-0.5">
-                <p className="text-slate-500"><span className="font-medium text-slate-700">Resolution:</span> {mlResult.imageInfo.resolution}</p>
-                <p className="text-slate-500"><span className="font-medium text-slate-700">File:</span> {mlResult.imageInfo.filename}</p>
-              </div>
-            )}
-
-            {/* Anatomy results */}
-            {trinay?.anatomy && (
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Anatomy</p>
-                {[
-                  { label: 'Blood Vessels', detected: trinay.anatomy.blood_vessels.detected, extra: `${trinay.anatomy.blood_vessels.pixels.toLocaleString()} px` },
-                  { label: 'Optic Disc',    detected: trinay.anatomy.optic_disc.detected,    extra: `${trinay.anatomy.optic_disc.pixels.toLocaleString()} px` },
-                  { label: 'Fovea',         detected: true, extra: `(${Math.round(trinay.anatomy.fovea.x)}, ${Math.round(trinay.anatomy.fovea.y)})` },
-                ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between py-1 border-b border-slate-100 text-xs">
-                    <span className="text-slate-600">{row.label}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-slate-400">{row.extra}</span>
-                      <span className={`font-semibold px-2 py-0.5 rounded border text-[11px] ${
-                        row.detected ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-500 bg-slate-50 border-slate-200'
-                      }`}>
-                        {row.detected ? t.yes : 'Not detected'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Lesion findings */}
-            {lesionItems.length > 0 ? (
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Lesions</p>
-                <ul className="space-y-1.5 text-xs">
-                  {lesionItems.map(([name]) => (
-                    <li key={name} className="flex items-center justify-between py-1 border-b border-slate-100">
-                      <span className="text-slate-600">{name}</span>
-                      <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                        {t.yes}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-500 text-center py-2">No lesions detected</p>
-            )}
-          </div>
-
-          {/* Quick actions */}
-          <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5">
-            <button
-              type="button"
-              onClick={handleOpenDetailedReport}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1E60D5] hover:bg-blue-700 text-white font-semibold text-xs rounded-lg shadow-xs transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span>{t.viewReport}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleFinishScreening}
-              className="w-full py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors text-center"
-            >
-              {t.returnToDashboard}
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

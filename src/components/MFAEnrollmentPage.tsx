@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Eye, ArrowRight, Loader2, ShieldCheck, Copy, Check, QrCode, KeyRound, RefreshCw } from 'lucide-react';
+import { Eye, ArrowRight, Loader2, ShieldCheck, Copy, Check, KeyRound, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { enrollTotpFactor, verifyTotpEnrollment } from '../services/mfaService';
 
@@ -34,11 +34,10 @@ export const MFAEnrollmentPage: React.FC = () => {
     setOtp(['', '', '', '', '', '']);
 
     try {
-      const res = await enrollTotpFactor('RETINA-X Google Authenticator');
+      const res = await enrollTotpFactor('TRINAY Google Authenticator');
       if (!isMountedRef.current) return;
 
       if (res.isAlreadyVerified) {
-        // User already has an enrolled & verified factor; seamlessly route to standard verification challenge
         switchToTwoFactorChallenge(res.factorId);
         return;
       }
@@ -138,7 +137,6 @@ export const MFAEnrollmentPage: React.FC = () => {
       setCopiedKey(true);
       setTimeout(() => setCopiedKey(false), 2500);
     } catch {
-      // Fallback
       setCopiedKey(true);
       setTimeout(() => setCopiedKey(false), 2500);
     }
@@ -160,8 +158,6 @@ export const MFAEnrollmentPage: React.FC = () => {
 
       if (res.success) {
         setIsSuccess(true);
-        // Supabase session has been upgraded to AAL2
-        // Transition to user role-based dashboard
         await confirmTwoFactorLogin();
       } else {
         setVerifyError(
@@ -176,7 +172,6 @@ export const MFAEnrollmentPage: React.FC = () => {
     }
   };
 
-  // Convert SVG string or data URL for rendering in img tag
   const getQrSrc = (raw: string | null): string => {
     if (!raw) return '';
     if (raw.startsWith('data:image/')) return raw;
@@ -186,41 +181,40 @@ export const MFAEnrollmentPage: React.FC = () => {
     return raw;
   };
 
-  // Format secret with spacing for readability
   const formattedSecret = secret ? secret.replace(/(.{4})/g, '$1 ').trim() : '';
 
   return (
-    <div className="min-h-screen bg-[#070D19] flex items-center justify-center p-4 selection:bg-blue-600 selection:text-white relative">
-      {/* Background ambient lighting matching LoginPage */}
+    <div className="min-h-screen bg-[#070D19] flex items-center justify-center p-4 selection:bg-[#0284C7] selection:text-white relative">
+      {/* Background ambient lighting */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#0284C7]/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Centered Enrollment Card */}
-      <div className="relative w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden z-10">
+      <div className="relative w-full max-w-md bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden z-10">
         {/* Brand Header */}
         <div className="p-8 pb-5 text-center border-b border-slate-800/80">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 mb-3 shadow-lg shadow-blue-900/30">
-            <Eye className="w-6 h-6 text-blue-400" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0284C7]/20 text-[#0284C7] border border-[#0284C7]/30 mb-3 shadow-lg shadow-sky-950/50">
+            <Eye className="w-7 h-7 text-[#0284C7]" />
           </div>
           <h1 className="text-2xl font-bold tracking-wider text-white">
-            RETINA<span className="text-blue-500">-X</span>
+            TRINAY<span className="text-[#0284C7] font-extrabold">-X</span>
           </h1>
 
-          <div className="mt-3 space-y-1">
-            <h2 className="text-lg font-bold text-slate-100 flex items-center justify-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-blue-400" />
+          <div className="mt-3.5 space-y-1">
+            <h2 className="text-base font-bold text-slate-100 flex items-center justify-center gap-2">
+              <ShieldCheck className="w-4.5 h-4.5 text-[#0284C7]" />
               <span>Set Up Two-Step Verification</span>
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed max-w-xs mx-auto">
-              Scan this QR code using Google Authenticator.
+              Scan this QR code using Google Authenticator on your mobile device.
             </p>
           </div>
 
           {pendingUser && (
-            <div className="mt-3 inline-block px-3 py-1 bg-slate-800/60 border border-slate-700/60 rounded-full text-[11px] text-slate-400 font-medium">
-              Signing in as <span className="text-blue-400 font-semibold">{pendingUser.email || pendingUser.id}</span>
+            <div className="mt-3.5 inline-block px-3 py-1 bg-slate-800/80 border border-slate-700/60 rounded-full text-[11px] text-slate-300 font-medium">
+              Signing in as <span className="text-sky-400 font-bold">{pendingUser.email || pendingUser.id}</span>
             </div>
           )}
         </div>
@@ -228,12 +222,12 @@ export const MFAEnrollmentPage: React.FC = () => {
         {/* Enrollment Body */}
         <div className="p-8 pt-6 space-y-5">
           {enrollError ? (
-            <div className="p-4 bg-red-950/70 border border-red-800/80 rounded-xl text-xs text-red-300 space-y-3 text-center">
+            <div className="p-4 bg-red-950/70 border border-red-800/80 rounded-2xl text-xs text-red-300 space-y-3 text-center">
               <p>{enrollError}</p>
               <button
                 type="button"
                 onClick={loadEnrollment}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-900/60 hover:bg-red-900 text-red-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-red-900/70 hover:bg-red-900 text-red-100 text-xs font-bold rounded-xl transition-colors cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Retry Setup</span>
@@ -241,7 +235,7 @@ export const MFAEnrollmentPage: React.FC = () => {
             </div>
           ) : isEnrolling ? (
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#0284C7]" />
               <p className="text-xs font-medium">Generating Authenticator QR Code...</p>
             </div>
           ) : (
@@ -249,7 +243,7 @@ export const MFAEnrollmentPage: React.FC = () => {
               {/* QR Code Presentation */}
               <div className="flex flex-col items-center justify-center">
                 {qrCodeData && (
-                  <div className="bg-white p-3.5 rounded-2xl shadow-lg border border-slate-300 inline-flex items-center justify-center">
+                  <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-200 inline-flex items-center justify-center">
                     <img
                       src={getQrSrc(qrCodeData)}
                       alt="Google Authenticator QR Code"
@@ -263,22 +257,22 @@ export const MFAEnrollmentPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowManualKey(!showManualKey)}
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors cursor-pointer py-1"
+                    className="inline-flex items-center gap-1.5 text-xs text-sky-400 hover:text-sky-300 font-medium transition-colors cursor-pointer py-1"
                   >
                     <KeyRound className="w-3.5 h-3.5" />
                     <span>Can't scan? Enter this setup key manually.</span>
                   </button>
 
                   {showManualKey && secret && (
-                    <div className="mt-2 p-3 bg-slate-800/90 border border-slate-700/80 rounded-xl text-left space-y-2 animate-in fade-in duration-150">
+                    <div className="mt-2 p-3.5 bg-slate-800/90 border border-slate-700/80 rounded-2xl text-left space-y-2 animate-in fade-in duration-150">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
                           Account Key (Base32)
                         </span>
                         <button
                           type="button"
                           onClick={handleCopySecret}
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
                         >
                           {copiedKey ? (
                             <>
@@ -293,11 +287,11 @@ export const MFAEnrollmentPage: React.FC = () => {
                           )}
                         </button>
                       </div>
-                      <code className="block text-xs font-mono font-bold text-amber-300 select-all tracking-wider break-all bg-slate-900/80 p-2 rounded-lg border border-slate-800">
+                      <code className="block text-xs font-mono font-bold text-amber-300 select-all tracking-wider break-all bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                         {formattedSecret}
                       </code>
                       <p className="text-[10px] text-slate-400 leading-tight">
-                        In Google Authenticator, tap <strong className="text-slate-300">+</strong> → <strong className="text-slate-300">Enter a setup key</strong>, enter "RETINA-X" as Account name, paste this key, and select Time-based.
+                        In Google Authenticator, tap <strong className="text-slate-300">+</strong> → <strong className="text-slate-300">Enter a setup key</strong>, enter "TRINAY" as Account name, paste this key, and select Time-based.
                       </p>
                     </div>
                   )}
@@ -339,7 +333,7 @@ export const MFAEnrollmentPage: React.FC = () => {
                       className={`w-11 h-13 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold font-mono rounded-xl transition-colors focus:outline-hidden ${
                         verifyError
                           ? 'bg-red-950/20 border border-red-800/80 text-red-200 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                          : 'bg-slate-800/90 border border-slate-700 text-slate-100 placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-slate-800/90 border border-slate-700 text-slate-100 placeholder-slate-600 focus:border-[#0284C7] focus:ring-1 focus:ring-[#0284C7]'
                       }`}
                     />
                   ))}
@@ -350,7 +344,7 @@ export const MFAEnrollmentPage: React.FC = () => {
                   id="enroll-verify-btn"
                   type="submit"
                   disabled={!isComplete || isVerifying || isSuccess}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1E60D5] hover:bg-blue-600 active:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-900/30 transition-all text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#0284C7] hover:bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-950/50 transition-all text-sm mt-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isVerifying ? (
                     <div className="flex items-center gap-2">
@@ -380,9 +374,9 @@ export const MFAEnrollmentPage: React.FC = () => {
               id="enroll-back-to-login-btn"
               onClick={cancelTwoFactor}
               disabled={isVerifying}
-              className="inline-flex items-center text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer py-1 disabled:opacity-50"
+              className="inline-flex items-center text-xs font-bold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer py-1 disabled:opacity-50"
             >
-              ← Back to Login
+              ← Back to Sign In
             </button>
           </div>
         </div>
@@ -390,3 +384,4 @@ export const MFAEnrollmentPage: React.FC = () => {
     </div>
   );
 };
+

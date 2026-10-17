@@ -1,0 +1,53 @@
+{
+  "common": {
+    "dashboard": "डॅशबोर्ड",
+    "patients": "रुग्ण",
+    "screening": "स्क्रीनिंग",
+    "medical_records": "मेडिकल रेकॉर्ड्स",
+    "analytics": "अॅनालिटिक्स",
+    "reports": "अहवाल",
+    "profile": "प्रोफाईल",
+    "settings": "सेटिंग्ज",
+    "logout": "लॉग आऊट",
+    "save": "सेव्ह करा",
+    "cancel": "रद्द करा",
+    "close": "बंद करा",
+    "loading": "लोड होत आहे...",
+    "error": "त्रुटी"
+  },
+  "dashboard": {
+    "welcome": "परत स्वागत आहे",
+    "recent_patients": "अलीकडील रुग्ण",
+    "screenings_today": "आजची स्क्रीनिंग",
+    "pending_reviews": "प्रलंबित पुनरावलोकने",
+    "view_all": "सर्व पहा"
+  },
+  "patient": {
+    "add_patient": "रुग्ण जोडा",
+    "edit_patient": "रुग्ण संपादित करा",
+    "delete_patient": "रुग्ण हटवा",
+    "search": "रुग्ण शोधा...",
+    "full_name": "पूर्ण नाव",
+    "age": "वय",
+    "gender": "लिंग"
+  },
+  "screening": {
+    "title": "नेत्र स्क्रीनिंग",
+    "start": "स्क्रीनिंग सुरू करा",
+    "processing": "प्रतिमेचे विश्लेषण करत आहे...",
+    "status": "स्थिती",
+    "results": "निकाल",
+    "recommendations": "शिफारसी",
+    "explanations": "क्लिनिकल स्पष्टीकरण"
+  },
+  "results": {
+    "normal": "सामान्य",
+    "cataract": "मोतीबिंदू",
+    "glaucoma": "काचबिंदू",
+    "dr": "डायबेटिक रेटिनोपॅथी",
+    "amd": "एएमडी",
+    "refer": "नेत्ररोग तज्ञाकडे पाठवा",
+    "good": "चांगले",
+    "bad": "वाईट"
+  }
+}

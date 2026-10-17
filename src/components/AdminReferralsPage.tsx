@@ -16,7 +16,7 @@ export const AdminReferralsPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 max-w-6xl pb-12">
+    <div className="space-y-6 max-w-7xl pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -28,13 +28,13 @@ export const AdminReferralsPage: React.FC = () => {
             {t.referralsMasterAuditDesc}
           </p>
         </div>
-        <span className="text-xs font-semibold px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200">
+        <span className="text-xs font-bold px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200 shadow-2xs">
           {t.totalRecords}: {referrals.length}
         </span>
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+      <div className="bg-white p-4.5 rounded-2xl border border-slate-200/90 shadow-2xs">
         <div className="relative max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -42,21 +42,21 @@ export const AdminReferralsPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.searchPlaceholder}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#0284C7] focus:bg-white"
           />
         </div>
       </div>
 
       {/* Referrals Table */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-xs">
             {t.noRecordsFound}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-3.5">{t.referrals} ID</th>
                   <th className="px-6 py-3.5">{t.fullName}</th>
@@ -76,42 +76,42 @@ export const AdminReferralsPage: React.FC = () => {
 
                   return (
                     <tr key={r.id} className="hover:bg-slate-50/80">
-                      <td className="px-6 py-3.5 font-bold text-slate-900 text-xs">{r.id}</td>
+                      <td className="px-6 py-3.5 font-mono font-bold text-slate-900 text-xs">{r.id}</td>
                       <td className="px-6 py-3.5">
                         <button
                           type="button"
                           onClick={() => openPatientProfile(r.patientId)}
-                          className="text-xs font-bold text-blue-600 hover:underline block text-left"
+                          className="text-xs font-bold text-[#0284C7] hover:underline block text-left cursor-pointer"
                         >
                           {r.patientName}
                         </button>
-                        <span className="text-[11px] text-slate-400">{r.patientId}</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{r.patientId}</span>
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-slate-600">{r.nurseName || 'Sister Priyanka'}</td>
+                      <td className="px-6 py-3.5 text-xs text-slate-600 font-medium">{r.nurseName || 'Sister Priyanka'}</td>
                       <td className="px-6 py-3.5 text-xs text-slate-500">{r.date}</td>
-                      <td className="px-6 py-3.5 text-xs text-slate-700 max-w-xs truncate">{r.reason}</td>
+                      <td className="px-6 py-3.5 text-xs text-slate-700 max-w-xs truncate font-medium">{r.reason}</td>
                       <td className="px-6 py-3.5">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                             r.priority === 'High'
-                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
                               : 'bg-amber-50 text-amber-700 border border-amber-200'
                           }`}
                         >
                           {r.priority === 'High' ? t.high : r.priority === 'Medium' ? t.medium : t.low}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 text-xs text-slate-900 font-medium">
-                        {r.specialistName || 'Dr. Mehta (Consultant)'}
+                      <td className="px-6 py-3.5 text-xs text-slate-900 font-semibold">
+                        {r.specialistName || 'Dr. Aviraj Murkute (Consultant)'}
                       </td>
                       <td className="px-6 py-3.5 text-xs">
-                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
                           {r.status}
                         </span>
                       </td>
                       <td className="px-6 py-3.5 text-xs">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${
+                          className={`inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
                             isReviewed
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -131,3 +131,4 @@ export const AdminReferralsPage: React.FC = () => {
     </div>
   );
 };
+

@@ -4,14 +4,9 @@ import {
   Plus,
   Shield,
   Stethoscope,
-  Users,
   Search,
   CheckCircle2,
   XCircle,
-  Lock,
-  Mail,
-  Phone,
-  User,
   AlertCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -47,8 +42,8 @@ export const AdminUsersPage: React.FC = () => {
 
   if (currentRole !== 'admin') {
     return (
-      <div className="p-8 text-center bg-white rounded-xl border border-slate-200">
-        <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
+        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
         <p className="text-sm font-bold text-slate-800">Access Denied</p>
         <p className="text-xs text-slate-500 mt-1">Only system administrators can access User Management.</p>
       </div>
@@ -91,7 +86,7 @@ export const AdminUsersPage: React.FC = () => {
       return;
     }
 
-    let title = 'Primary Healthcare Worker';
+    let title = 'Ophthalmologist';
     if (role === 'admin') title = 'Hospital System Administrator';
     if (role === 'specialist') title = 'Consultant Ophthalmologist';
 
@@ -100,7 +95,7 @@ export const AdminUsersPage: React.FC = () => {
       const result = await addUser({
         name: fullName.trim(),
         email: trimmedEmail,
-        phone: phone.trim() || '+91 98200 00000',
+        phone: phone.trim(),
         role: role,
         title: title,
         password: userPassword,
@@ -168,14 +163,14 @@ export const AdminUsersPage: React.FC = () => {
     switch (r) {
       case 'admin':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
             <Shield className="w-3 h-3 text-purple-600" />
             <span>{t.roleAdmin}</span>
           </span>
         );
       case 'specialist':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
             <Stethoscope className="w-3 h-3 text-indigo-600" />
             <span>{t.roleSpecialist}</span>
           </span>
@@ -183,8 +178,8 @@ export const AdminUsersPage: React.FC = () => {
       case 'nurse':
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-            <UserCheck className="w-3 h-3 text-blue-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
+            <UserCheck className="w-3 h-3 text-[#0284C7]" />
             <span>{t.roleNurse}</span>
           </span>
         );
@@ -192,7 +187,7 @@ export const AdminUsersPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl pb-12">
+    <div className="space-y-6 max-w-7xl pb-12">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -208,7 +203,7 @@ export const AdminUsersPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E60D5] hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+          className="inline-flex items-center gap-2 px-4.5 py-2.5 bg-[#0284C7] hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>{t.addNewUser}</span>
@@ -218,15 +213,15 @@ export const AdminUsersPage: React.FC = () => {
       {/* Page Alert Banner */}
       {pageAlert && (
         <div
-          className={`p-4 rounded-xl border flex items-center justify-between text-xs font-semibold animate-in fade-in duration-150 ${
+          className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-bold animate-in fade-in duration-150 ${
             pageAlert.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-700'
+              ? 'bg-rose-50 border-rose-200 text-rose-800'
               : 'bg-emerald-50 border-emerald-200 text-emerald-800'
           }`}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {pageAlert.type === 'error' ? (
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             ) : (
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             )}
@@ -243,7 +238,7 @@ export const AdminUsersPage: React.FC = () => {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white p-4.5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -251,7 +246,7 @@ export const AdminUsersPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.searchPlaceholder}
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-hidden focus:border-[#0284C7] focus:bg-white"
           />
         </div>
 
@@ -262,9 +257,9 @@ export const AdminUsersPage: React.FC = () => {
               key={r}
               type="button"
               onClick={() => setRoleFilter(r)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold capitalize transition-colors cursor-pointer ${
                 roleFilter === r
-                  ? 'bg-slate-900 text-white'
+                  ? 'bg-slate-900 text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -275,10 +270,10 @@ export const AdminUsersPage: React.FC = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3.5">{t.name}</th>
                 <th className="px-6 py-3.5">{t.userIdEmail}</th>
@@ -293,13 +288,13 @@ export const AdminUsersPage: React.FC = () => {
               {filteredUsers.map((u) => (
                 <tr key={u.id} className="hover:bg-slate-50/80">
                   <td className="px-6 py-3.5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8.5 h-8.5 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
                         {u.avatarLetter || u.name.charAt(0)}
                       </div>
                       <div>
                         <span className="font-bold text-slate-900 block">{u.name}</span>
-                        <span className="text-[11px] text-slate-400">{u.title}</span>
+                        <span className="text-[11px] text-slate-400 font-medium">{u.title}</span>
                       </div>
                     </div>
                   </td>
@@ -308,16 +303,16 @@ export const AdminUsersPage: React.FC = () => {
                   <td className="px-6 py-3.5 text-xs text-slate-500">{u.phone || '—'}</td>
                   <td className="px-6 py-3.5">
                     <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         u.status === 'Active'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}
                     >
                       {u.status === 'Active' ? (
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                       ) : (
-                        <XCircle className="w-3 h-3 text-red-600" />
+                        <XCircle className="w-3 h-3 text-rose-600" />
                       )}
                       <span>{u.status === 'Active' ? t.active : t.inactive}</span>
                     </span>
@@ -327,7 +322,7 @@ export const AdminUsersPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleUserStatus(u.id)}
-                      className={`text-xs font-semibold px-2.5 py-1 rounded transition-colors ${
+                      className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                         u.status === 'Active'
                           ? 'text-amber-600 hover:bg-amber-50'
                           : 'text-emerald-700 hover:bg-emerald-50'
@@ -355,7 +350,7 @@ export const AdminUsersPage: React.FC = () => {
                         setDeleteError(null);
                         setUserToDelete(u);
                       }}
-                      className="text-xs font-semibold px-2.5 py-1 rounded text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                       title={t.deleteUser}
                     >
                       {t.deleteUser}
@@ -372,35 +367,35 @@ export const AdminUsersPage: React.FC = () => {
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <UserCheck className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <UserCheck className="w-5 h-5 text-[#0284C7]" />
                 <h3 className="text-base font-bold text-slate-900">{t.addNewUser}</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 text-sm"
+                className="text-slate-400 hover:text-slate-700 text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">
                 {error}
               </div>
             )}
 
             {successMessage && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-semibold">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-bold">
                 ✓ {successMessage}
               </div>
             )}
 
             <form onSubmit={handleCreateUser} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   {t.fullName}
                 </label>
                 <input
@@ -409,12 +404,12 @@ export const AdminUsersPage: React.FC = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Sister Ananya Roy"
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0284C7] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   {t.userIdEmail}
                 </label>
                 <input
@@ -423,12 +418,12 @@ export const AdminUsersPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. ananya@retinax.demo"
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0284C7] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   {t.phone}
                 </label>
                 <input
@@ -436,12 +431,12 @@ export const AdminUsersPage: React.FC = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98200 44004"
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0284C7] focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   {t.role}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -456,9 +451,9 @@ export const AdminUsersPage: React.FC = () => {
                       key={item.r}
                       type="button"
                       onClick={() => setRole(item.r)}
-                      className={`p-2.5 rounded-lg border text-xs font-bold transition-all ${
+                      className={`p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                         role === item.r
-                          ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600'
+                          ? 'border-[#0284C7] bg-sky-50 text-[#0284C7] ring-1 ring-[#0284C7]'
                           : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                       }`}
                     >
@@ -469,7 +464,7 @@ export const AdminUsersPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Password
                 </label>
                 <input
@@ -477,7 +472,7 @@ export const AdminUsersPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Leave blank for default: 'password'"
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0284C7] focus:bg-white"
                 />
               </div>
 
@@ -485,14 +480,14 @@ export const AdminUsersPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-xs transition-colors"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#0284C7] hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
                   {isSubmitting ? 'Creating...' : t.savePatient}
                 </button>
@@ -506,10 +501,10 @@ export const AdminUsersPage: React.FC = () => {
       {userToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold">
-                  <AlertCircle className="w-4 h-4" />
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8.5 h-8.5 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
+                  <AlertCircle className="w-4.5 h-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">{t.deleteUser}?</h3>
@@ -523,24 +518,24 @@ export const AdminUsersPage: React.FC = () => {
                   setUserToDelete(null);
                   setDeleteError(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              This will permanently delete this user and their associated RETINA-X data. This action cannot be undone.
+              This will permanently delete this user and their associated TRINAY records. This action cannot be undone.
             </p>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-              <div className="text-xs font-bold text-slate-800">{userToDelete.name}</div>
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-slate-900">{userToDelete.name}</div>
               <div className="text-xs text-slate-500">{userToDelete.email}</div>
-              <div className="text-xs text-slate-400 capitalize">{t.role}: {userToDelete.role}</div>
+              <div className="text-xs text-slate-400 font-medium capitalize">{t.role}: {userToDelete.role}</div>
             </div>
 
             {deleteError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-start gap-2">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600 font-semibold flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{deleteError}</span>
               </div>
@@ -555,7 +550,7 @@ export const AdminUsersPage: React.FC = () => {
                   setUserToDelete(null);
                   setDeleteError(null);
                 }}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {t.cancel}
               </button>
@@ -564,7 +559,7 @@ export const AdminUsersPage: React.FC = () => {
                 id="confirm-delete-user-btn"
                 disabled={isDeleting}
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
               >
                 {isDeleting ? (
                   <span>Deleting...</span>
@@ -579,3 +574,4 @@ export const AdminUsersPage: React.FC = () => {
     </div>
   );
 };
+

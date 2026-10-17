@@ -11,20 +11,30 @@ import { DashboardAdmin } from './components/DashboardAdmin';
 import { PatientsPage } from './components/PatientsPage';
 import { PatientProfilePage } from './components/PatientProfilePage';
 import { NewScreeningFlow } from './components/NewScreeningFlow';
+import { NewScreeningEntry } from './components/NewScreeningEntry';
 import { ScreeningHistoryPage } from './components/ScreeningHistoryPage';
 import { AdminScreeningsPage } from './components/AdminScreeningsPage';
 import { ReferralsPage } from './components/ReferralsPage';
 import { SpecialistReviewPage } from './components/SpecialistReviewPage';
+import { ReportsPage } from './components/ReportsPage';
 import { AdminReportsPage } from './components/AdminReportsPage';
 import { DetailedReportPage } from './components/DetailedReportPage';
 import { AdminUsersPage } from './components/AdminUsersPage';
+import { AnalyticsPage } from './components/AnalyticsPage';
 import { SettingsPage } from './components/SettingsPage';
+import { CataractScreeningFlow } from './components/CataractScreeningFlow';
+import { CataractHistoryPage } from './components/CataractHistoryPage';
+import { CataractReportPage } from './components/CataractReportPage';
+import { CataractReportModal } from './components/CataractReportModal';
+import { GlaucomaScreeningFlow } from './components/GlaucomaScreeningFlow';
+import { GlaucomaHistoryPage } from './components/GlaucomaHistoryPage';
+import { GlaucomaReportPage } from './components/GlaucomaReportPage';
+import { GlaucomaReportModal } from './components/GlaucomaReportModal';
 import { AddPatientModal } from './components/AddPatientModal';
 import { AiExplanationModal } from './components/AiExplanationModal';
 import { ScreeningReportModal } from './components/ScreeningReportModal';
 import { ReferralModal } from './components/ReferralModal';
 import { LanguageModal } from './components/LanguageModal';
-import { AiChatbotDrawer } from './components/AiChatbotDrawer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const AppContent: React.FC = () => {
@@ -79,13 +89,45 @@ const AppContent: React.FC = () => {
         return <PatientsPage />;
 
       case 'patient-detail':
-        return <PatientProfilePage />;
+        return (
+          <>
+            <PatientsPage />
+            <PatientProfilePage />
+          </>
+        );
 
       case 'new-screening':
+        return <NewScreeningEntry />;
+
+      case 'dr-screening':
         return <NewScreeningFlow />;
 
       case 'screening-history':
         return <ScreeningHistoryPage />;
+
+      case 'cataract-screening':
+        return <CataractScreeningFlow />;
+
+      case 'cataract-history':
+        return <CataractHistoryPage />;
+
+      case 'cataract-report-detail':
+        return <CataractReportPage />;
+
+      case 'glaucoma-screening':
+        return <GlaucomaScreeningFlow />;
+
+      case 'glaucoma-history':
+        return <GlaucomaHistoryPage />;
+
+      case 'glaucoma-report-detail':
+        return <GlaucomaReportPage />;
+
+      case 'analytics':
+        return <AnalyticsPage />;
+
+      case 'reports-card':
+        return <ReportsPage />;
 
       case 'screenings':
         return <AdminScreeningsPage />;
@@ -97,7 +139,7 @@ const AppContent: React.FC = () => {
         return <SpecialistReviewPage />;
 
       case 'reports':
-        return <AdminReportsPage />;
+        return <ReportsPage />;
 
       case 'report-detail':
         return <DetailedReportPage />;
@@ -116,23 +158,24 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex font-sans antialiased selection:bg-blue-600 selection:text-white">
-      {/* Fixed Left Sidebar (240px width, deep navy #0D1829, blue active box #1E60D5) */}
-      <Sidebar
-        isOpenOnMobile={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
-      />
+    <div className="min-h-screen bg-[#F0F4F8] text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
+      {/* Top Navigation Bar - Full Width across top */}
+      <TopBar onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)} />
 
-      {/* Main App Container (offset on desktop by sidebar width: md:pl-[240px]) */}
-      <div className="flex-1 flex flex-col min-w-0 md:pl-[240px]">
-        {/* Top Navigation Bar */}
-        <TopBar onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)} />
+      {/* Main Body: Real Dashboard Layout with Left-Docked Sidebar and Main Content */}
+      <div className="flex-1 flex min-w-0 w-full">
+        <Sidebar
+          isOpenOnMobile={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        />
 
         {/* Dynamic Page Views */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-150">
-          <ErrorBoundary>
-            {renderMainContent()}
-          </ErrorBoundary>
+        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-7 overflow-y-auto animate-in fade-in duration-150">
+          <div className="max-w-[1600px] w-full mx-auto">
+            <ErrorBoundary>
+              {renderMainContent()}
+            </ErrorBoundary>
+          </div>
         </main>
       </div>
 
@@ -152,13 +195,15 @@ const AppContent: React.FC = () => {
         onClose={() => setIsReportModalOpen(false)}
       />
 
+      <CataractReportModal />
+      <GlaucomaReportModal />
+
       <ReferralModal
         isOpen={isReferralModalOpen}
         onClose={() => setIsReferralModalOpen(false)}
       />
 
       <LanguageModal />
-      <AiChatbotDrawer />
     </div>
   );
 };

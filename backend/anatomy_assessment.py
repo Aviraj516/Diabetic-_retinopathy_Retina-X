@@ -274,7 +274,11 @@ def calculate_macula_features(
         ),
         "roi_std_intensity": float(
             np.std(gray)
-        )
+        ),
+        "macula_is_segmented": False,
+        "macula_is_estimated": True,
+        "macula_method": "fovea_centered_roi_estimation",
+        "radius_pixels": int(radius)
     }
 
 

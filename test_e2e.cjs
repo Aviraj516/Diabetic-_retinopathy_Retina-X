@@ -14,10 +14,11 @@ const path = require('path');
   console.log('1. Loading login page...');
   await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
 
-  // 2. Click Quick Fill 'Nurse'
+  // 2. Log in as Nurse
   console.log('2. Logging in as Nurse...');
-  await page.waitForSelector('#btn-quick-nurse', { timeout: 10000 });
-  await page.click('#btn-quick-nurse');
+  await page.waitForSelector('#login-identifier', { timeout: 10000 });
+  await page.type('#login-identifier', 'avi@gmail.com');
+  await page.type('#login-password', 'password');
   await new Promise(r => setTimeout(r, 400));
 
   // Click Log In

@@ -9,6 +9,7 @@ import { adminUserRouter } from './server/api/adminUsers';
 import { patientRouter } from './server/api/patientService';
 import { authRouter } from './server/api/authService';
 import { mlRouter } from './server/api/mlService';
+import { screeningRouter } from './server/api/screeningService';
 
 dotenv.config();
 
@@ -36,7 +37,9 @@ async function ensureMLServerRunning() {
 
   const venvPython = path.join(process.cwd(), '.venv', 'bin', 'python');
   const pythonCmd = fs.existsSync(venvPython) ? venvPython : 'python3';
-  const scriptPath = path.join(process.cwd(), 'ml_server.py');
+  const scriptPath = fs.existsSync(path.join(process.cwd(), 'app.py'))
+    ? path.join(process.cwd(), 'app.py')
+    : path.join(process.cwd(), 'ml_server.py');
 
   console.log(`[RETINA-X ML Server] Starting Python ML server (${pythonCmd} ${scriptPath})...`);
   mlProcess = spawn(pythonCmd, [scriptPath], {
@@ -75,7 +78,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
   // API routes FIRST
   app.get('/api/health', (_req, res) => {
@@ -93,6 +97,9 @@ async function startServer() {
 
   // ML inference proxy (forwards image uploads to Python ML server on port 5001)
   app.use('/api/ml', mlRouter);
+
+  // Screening sessions, results, artifacts and signed URLs router
+  app.use('/api/screenings', screeningRouter);
 
   // Vite middleware for development vs static serving for production
   if (process.env.NODE_ENV !== 'production') {

@@ -119,7 +119,7 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ isOpen, onClose })
               value={specialistNotes}
               onChange={(e) => setSpecialistNotes(e.target.value)}
               placeholder="Add specific clinical notes or urgent referral context..."
-              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-hidden focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15 transition-all"
             />
           </div>
 
@@ -132,13 +132,13 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ isOpen, onClose })
             </div>
           )}
 
-          {/* Action Buttons matching reference image #13 */}
+          {/* Action Buttons */}
           <div className="space-y-2 pt-2">
             <button
               type="button"
               disabled={isSuccess}
               onClick={handleShareWithSpecialist}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#1E60D5] hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg shadow-xs transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#0284C7] hover:bg-sky-600 active:bg-sky-700 text-white font-semibold rounded-xl shadow-xs shadow-sky-500/15 transition-colors cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span>{t.shareWithSpecialist}</span>
@@ -146,7 +146,7 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ isOpen, onClose })
             <button
               type="button"
               onClick={handleShareWithSpecialist}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-lg border border-slate-200 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 shadow-2xs transition-colors cursor-pointer"
             >
               <FileCheck className="w-4 h-4 text-slate-500" />
               <span>{t.generateReferralReport}</span>

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { XaiTab } from '../data/retinaImages';
+export type { XaiTab };
 
 interface FundusRetinaCanvasProps {
   mode?: XaiTab;
@@ -14,6 +15,9 @@ interface FundusRetinaCanvasProps {
   imageLesions?: string;    // lesion overlay
   imageAnatomy?: string;    // anatomy overlay
   imageCombined?: string;   // combined anatomy+lesion overlay
+  imageDebugAnatomy?: string; // 4-panel diagnostic anatomy visualization (OD, Fovea, Macula, Combined)
+  highlightLesion?: 'MA' | 'HE' | 'EX' | 'SE' | null;
+  onInspectFullscreen?: () => void;
 }
 
 const b64Url = (b64: string) =>
@@ -32,37 +36,58 @@ export const FundusRetinaCanvas: React.FC<FundusRetinaCanvasProps> = ({
   imageLesions,
   imageAnatomy,
   imageCombined,
+  imageDebugAnatomy,
+  highlightLesion,
+  onInspectFullscreen,
 }) => {
+  const [hasImgError, setHasImgError] = useState(false);
+  const [showDiagnosticGrid, setShowDiagnosticGrid] = useState(false);
   const effectiveOpacity = heatmapOpacity ?? opacityProp ?? 70;
+
   // Resolve which image to show for the selected mode
   const resolveImage = (): string | null => {
     switch (mode) {
-      case 'Original':    return imageOriginal  ? b64Url(imageOriginal)  : null;
-      case 'Grad-CAM++':  return imageGradCam   ? b64Url(imageGradCam)   : (imageOriginal ? b64Url(imageOriginal) : null);
-      case 'Lesions':     return imageLesions   ? b64Url(imageLesions)   : (imageOriginal ? b64Url(imageOriginal) : null);
-      case 'Anatomy':     return imageAnatomy   ? b64Url(imageAnatomy)   : (imageOriginal ? b64Url(imageOriginal) : null);
-      case 'Combined':    return imageCombined  ? b64Url(imageCombined)  : (imageOriginal ? b64Url(imageOriginal) : null);
-      default:            return imageOriginal  ? b64Url(imageOriginal)  : null;
+      case 'Original':
+        return imageOriginal ? b64Url(imageOriginal) : null;
+      case 'Grad-CAM++':
+        return imageGradCam ? b64Url(imageGradCam) : (imageOriginal ? b64Url(imageOriginal) : null);
+      case 'Lesions':
+        return imageLesions ? b64Url(imageLesions) : (imageOriginal ? b64Url(imageOriginal) : null);
+      case 'Anatomy':
+        if (showDiagnosticGrid && imageDebugAnatomy) {
+          return b64Url(imageDebugAnatomy);
+        }
+        return imageAnatomy ? b64Url(imageAnatomy) : (imageOriginal ? b64Url(imageOriginal) : null);
+      case 'Combined':
+        return imageCombined ? b64Url(imageCombined) : (imageOriginal ? b64Url(imageOriginal) : null);
+      default:
+        return imageOriginal ? b64Url(imageOriginal) : null;
     }
   };
 
   const imgSrc = resolveImage();
 
-  // If we have real ML images, show them directly
-  if (imgSrc) {
+  useEffect(() => {
+    setHasImgError(false);
+  }, [imgSrc, mode, showDiagnosticGrid]);
+
+  // If we have real ML images and no load error, show them directly
+  if (imgSrc && !hasImgError) {
     const isHeatmapMode = mode === 'Grad-CAM++';
     const opacity = isHeatmapMode ? effectiveOpacity / 100 : 1.0;
     const needsBaseUnderlay = isHeatmapMode && !!imageOriginal && !!imageGradCam;
 
     return (
-      <div className={`relative w-full overflow-hidden rounded-xl bg-black select-none ${className}`}>
-        {/* Base original image shown under XAI heatmap so slider cross-fades smoothly */}
+      <div className={`relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl bg-black select-none ${className}`}>
+        {/* Base original image shown under XAI heatmap so slider cross-fades smoothly with identical geometry */}
         {needsBaseUnderlay && (
           <img
             src={b64Url(imageOriginal!)}
             alt="Fundus base"
-            className="w-full h-full object-contain block"
+            className="w-full h-full block max-w-full max-h-full"
+            style={{ objectFit: 'contain' }}
             draggable={false}
+            onError={() => setHasImgError(true)}
           />
         )}
 
@@ -70,51 +95,85 @@ export const FundusRetinaCanvas: React.FC<FundusRetinaCanvasProps> = ({
         <img
           src={imgSrc}
           alt={`Fundus ${mode}`}
-          className="w-full h-full object-contain block"
+          className="w-full h-full block max-w-full max-h-full"
           style={{
+            objectFit: 'contain',
             position: needsBaseUnderlay ? 'absolute' : 'relative',
             inset: needsBaseUnderlay ? 0 : undefined,
             opacity: needsBaseUnderlay ? opacity : 1,
           }}
           draggable={false}
+          onError={() => setHasImgError(true)}
         />
 
         {showAlignmentGuides && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <svg viewBox="0 0 500 500" className="w-full h-full absolute inset-0" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="250" cy="250" r="215" fill="none" stroke="#38BDF8" strokeWidth="2" strokeDasharray="8 6" opacity="0.9" />
-              <line x1="250" y1="220" x2="250" y2="240" stroke="#38BDF8" strokeWidth="2" />
-              <line x1="250" y1="260" x2="250" y2="280" stroke="#38BDF8" strokeWidth="2" />
-              <line x1="220" y1="250" x2="240" y2="250" stroke="#38BDF8" strokeWidth="2" />
-              <line x1="260" y1="250" x2="280" y2="250" stroke="#38BDF8" strokeWidth="2" />
-              <circle cx="250" cy="250" r="14" fill="none" stroke="#38BDF8" strokeWidth="1.5" />
-              <path d="M 120 140 L 100 140 L 100 160" fill="none" stroke="#38BDF8" strokeWidth="3" />
-              <path d="M 380 140 L 400 140 L 400 160" fill="none" stroke="#38BDF8" strokeWidth="3" />
-              <path d="M 100 340 L 100 360 L 120 360" fill="none" stroke="#38BDF8" strokeWidth="3" />
-              <path d="M 400 340 L 400 360 L 380 360" fill="none" stroke="#38BDF8" strokeWidth="3" />
+              <circle cx="250" cy="250" r="215" fill="none" stroke="#0284C7" strokeWidth="2" strokeDasharray="8 6" opacity="0.8" />
+              <line x1="250" y1="220" x2="250" y2="240" stroke="#0284C7" strokeWidth="2" />
+              <line x1="250" y1="260" x2="250" y2="280" stroke="#0284C7" strokeWidth="2" />
+              <line x1="220" y1="250" x2="240" y2="250" stroke="#0284C7" strokeWidth="2" />
+              <line x1="260" y1="250" x2="280" y2="250" stroke="#0284C7" strokeWidth="2" />
+              <circle cx="250" cy="250" r="14" fill="none" stroke="#0284C7" strokeWidth="1.5" />
+              <path d="M 120 140 L 100 140 L 100 160" fill="none" stroke="#0284C7" strokeWidth="3" />
+              <path d="M 380 140 L 400 140 L 400 160" fill="none" stroke="#0284C7" strokeWidth="3" />
+              <path d="M 100 340 L 100 360 L 120 360" fill="none" stroke="#0284C7" strokeWidth="3" />
+              <path d="M 400 340 L 400 360 L 380 360" fill="none" stroke="#0284C7" strokeWidth="3" />
             </svg>
           </div>
         )}
 
-        {/* Mode badge */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 pointer-events-none">
+        {/* Mode badge & highlight indicator */}
+        <div className="absolute top-3 right-3 flex items-center gap-2 pointer-events-none">
+          {mode === 'Anatomy' && imageDebugAnatomy && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDiagnosticGrid(!showDiagnosticGrid);
+              }}
+              className="px-2.5 py-1 text-[11px] font-semibold rounded-md bg-slate-900/90 text-sky-300 hover:text-white border border-sky-500/50 backdrop-blur-xs transition-colors cursor-pointer pointer-events-auto shadow-xs"
+            >
+              {showDiagnosticGrid ? 'Unified Anatomy' : '4-Panel Diagnostic'}
+            </button>
+          )}
+          {onInspectFullscreen && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onInspectFullscreen();
+              }}
+              className="p-1.5 rounded-md bg-slate-900/80 text-slate-300 hover:text-white border border-slate-600/50 backdrop-blur-xs transition-colors cursor-pointer pointer-events-auto shadow-xs"
+              title="Fullscreen Inspection"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
+            </button>
+          )}
+          {highlightLesion && (
+            <span className="px-2.5 py-1 text-[11px] font-bold rounded-md bg-amber-500 text-white shadow-xs animate-pulse border border-amber-300">
+              Focus: {highlightLesion}
+            </span>
+          )}
           {mode === 'Grad-CAM++' && (
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-blue-600/90 text-white shadow-sm backdrop-blur-xs">
+            <span className="px-2.5 py-1 text-[11px] font-bold rounded-md bg-[#0284C7]/90 text-white shadow-xs backdrop-blur-xs border border-sky-400/30">
               XAI Heatmap {heatmapOpacity}%
             </span>
           )}
           {mode === 'Lesions' && (
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-red-600/90 text-white shadow-sm backdrop-blur-xs">
+            <span className="px-2.5 py-1 text-[11px] font-bold rounded-md bg-rose-600/90 text-white shadow-xs backdrop-blur-xs border border-rose-400/30">
               Lesion Overlay
             </span>
           )}
           {mode === 'Anatomy' && (
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-cyan-600/90 text-white shadow-sm backdrop-blur-xs">
-              Anatomy Overlay
+            <span className="px-2.5 py-1 text-[11px] font-bold rounded-md bg-teal-600/90 text-white shadow-xs backdrop-blur-xs border border-teal-400/30">
+              {showDiagnosticGrid ? '4-Panel Diagnostic' : 'Anatomy Overlay'}
             </span>
           )}
           {mode === 'Combined' && (
-            <span className="px-2.5 py-1 text-xs font-semibold rounded-md bg-purple-600/90 text-white shadow-sm backdrop-blur-xs">
+            <span className="px-2.5 py-1 text-[11px] font-bold rounded-md bg-indigo-600/90 text-white shadow-xs backdrop-blur-xs border border-indigo-400/30">
               Combined Overlay
             </span>
           )}
@@ -194,7 +253,7 @@ export const FundusRetinaCanvas: React.FC<FundusRetinaCanvasProps> = ({
 
         {/* Alignment guides (camera viewfinder) */}
         {showAlignmentGuides && (
-          <g stroke="#38BDF8" strokeWidth="2" opacity="0.9">
+          <g stroke="#0284C7" strokeWidth="2" opacity="0.85">
             <circle cx="250" cy="250" r="215" fill="none" strokeDasharray="8 6" />
             <line x1="250" y1="220" x2="250" y2="240" />
             <line x1="250" y1="260" x2="250" y2="280" />
@@ -209,10 +268,10 @@ export const FundusRetinaCanvas: React.FC<FundusRetinaCanvasProps> = ({
         )}
       </svg>
 
-      {/* Upload placeholder text (only in interactive viewfinder mode) */}
+      {/* Upload placeholder text */}
       {showAlignmentGuides && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-[11px] text-slate-500 font-medium">Upload an image to analyse</span>
+          <span className="text-[11px] text-slate-400 font-medium">Upload an image to analyse</span>
         </div>
       )}
     </div>

@@ -10,9 +10,12 @@ export const LANGUAGES: LanguageOption[] = [
 ];
 
 export interface TranslationStrings {
+  [key: string]: string | undefined;
   // App brand & common
   appName: string;
   appSubtitle: string;
+  opthalmologySystem?: string;
+  managePatientsDesc?: string;
   dashboard: string;
   patients: string;
   newScreening: string;
@@ -267,7 +270,6 @@ export interface TranslationStrings {
   loginTitle: string;
   loginButton: string;
   authenticating: string;
-  quickFillCredentials: string;
   twoStepVerification: string;
   enterTotpCode: string;
   signingInAs: string;
@@ -609,7 +611,6 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     loginTitle: 'Login',
     loginButton: 'Log In',
     authenticating: 'Authenticating...',
-    quickFillCredentials: 'Quick Fill Credentials',
     twoStepVerification: 'Two-Step Verification',
     enterTotpCode: 'Enter the 6-digit code from your Google Authenticator app.',
     signingInAs: 'Signing in as',
@@ -703,6 +704,21 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     users: "Users",
     activeRole: "Active Role",
     signOut: "Sign Out",
+    opthalmologySystem: "OPHTHALMOLOGY CLINICAL SYSTEM",
+    managePatientsDesc: "Manage patients, screenings, and eye-care reports from one place.",
+    selectScreeningModule: "Select Screening Module",
+    diabeticRetinopathyDR: "Diabetic Retinopathy (DR)",
+    cataractScreening: "Cataract Screening",
+    glaucomaScreening: "Glaucoma Screening",
+    registeredInDb: "Registered in clinical database",
+    todaysPatientsUpper: "TODAY'S PATIENTS",
+    registeredToday: "Registered today",
+    todaysScreeningsUpper: "TODAY'S SCREENINGS",
+    sessionsToday: "sessions today",
+    pendingReviewsUpper: "PENDING REVIEWS",
+    noPendingReviews: "No pending reviews",
+    pendingReports: "Pending Reports",
+    completedScreeningsCount: "Completed Screenings",
   },
 
   hi: {
@@ -949,7 +965,6 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     loginTitle: 'लॉग इन',
     loginButton: 'लॉग इन करें',
     authenticating: 'प्रमाणीकरण हो रहा है...',
-    quickFillCredentials: 'त्वरित क्रेडेंशियल्स भरें',
     twoStepVerification: 'दो-चरणीय सत्यापन',
     enterTotpCode: 'अपने Google Authenticator ऐप से 6-अंकों का कोड दर्ज करें।',
     signingInAs: 'लॉग इन किया जा रहा है बतौर',
@@ -1043,6 +1058,21 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     users: "उपयोगकर्ता",
     activeRole: "सक्रिय भूमिका",
     signOut: "साइन आउट",
+    opthalmologySystem: "नेत्र विज्ञान नैदानिक प्रणाली",
+    managePatientsDesc: "मरीजों, स्क्रीनिंग और आंखों की देखभाल की रिपोर्टों को एक ही स्थान से प्रबंधित करें।",
+    selectScreeningModule: "स्क्रीनिंग मॉड्यूल चुनें",
+    diabeticRetinopathyDR: "डायबिटिक रेटिनोपैथी (DR)",
+    cataractScreening: "मोतियाबिंद स्क्रीनिंग",
+    glaucomaScreening: "ग्लूकोमा स्क्रीनिंग",
+    registeredInDb: "नैदानिक डेटाबेस में पंजीकृत",
+    todaysPatientsUpper: "आज के मरीज",
+    registeredToday: "आज पंजीकृत",
+    todaysScreeningsUpper: "आज की स्क्रीनिंग",
+    sessionsToday: "आज के सत्र",
+    pendingReviewsUpper: "लंबित समीक्षाएं",
+    noPendingReviews: "कोई लंबित समीक्षा नहीं",
+    pendingReports: "लंबित रिपोर्ट",
+    completedScreeningsCount: "पूर्ण स्क्रीनिंग",
   },
 
   mr: {
@@ -1289,7 +1319,6 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     loginTitle: 'लॉग इन',
     loginButton: 'लॉग इन करा',
     authenticating: 'प्रमाणीकरण होत आहे...',
-    quickFillCredentials: 'त्वरित क्रेडेंशियल्स भरा',
     twoStepVerification: 'दोन-चरण पडताळणी',
     enterTotpCode: 'आपल्या Google Authenticator अॅपमधून 6-अंकी कोड प्रविष्ट करा.',
     signingInAs: 'लॉग इन करत आहे म्हणून',
@@ -1383,6 +1412,21 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     users: "वापरकर्ते",
     activeRole: "सक्रिय भूमिका",
     signOut: "साइन आउट",
+    opthalmologySystem: "नेत्ररोग चिकित्सा प्रणाली",
+    managePatientsDesc: "रुग्ण, स्क्रीनिंग आणि डोळ्यांच्या निगा अहवालांचे एकाच ठिकाणाहून व्यवस्थापन करा.",
+    selectScreeningModule: "स्क्रीनिंग मॉड्युल निवडा",
+    diabeticRetinopathyDR: "मधुमेही रेटिनोपॅथी (DR)",
+    cataractScreening: "मोतीबिंदू स्क्रीनिंग",
+    glaucomaScreening: "काचबिंदू स्क्रीनिंग",
+    registeredInDb: "क्लिनिकल डेटाबेसमध्ये नोंदणीकृत",
+    todaysPatientsUpper: "आजचे रुग्ण",
+    registeredToday: "आज नोंदणीकृत",
+    todaysScreeningsUpper: "आजचे स्क्रीनिंग",
+    sessionsToday: "आजची सत्रे",
+    pendingReviewsUpper: "प्रलंबित पुनरावलोकने",
+    noPendingReviews: "कोणतेही प्रलंबित पुनरावलोकन नाही",
+    pendingReports: "प्रलंबित अहवाल",
+    completedScreeningsCount: "पूर्ण झालेले स्क्रीनिंग",
   },
 
   ta: {
@@ -1629,7 +1673,6 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     loginTitle: 'உள்நுழைவு',
     loginButton: 'உள்நுழைக',
     authenticating: 'சரிபார்க்கிறது...',
-    quickFillCredentials: 'விரைவு உள்நுழைவு',
     twoStepVerification: 'இருபடி சரிபார்ப்பு',
     enterTotpCode: 'Google Authenticator பயன்பாட்டிலிருந்து 6-இலக்க குறியீட்டை உள்ளிடவும்.',
     signingInAs: 'உள்நுழைகிறீர்கள் என',
@@ -1969,7 +2012,6 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     loginTitle: 'లాగిన్',
     loginButton: 'లాగిన్ అవ్వండి',
     authenticating: 'ధృవీకరిస్తోంది...',
-    quickFillCredentials: 'త్వరిత లాగిన్ వివరాలు',
     twoStepVerification: 'రెండు-దశల ధృవీకరణ',
     enterTotpCode: 'మీ Google Authenticator యాప్ నుండి 6-అంకెల కోడ్‌ను నమోదు చేయండి.',
     signingInAs: 'లాగిన్ అవుతున్నారు ఇలా',
@@ -2309,7 +2351,6 @@ export const TRANSLATIONS: Record<LanguageCode, TranslationStrings> = {
     loginTitle: 'লগ ইন',
     loginButton: 'লগ ইন করুন',
     authenticating: 'যাচাই করা হচ্ছে...',
-    quickFillCredentials: 'দ্রুত লগইন শংসাপত্র',
     twoStepVerification: 'দ্বি-পদক্ষেপ যাচাইকরণ',
     enterTotpCode: 'আপনার Google Authenticator অ্যাপ থেকে ৬-সংখ্যার কোডটি লিখুন।',
     signingInAs: 'লগ ইন করা হচ্ছে হিসাবে',

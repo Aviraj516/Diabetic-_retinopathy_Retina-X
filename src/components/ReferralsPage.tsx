@@ -64,12 +64,12 @@ export const ReferralsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl pb-12">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{t.referrals}</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t.referrals}</h1>
+          <p className="text-xs text-slate-500 mt-1">
             {roleScopedReferrals.length} active specialist referrals
           </p>
         </div>
@@ -77,7 +77,7 @@ export const ReferralsPage: React.FC = () => {
         <button
           type="button"
           onClick={() => setActivePage('new-screening')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E60D5] hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-xs transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#0284C7] hover:bg-sky-600 active:bg-sky-700 text-white text-xs font-semibold rounded-xl shadow-xs shadow-sky-500/15 transition-all cursor-pointer"
         >
           <Send className="w-4 h-4" />
           <span>{t.startNewScreening}</span>
@@ -89,7 +89,7 @@ export const ReferralsPage: React.FC = () => {
         {/* Empty state when 0 referrals */}
         {roleScopedReferrals.length === 0 ? (
           <div className="py-20 px-6 text-center">
-            <div className="w-16 h-16 mx-auto mb-3.5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+            <div className="w-16 h-16 mx-auto mb-3.5 rounded-full bg-sky-50 flex items-center justify-center text-sky-600">
               <AlertTriangle className="w-8 h-8" />
             </div>
             <h3 className="text-base font-semibold text-slate-800">
@@ -101,7 +101,7 @@ export const ReferralsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActivePage('new-screening')}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg shadow-xs"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#0284C7] hover:bg-sky-600 rounded-xl shadow-xs cursor-pointer"
             >
               <Eye className="w-4 h-4" />
               <span>Perform Retinal Screening</span>
@@ -112,10 +112,10 @@ export const ReferralsPage: React.FC = () => {
             {roleScopedReferrals.map((item) => (
               <div
                 key={item.id}
-                className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
+                className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-sky-50/20 transition-colors"
               >
                 <div className="flex items-start gap-3.5">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50 text-red-600 shrink-0">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 shadow-2xs shrink-0">
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div>
@@ -151,7 +151,7 @@ export const ReferralsPage: React.FC = () => {
                     </div>
 
                     {item.notes && (
-                      <p className="text-xs text-slate-600 bg-slate-50 p-2 rounded-md border border-slate-200 mt-2 max-w-xl">
+                      <p className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 mt-2 max-w-xl">
                         &quot;{item.notes}&quot;
                       </p>
                     )}
@@ -163,14 +163,14 @@ export const ReferralsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleOpenReferralModal(item)}
-                    className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+                    className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 shadow-2xs transition-colors cursor-pointer"
                   >
                     {t.viewDetails}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleOpenInSpecialist(item)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg shadow-2xs transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0284C7] hover:bg-sky-600 rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     <Stethoscope className="w-3.5 h-3.5" />
                     <span>Open in Specialist Mode</span>

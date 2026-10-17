@@ -1,0 +1,53 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "patients": "Patients",
+    "screening": "Screening",
+    "medical_records": "Medical Records",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "recent_patients": "Recent Patients",
+    "screenings_today": "Screenings Today",
+    "pending_reviews": "Pending Reviews",
+    "view_all": "View All"
+  },
+  "patient": {
+    "add_patient": "Add Patient",
+    "edit_patient": "Edit Patient",
+    "delete_patient": "Delete Patient",
+    "search": "Search patients...",
+    "full_name": "Full Name",
+    "age": "Age",
+    "gender": "Gender"
+  },
+  "screening": {
+    "title": "Eye Screening",
+    "start": "Start Screening",
+    "processing": "Analyzing image...",
+    "status": "Status",
+    "results": "Results",
+    "recommendations": "Recommendations",
+    "explanations": "Clinical Explanations"
+  },
+  "results": {
+    "normal": "Normal",
+    "cataract": "Cataract",
+    "glaucoma": "Glaucoma",
+    "dr": "Diabetic Retinopathy",
+    "amd": "AMD",
+    "refer": "Refer to ophthalmologist",
+    "good": "Good",
+    "bad": "Bad"
+  }
+}

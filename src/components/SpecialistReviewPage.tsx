@@ -13,6 +13,8 @@ import {
   Eye,
   Send,
   AlertTriangle,
+  Sliders,
+  Activity,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { FundusRetinaCanvas } from './FundusRetinaCanvas';
@@ -76,7 +78,7 @@ export const SpecialistReviewPage: React.FC = () => {
       <div className="space-y-6 max-w-5xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{t.casesReviews}</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900">{t.casesReviews}</h1>
             <p className="text-xs text-slate-500 mt-0.5">
               Review screenings referred by healthcare workers and issue official clinical assessments.
             </p>
@@ -84,28 +86,28 @@ export const SpecialistReviewPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setActivePage('dashboard')}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-3.5 h-3.5" />
             <span>{t.dashboard}</span>
           </button>
         </div>
 
         {pendingCases.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200/90 p-12 text-center shadow-2xs">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-              <Stethoscope className="w-8 h-8" />
+            <div className="w-12 h-12 mx-auto mb-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400">
+              <Stethoscope className="w-6 h-6 text-sky-600" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-sm font-bold text-slate-900">
               No cases awaiting review
             </h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-6">
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-5">
               Screenings referred by Nurses will appear here for specialist review and secondary ophthalmology assessment.
             </p>
             <button
               type="button"
               onClick={() => setActivePage('dashboard')}
-              className="px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg shadow-2xs"
+              className="px-4 py-2 text-xs font-semibold text-white bg-[#0284C7] hover:bg-sky-700 rounded-lg shadow-2xs"
             >
               {t.dashboard}
             </button>
@@ -113,60 +115,60 @@ export const SpecialistReviewPage: React.FC = () => {
         ) : (
           /* Cases Awaiting Review Table */
           <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-bold text-slate-900">
+            <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 {t.pendingReviews} ({pendingCases.length})
               </h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 text-xs font-semibold border-b border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/80 text-slate-500 text-[11px] font-semibold border-b border-slate-100 uppercase tracking-wider">
                   <tr>
-                    <th className="px-6 py-3">{t.fullName}</th>
-                    <th className="px-6 py-3">{t.patientId}</th>
-                    <th className="px-6 py-3">{t.eye}</th>
-                    <th className="px-6 py-3">{t.result}</th>
-                    <th className="px-6 py-3">{t.confidence}</th>
-                    <th className="px-6 py-3">{t.date}</th>
-                    <th className="px-6 py-3">{t.priority}</th>
-                    <th className="px-6 py-3">{t.status}</th>
-                    <th className="px-6 py-3 text-right">{t.actions}</th>
+                    <th className="px-5 py-3">{t.fullName}</th>
+                    <th className="px-5 py-3">{t.patientId}</th>
+                    <th className="px-5 py-3">{t.eye}</th>
+                    <th className="px-5 py-3">{t.result}</th>
+                    <th className="px-5 py-3">{t.confidence}</th>
+                    <th className="px-5 py-3">{t.date}</th>
+                    <th className="px-5 py-3">{t.priority}</th>
+                    <th className="px-5 py-3">{t.status}</th>
+                    <th className="px-5 py-3 text-right">{t.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {pendingCases.map((c) => {
                     const ref = referrals.find((r) => r.screeningId === c.id);
                     return (
-                      <tr key={c.id} className="hover:bg-slate-50/80">
-                        <td className="px-6 py-3.5 font-bold text-slate-900">{c.patientName}</td>
-                        <td className="px-6 py-3.5 text-xs text-slate-500">{c.patientId}</td>
-                        <td className="px-6 py-3.5 text-xs font-medium">{c.eye}</td>
-                        <td className="px-6 py-3.5 text-xs font-semibold text-slate-900">
+                      <tr key={c.id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="px-5 py-3 font-semibold text-slate-900">{c.patientName}</td>
+                        <td className="px-5 py-3 text-slate-500">{c.patientId}</td>
+                        <td className="px-5 py-3 font-medium">{c.eye}</td>
+                        <td className="px-5 py-3 font-semibold text-slate-900">
                           {c.drSeverityLevel}
                         </td>
-                        <td className="px-6 py-3.5 text-xs text-blue-600 font-semibold">{c.confidence}%</td>
-                        <td className="px-6 py-3.5 text-xs text-slate-500">{c.date}</td>
-                        <td className="px-6 py-3.5">
+                        <td className="px-5 py-3 text-sky-700 font-semibold">{c.confidence}%</td>
+                        <td className="px-5 py-3 text-slate-500">{c.date}</td>
+                        <td className="px-5 py-3">
                           <span
-                            className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+                            className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                               ref?.priority === 'High'
-                                ? 'bg-red-50 text-red-700 border border-red-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
                             }`}
                           >
                             {ref?.priority || 'Medium'}
                           </span>
                         </td>
-                        <td className="px-6 py-3.5">
-                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700">
+                        <td className="px-5 py-3">
+                          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                             {t.pendingReviews}
                           </span>
                         </td>
-                        <td className="px-6 py-3.5 text-right">
+                        <td className="px-5 py-3 text-right">
                           <button
                             type="button"
                             onClick={() => setSelectedCaseId(c.id)}
-                            className="px-3 py-1.5 bg-[#1E60D5] hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs"
+                            className="px-3 py-1 bg-[#0284C7] hover:bg-sky-700 text-white text-xs font-semibold rounded-lg shadow-2xs transition-colors"
                           >
                             {t.reviewCase}
                           </button>
@@ -209,17 +211,17 @@ export const SpecialistReviewPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl pb-12">
       {/* Top Header & Back Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setSelectedCaseId(null)}
-            className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+            className="p-2 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors border border-slate-200"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Specialist Clinical Review</h1>
+            <h1 className="text-lg font-bold text-slate-900">Specialist Clinical Review</h1>
             <p className="text-xs text-slate-500">
               Case ID: {activeCase.id} • Patient: {activeCase.patientName} ({activeCase.patientId})
             </p>
@@ -231,9 +233,9 @@ export const SpecialistReviewPage: React.FC = () => {
             <button
               type="button"
               onClick={() => openReportDetail(activeCase.reportId!)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg shadow-2xs transition-colors"
             >
-              <FileText className="w-4 h-4 text-blue-600" />
+              <FileText className="w-3.5 h-3.5 text-sky-600" />
               <span>View Full Report</span>
             </button>
           )}
@@ -244,11 +246,11 @@ export const SpecialistReviewPage: React.FC = () => {
       <div className="p-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
         <div>
           <span className="text-slate-400 block font-medium">Patient</span>
-          <strong className="text-sm text-slate-900">{activeCase.patientName}</strong>
+          <strong className="text-xs text-slate-900">{activeCase.patientName}</strong>
         </div>
         <div>
           <span className="text-slate-400 block font-medium">Patient ID</span>
-          <strong className="text-sm text-slate-900">{activeCase.patientId}</strong>
+          <strong className="text-xs text-slate-900">{activeCase.patientId}</strong>
         </div>
         <div>
           <span className="text-slate-400 block font-medium">Age / Gender</span>
@@ -256,11 +258,11 @@ export const SpecialistReviewPage: React.FC = () => {
         </div>
         <div>
           <span className="text-slate-400 block font-medium">Eye Screened</span>
-          <span className="font-bold text-blue-700">{activeCase.eye}</span>
+          <span className="font-bold text-sky-700">{activeCase.eye}</span>
         </div>
         <div>
           <span className="text-slate-400 block font-medium">Referral Priority</span>
-          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
             {activeReferral?.priority || 'Medium'}
           </span>
         </div>
@@ -271,11 +273,12 @@ export const SpecialistReviewPage: React.FC = () => {
         {/* Left: Retinal Image & XAI Visualizer */}
         <div className="lg:col-span-7 bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-sky-600" />
               XAI Inspection Canvas
             </span>
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              Quality: {activeCase.imageQuality} (Suitable)
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              Quality: {activeCase.imageQuality}
             </span>
           </div>
 
@@ -287,9 +290,9 @@ export const SpecialistReviewPage: React.FC = () => {
                   key={mode}
                   type="button"
                   onClick={() => setActiveXaiTab(mode)}
-                  className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap text-xs ${
                     activeXaiTab === mode
-                      ? 'bg-white text-blue-600 font-bold shadow-2xs'
+                      ? 'bg-white text-sky-700 font-bold shadow-2xs border border-slate-200'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -305,13 +308,18 @@ export const SpecialistReviewPage: React.FC = () => {
               mode={activeXaiTab}
               opacity={heatmapOpacity}
               className="w-full h-full"
+              imageOriginal={activeCase.imageOriginal}
+              imageGradCam={activeCase.imageGradCam}
+              imageLesions={activeCase.imageLesions}
+              imageAnatomy={activeCase.imageAnatomy}
+              imageCombined={activeCase.imageCombined}
             />
           </div>
 
           {/* Opacity slider for overlays */}
           {(activeXaiTab === 'Grad-CAM++' || activeXaiTab === 'Combined') && (
             <div className="flex items-center justify-between gap-4 px-2 py-1 text-xs">
-              <span className="text-slate-500 font-medium">Overlay Heatmap Opacity:</span>
+              <span className="text-slate-500 font-medium text-[11px]">Heatmap Opacity:</span>
               <div className="flex items-center gap-2 flex-1 max-w-xs">
                 <input
                   type="range"
@@ -319,9 +327,9 @@ export const SpecialistReviewPage: React.FC = () => {
                   max={100}
                   value={heatmapOpacity}
                   onChange={(e) => setHeatmapOpacity(Number(e.target.value))}
-                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0284C7]"
                 />
-                <span className="w-8 font-mono text-[11px] text-slate-600 text-right">
+                <span className="w-8 font-mono text-[11px] text-slate-600 text-right font-semibold">
                   {heatmapOpacity}%
                 </span>
               </div>
@@ -329,64 +337,68 @@ export const SpecialistReviewPage: React.FC = () => {
           )}
 
           {/* AI Detection Findings Strip */}
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
-            <span className="font-bold text-slate-800 block">AI Detected Features:</span>
-            <div className="flex items-center gap-2 flex-wrap">
-              {activeCase.findings.map((finding) => (
-                <span
-                  key={finding}
-                  className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-medium text-[11px]"
-                >
-                  • {finding}
-                </span>
-              ))}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+            <span className="font-bold text-slate-800 text-[11px] uppercase tracking-wider block">AI Detected Features:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activeCase.findings && activeCase.findings.length > 0 ? (
+                activeCase.findings.map((finding) => (
+                  <span
+                    key={finding}
+                    className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-medium text-[11px]"
+                  >
+                    • {finding}
+                  </span>
+                ))
+              ) : (
+                <span className="text-slate-400 text-xs italic">No critical microvascular lesions detected</span>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right: SPECIALIST ASSESSMENT FORM */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs space-y-5">
+        <div className="lg:col-span-5 bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
           <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Stethoscope className="w-4 h-4 text-indigo-600" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Stethoscope className="w-4 h-4 text-sky-600" />
               <span>Specialist Clinical Assessment</span>
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Review AI hypothesis and submit official diagnostic assessment.
+              Review AI hypothesis and record your official clinical assessment.
             </p>
           </div>
 
           {isSubmitted ? (
-            <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-                <Check className="w-6 h-6" />
+            <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+                <Check className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-emerald-900">
-                ✓ Review Submitted Successfully
+              <h3 className="text-xs font-bold text-emerald-900">
+                Review Submitted Successfully
               </h3>
-              <p className="text-xs text-emerald-700">
-                The assessment has been recorded. The case status is updated to <strong>Reviewed</strong> and synchronized with the healthcare worker&apos;s clinic.
+              <p className="text-[11px] text-emerald-700">
+                The assessment has been recorded and case status updated to <strong>Reviewed</strong>.
               </p>
             </div>
           ) : (
             <form onSubmit={handleAssessmentSubmit} className="space-y-4">
               {/* AI Screening Result Reference */}
-              <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-200 text-xs flex items-center justify-between">
+              <div className="p-3 bg-sky-50/60 rounded-xl border border-sky-200 text-xs flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-blue-600 font-bold uppercase block">AI Screening Result</span>
-                  <span className="font-bold text-slate-900 text-sm">{activeCase.drSeverityLevel}</span>
+                  <span className="text-[10px] text-sky-600 font-bold uppercase block">AI Primary Hypothesis</span>
+                  <span className="font-bold text-slate-900 text-xs">{activeCase.drSeverityLevel}</span>
                 </div>
-                <span className="text-xs font-bold text-blue-700 bg-white px-2 py-1 rounded border border-blue-200">
+                <span className="text-xs font-bold text-sky-700 bg-white px-2 py-0.5 rounded-md border border-sky-200">
                   {activeCase.confidence}% Confidence
                 </span>
               </div>
 
               {/* Your Assessment Radio Selector */}
               <div>
-                <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
-                  Your Assessment
+                <label className="block text-[11px] font-bold text-slate-900 uppercase tracking-wider mb-2">
+                  Specialist Grade Assessment
                 </label>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {(
                     [
                       { val: 'No DR', label: 'No DR (No Diabetic Retinopathy)' },
@@ -398,9 +410,9 @@ export const SpecialistReviewPage: React.FC = () => {
                   ).map((option) => (
                     <label
                       key={option.val}
-                      className={`flex items-center gap-3 p-2.5 rounded-lg border text-xs cursor-pointer transition-colors ${
+                      className={`flex items-center gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-colors ${
                         assessment === option.val
-                          ? 'border-blue-500 bg-blue-50/50 font-semibold text-blue-900'
+                          ? 'border-sky-500 bg-sky-50/50 font-semibold text-sky-900'
                           : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                       }`}
                     >
@@ -410,7 +422,7 @@ export const SpecialistReviewPage: React.FC = () => {
                         value={option.val}
                         checked={assessment === option.val}
                         onChange={() => setAssessment(option.val)}
-                        className="text-blue-600 focus:ring-blue-500"
+                        className="text-[#0284C7] focus:ring-[#0284C7]"
                       />
                       <span>{option.label}</span>
                     </label>
@@ -420,7 +432,7 @@ export const SpecialistReviewPage: React.FC = () => {
 
               {/* Specialist Clinical Notes Textarea */}
               <div>
-                <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5">
+                <label className="block text-[11px] font-bold text-slate-900 uppercase tracking-wider mb-1">
                   Specialist Clinical Notes
                 </label>
                 <textarea
@@ -428,15 +440,15 @@ export const SpecialistReviewPage: React.FC = () => {
                   required
                   value={clinicalNotes}
                   onChange={(e) => setClinicalNotes(e.target.value)}
-                  placeholder="Enter detailed clinical observations, retinal examination notes, or specific guidance for the clinic..."
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+                  placeholder="Enter detailed clinical observations, retinal findings, or instructions..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#0284C7] focus:bg-white transition-colors"
                 />
               </div>
 
               {/* Recommendation Dropdown */}
               <div>
-                <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5">
-                  Recommendation
+                <label className="block text-[11px] font-bold text-slate-900 uppercase tracking-wider mb-1">
+                  Clinical Recommendation
                 </label>
                 <select
                   value={recommendation}
@@ -449,11 +461,11 @@ export const SpecialistReviewPage: React.FC = () => {
                         | 'No further action'
                     )
                   }
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:border-blue-500 focus:bg-white"
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-hidden focus:border-[#0284C7] focus:bg-white transition-colors"
                 >
                   <option value="Follow-up">Follow-up recommended (2–4 weeks)</option>
                   <option value="Specialist monitoring">Specialist monitoring &amp; dilated examination</option>
-                  <option value="Further evaluation">Further evaluation (OCT / Fluorescein Angiography)</option>
+                  <option value="Further evaluation">Further evaluation (OCT / Angiography)</option>
                   <option value="No further action">No further action (Routine annual screening)</option>
                 </select>
               </div>
@@ -462,7 +474,7 @@ export const SpecialistReviewPage: React.FC = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-2.5 px-4 bg-[#1E60D5] hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs rounded-lg shadow-xs shadow-blue-500/20 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 bg-[#0284C7] hover:bg-sky-700 active:bg-sky-800 text-white font-semibold text-xs rounded-lg shadow-2xs transition-colors flex items-center justify-center gap-2"
                 >
                   <Stethoscope className="w-4 h-4" />
                   <span>Submit Specialist Review</span>

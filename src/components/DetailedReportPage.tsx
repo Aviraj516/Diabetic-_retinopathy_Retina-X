@@ -2,55 +2,124 @@ import React, { useState } from 'react';
 import {
   ArrowLeft,
   Download,
-  Send,
+  Printer,
+  Phone,
   CheckCircle2,
   AlertTriangle,
   FileText,
   Eye,
   ShieldCheck,
   Info,
-  Phone,
-  Check,
   Loader2,
   AlertCircle,
-  XCircle,
+  Maximize2,
+  X,
+  Layers,
+  Sparkles,
+  Sliders,
+  Compass,
+  FileSignature,
+  ZoomIn,
   Activity,
+  CheckCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { FundusRetinaCanvas } from './FundusRetinaCanvas';
+import { FundusRetinaCanvas, XaiTab } from './FundusRetinaCanvas';
 import { downloadRetinaXPdf } from '../utils/generateMedicalPdf';
+import { getArtifactUrl } from '../utils/imageUtils';
+import {
+  extractLesionItems,
+  generateDrClinicalInterpretation,
+  getRecommendedAction,
+  getCategoryWhatThisMeans,
+  getModelScoreExplanation,
+  VISUALIZATION_EXPLANATIONS,
+  getModelLimitations,
+} from '../utils/drClinicalExplanations';
 
 export const DetailedReportPage: React.FC = () => {
   const {
     activeReportId,
+    activePatientId,
     reports,
+    screenings,
     patients,
     setActivePage,
     sendReportToPatientPhone,
   } = useApp();
 
-  const report = reports.find((r) => r.id === activeReportId) || reports[0];
-  const patient = patients.find((p) => p.id === report?.patientId);
+  // Single source of truth: report page resolves by active report ID or connected screening ID
+  let report = reports.find((r) => r.id === activeReportId || r.screeningId === activeReportId) || null;
+
+  // Fallback 1: match from screenings collection
+  if (!report && screenings && activeReportId) {
+    const matchedScreening = screenings.find(
+      (s) => s.id === activeReportId || s.reportId === activeReportId
+    );
+    if (matchedScreening) {
+      report = {
+        id: matchedScreening.reportId || matchedScreening.id,
+        patientId: matchedScreening.patientId,
+        screeningId: matchedScreening.id,
+        screeningType: 'dr',
+        generatedDate: matchedScreening.date || new Date().toISOString().split('T')[0],
+        patientName: matchedScreening.patientName,
+        patientPhone: matchedScreening.patientPhone || '',
+        patientAge: matchedScreening.patientAge || 50,
+        patientGender: matchedScreening.patientGender || 'Other',
+        eye: matchedScreening.eye || 'Right Eye',
+        drSeverity: (matchedScreening.drSeverity || 'Moderate') as any,
+        drSeverityLevel: matchedScreening.drSeverityLevel || matchedScreening.drSeverity || 'Moderate Non-Proliferative Diabetic Retinopathy (NPDR)',
+        confidence: matchedScreening.confidence || 96,
+        findings: matchedScreening.findings || ['Microaneurysms', 'Hard Exudates'],
+        imageQuality: matchedScreening.imageQuality || 'Good',
+        imageFileName: matchedScreening.imageFileName || 'fundus.jpg',
+        imageFileSize: matchedScreening.imageFileSize || '',
+        imageUrl: matchedScreening.imageUrl,
+        imageOriginal: matchedScreening.imageOriginal,
+        imageGradCam: matchedScreening.imageGradCam,
+        imageLesions: matchedScreening.imageLesions,
+        imageAnatomy: matchedScreening.imageAnatomy,
+        imageCombined: matchedScreening.imageCombined,
+        nurseName: matchedScreening.nurseName || 'Clinic Staff',
+        referralStatus: matchedScreening.status === 'Referred' ? 'Specialist Referral Initiated' : 'Routine Screening',
+        status: 'Generated',
+      };
+    }
+  }
+
+  // Fallback 2: match by activePatientId
+  if (!report && activePatientId && reports) {
+    report = reports.find((r) => r.patientId === activePatientId) || null;
+  }
+
+  const patient = report ? patients.find((p) => p.id === report.patientId || p.dbId === report.patientId) : undefined;
 
   const [isSendingModalOpen, setIsSendingModalOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendSuccess, setSendSuccess] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Visual evidence state
+  const [activeXaiTab, setActiveXaiTab] = useState<XaiTab>('Combined');
+  const [highlightedLesion, setHighlightedLesion] = useState<string | null>(null);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [heatmapOpacity, setHeatmapOpacity] = useState(65);
+
   if (!report) {
     return (
-      <div className="p-8 text-center bg-white rounded-xl border border-slate-200">
-        <div className="flex items-center justify-center w-16 h-16 mx-auto mb-3.5 rounded-full bg-slate-100 text-slate-400">
-          <FileText className="w-8 h-8" />
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 max-w-lg mx-auto my-12 shadow-sm">
+        <div className="flex items-center justify-center w-14 h-14 mx-auto mb-3.5 rounded-full bg-slate-100 text-slate-400">
+          <FileText className="w-7 h-7" />
         </div>
-        <h3 className="text-base font-semibold text-slate-800">No Report Available</h3>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-6">
-          No report has been generated yet. Complete a screening analysis first to view a report here.
+        <h3 className="text-base font-bold text-slate-900">Report Not Found</h3>
+        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5 leading-relaxed">
+          The requested screening report ({activeReportId || 'unknown ID'}) could not be located in the current screening registry.
         </p>
         <button
           type="button"
           onClick={() => setActivePage('dashboard')}
-          className="mt-3 px-4 py-2 bg-[#1E60D5] text-white text-xs font-semibold rounded-lg"
+          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
         >
           Return to Dashboard
         </button>
@@ -58,8 +127,16 @@ export const DetailedReportPage: React.FC = () => {
     );
   }
 
+  const screeningId = report.screeningId || report.id;
+  const originalImg = report.imageOriginal || (screeningId ? getArtifactUrl(screeningId, 'original') : undefined);
+  const gradCamImg = report.imageGradCam || (screeningId ? getArtifactUrl(screeningId, 'gradcam') : undefined);
+  const lesionsImg = report.imageLesions || (screeningId ? getArtifactUrl(screeningId, 'lesions') : undefined);
+  const anatomyImg = report.imageAnatomy || (screeningId ? getArtifactUrl(screeningId, 'anatomy') : undefined);
+  const combinedImg = report.imageCombined || (screeningId ? getArtifactUrl(screeningId, 'combined') : undefined);
+  const debugAnatomyImg = report.imageDebugAnatomy || (screeningId ? getArtifactUrl(screeningId, 'debug_anatomy') : undefined);
+
   const patientPhoneNumber = report.patientPhone || patient?.phoneNumber || '';
-  const hasVisualizations = !!(report.imageOriginal || report.imageLesions || report.imageAnatomy);
+  const hasVisualizations = !!(originalImg || lesionsImg || anatomyImg || combinedImg || gradCamImg);
 
   const handleDownloadPdf = async () => {
     try {
@@ -72,6 +149,10 @@ export const DetailedReportPage: React.FC = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleSimulateSend = () => {
     setIsSending(true);
     setTimeout(() => {
@@ -81,8 +162,13 @@ export const DetailedReportPage: React.FC = () => {
       setTimeout(() => {
         setIsSendingModalOpen(false);
         setSendSuccess(false);
-      }, 2600);
-    }, 1200);
+      }, 2400);
+    }, 1000);
+  };
+
+  const openFullscreen = (tab: XaiTab) => {
+    setActiveXaiTab(tab);
+    setIsFullscreenOpen(true);
   };
 
   // Safe formatters
@@ -99,745 +185,1170 @@ export const DetailedReportPage: React.FC = () => {
     return undefined;
   };
 
-  const formatCenter = (center: unknown): string | undefined => {
-    if (!center) return undefined;
-    if (Array.isArray(center) && center.length >= 2) {
-      const x = typeof center[0] === 'number' ? Math.round(center[0]) : center[0];
-      const y = typeof center[1] === 'number' ? Math.round(center[1]) : center[1];
-      return `(${x}, ${y})`;
-    }
-    if (typeof center === 'object' && center !== null) {
-      const obj = center as { x?: unknown; y?: unknown };
-      if (obj.x !== undefined && obj.y !== undefined) {
-        const x = typeof obj.x === 'number' ? Math.round(obj.x) : obj.x;
-        const y = typeof obj.y === 'number' ? Math.round(obj.y) : obj.y;
-        return `(${x}, ${y})`;
-      }
-    }
-    return undefined;
-  };
+  // Structured lesion findings
+  const structuredLesions = extractLesionItems(report.lesionData);
+  const detectedLesions = structuredLesions.filter((i) => i.isAssessed && i.detected && i.pixels > 0);
 
-  // Helper to safely get lesion count & pixels for any key alias
-  const getLesionStats = (key: 'MA' | 'HE' | 'EX' | 'SE') => {
-    if (!report.lesionData || typeof report.lesionData !== 'object') {
-      return { regions: 0, pixels: 0, detected: false };
-    }
-    const aliases: Record<string, string[]> = {
-      MA: ['MA', 'ma', 'Microaneurysms', 'microaneurysms', 'Microaneurysm', 'microaneurysm'],
-      HE: ['HE', 'he', 'Haemorrhages', 'haemorrhages', 'Hemorrhages', 'hemorrhages', 'Haemorrhage', 'haemorrhage'],
-      EX: ['EX', 'ex', 'Hard Exudates', 'hard exudates', 'Exudates', 'exudates', 'Hard Exudate'],
-      SE: ['SE', 'se', 'Soft Exudates', 'soft exudates', 'Cotton Wool Spots', 'cotton wool spots', 'Soft Exudate'],
-    };
-    for (const alias of aliases[key] || [key]) {
-      const item = (report.lesionData as Record<string, { detected?: boolean; regions?: number; pixels?: number }>)[alias];
-      if (item && typeof item === 'object') {
-        return {
-          regions: typeof item.regions === 'number' ? item.regions : 0,
-          pixels: typeof item.pixels === 'number' ? item.pixels : 0,
-          detected: Boolean(item.detected),
-        };
-      }
-    }
-    return { regions: 0, pixels: 0, detected: false };
-  };
+  // 'What This Means' categorical explanation
+  const whatThisMeans = getCategoryWhatThisMeans({
+    drSeverity: report.drSeverity,
+    drSeverityLevel: report.drSeverityLevel,
+    imageQuality: report.imageQuality,
+  });
 
-  // ---- Anatomy section: real data or empty state ----
+  // Model output score explanation
+  const scoreExplanation = getModelScoreExplanation(report.confidence);
+
+  // Model limitations notes
+  const modelLimitations = getModelLimitations({
+    lesionData: report.lesionData,
+    anatomyData: report.anatomyData,
+    imageQuality: report.imageQuality,
+  });
+
+  // Clinical interpretation & concordance synthesis
+  const interpretation = generateDrClinicalInterpretation({
+    lesionData: report.lesionData,
+    drSeverity: report.drSeverity,
+    drSeverityLevel: report.drSeverityLevel,
+    confidence: report.confidence,
+    imageQuality: report.imageQuality,
+  });
+
+  // Recommended action synthesis
+  const recommendedAction = getRecommendedAction({
+    imageQuality: report.imageQuality,
+    drSeverity: report.drSeverity,
+    drSeverityLevel: report.drSeverityLevel,
+    referralStatus: report.referralStatus,
+    referralPriority: report.referralPriority,
+    referralReason: report.referralReason,
+    recommendation: report.recommendation,
+  });
+
+  // Retinal anatomy data
   const anatomy = report.anatomyData;
-  const anatomyRows = anatomy
-    ? [
-      {
-        label: 'Optic Disc',
-        detected: anatomy.optic_disc?.detected,
-        extra: formatPx(anatomy.optic_disc?.pixels),
-      },
-      {
-        label: 'Macula / Fovea',
-        detected: anatomy.macula?.detected ?? true,
-        extra: anatomy.fovea ? formatCoord(anatomy.fovea.x, anatomy.fovea.y) : undefined,
-      },
-      {
-        label: 'Retinal Blood Vessels',
-        detected: anatomy.blood_vessels?.detected,
-        extra: formatPx(anatomy.blood_vessels?.pixels),
-      },
-    ]
-    : null;
 
-  // ---- Lesion section: real data or empty state ----
-  const lesionData = report.lesionData;
-  const lesionRows = lesionData && typeof lesionData === 'object'
-    ? Object.entries(lesionData).map(([name, info]) => ({
-        name,
-        detected: Boolean(info && typeof info === 'object' && (info as any).detected),
-      }))
-    : report.findings?.map((f) => ({ name: typeof f === 'string' ? f : String(f), detected: true })) || [];
+  // Presentation derivations
+  const eyeShort = report.eye === 'Left Eye' ? 'OS' : report.eye === 'Right Eye' ? 'OD' : report.eye;
+  const isNoDR =
+    report.drSeverity === 'No DR' ||
+    report.drSeverityLevel === 'No DR (Level 0)' ||
+    (report.drSeverityLevel || '').includes('Level 0');
 
+  const qualityGrade = report.imageQuality || 'Unrecorded';
+  const isQualityUngradable =
+    qualityGrade === 'Poor' ||
+    qualityGrade === 'Ungradable' ||
+    qualityGrade.toLowerCase().includes('poor');
+  const isQualityGood = qualityGrade === 'Good';
 
-  // ---- Quality badge ----
-  const qualityIsGood = report.imageQuality === 'Good';
+  const patientHistory =
+    (report as any).patientHistory ||
+    (patient?.diabetesDurationYears != null
+      ? `Type 2 Diabetes (${patient.diabetesDurationYears} yrs)${patient.knownDR && patient.knownDR !== 'Uncertain' ? ` • Prior DR: ${patient.knownDR}` : ''}`
+      : undefined);
+
+  const gradabilityText = isQualityUngradable
+    ? 'Ungradable'
+    : isQualityGood
+    ? 'Gradable (Adequate)'
+    : 'Gradable (Borderline / Review Quality)';
+
+  const reviewStatusText = report.specialistReview
+    ? 'Verified by Specialist'
+    : report.status === 'Sent to Patient'
+    ? 'Sent to Patient (Pending Specialist Review)'
+    : 'Pending Specialist Review';
+
+  // Severity color tokens
+  const getSeverityBadgeClasses = () => {
+    if (isNoDR) return 'bg-emerald-50 text-emerald-800 border-emerald-300';
+    if (report.drSeverity === 'Mild' || report.drSeverityLevel?.includes('Level 1')) return 'bg-sky-50 text-sky-800 border-sky-300';
+    if (report.drSeverity === 'Moderate' || report.drSeverityLevel?.includes('Level 2')) return 'bg-amber-50 text-amber-800 border-amber-300';
+    if (report.drSeverity === 'Severe' || report.drSeverityLevel?.includes('Level 3')) return 'bg-rose-50 text-rose-800 border-rose-300';
+    return 'bg-red-50 text-red-800 border-red-300';
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16">
-      {/* Top Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-5xl mx-auto space-y-4 pb-20 px-2 sm:px-4">
+      {/* Top Clinical Actions Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 print:hidden">
         <button
           type="button"
-          onClick={() => setActivePage('patients')}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors w-fit"
+          onClick={() => setActivePage(activePatientId ? 'patient-detail' : 'patients')}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors w-fit cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>{activePatientId ? 'Back to Patient Profile' : 'Back to Screening List'}</span>
         </button>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          {patientPhoneNumber && (
+            <button
+              type="button"
+              onClick={() => setIsSendingModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+            >
+              <Phone className="w-3.5 h-3.5 text-slate-500" />
+              <span>Send to Patient</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg shadow-2xs transition-colors cursor-pointer"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-500" />
+            <span>Print Report</span>
+          </button>
+
           <button
             type="button"
             disabled={isDownloading}
             onClick={handleDownloadPdf}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-800 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-300 rounded-lg shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-black rounded-lg shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
           >
             {isDownloading ? (
               <>
-                <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
                 <span>Generating PDF...</span>
               </>
             ) : (
               <>
-                <Download className="w-4 h-4 text-slate-600" />
-                <span>Download PDF</span>
+                <Download className="w-3.5 h-3.5 text-white" />
+                <span>Download Official PDF</span>
               </>
             )}
           </button>
-
-          <button
-            type="button"
-            onClick={() => setIsSendingModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 active:bg-blue-800 rounded-lg shadow-xs shadow-blue-500/20 transition-colors cursor-pointer"
-          >
-            <Send className="w-4 h-4" />
-            <span>{report.status === 'Sent to Patient' ? 'Resend Report' : 'Send Report'}</span>
-          </button>
         </div>
       </div>
 
-      {/* Main Medical Report Sheet */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-8 md:p-10 space-y-8 text-slate-800 print:border-none print:shadow-none print:p-0">
-        {/* Report Document Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-6 border-b-2 border-slate-900">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#0D1829] text-white font-bold text-sm">
-                R-X
-              </div>
-              <h1 className="text-xl font-black tracking-wider text-slate-900">
-                RETINA-X
-              </h1>
-            </div>
-            <p className="text-sm font-semibold text-blue-700 mt-1 uppercase tracking-wide">
-              AI-Assisted Retinal Screening Report
-            </p>
-            <p className="text-xs text-slate-500">
-              Department of Tele-Ophthalmology &amp; Diabetic Retinopathy Screening
-            </p>
-          </div>
-
-          <div className="text-left sm:text-right space-y-0.5 text-xs text-slate-600">
-            <p><strong>Report ID:</strong> {report.id}</p>
-            <p><strong>Screening ID:</strong> {report.screeningId}</p>
-            <p><strong>Date Generated:</strong> {report.generatedDate}</p>
-            <div className="mt-2">
-              <span
-                className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${report.status === 'Sent to Patient'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200'
-                  }`}
-              >
-                Status: {report.status}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 1: PATIENT INFORMATION */}
-        <div>
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-            Patient Information
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+      {/* Main Medical Report Document Sheet */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-10 space-y-6 text-slate-800 print:border-none print:shadow-none print:p-0 print:space-y-4 print:text-black">
+        
+        {/* Document Header */}
+        <header className="border-b-2 border-slate-900 pb-5">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
-              <span className="text-slate-400 block">Full Name</span>
-              <strong className="text-sm text-slate-900">{report.patientName}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Patient ID</span>
-              <strong className="text-sm text-slate-900">{report.patientId}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Age &amp; Gender</span>
-              <strong className="text-slate-900">{report.patientAge} Years / {report.patientGender}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Phone Number</span>
-              <strong className="text-slate-900">{patientPhoneNumber || '—'}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Date of Screening</span>
-              <strong className="text-slate-900">{report.generatedDate}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Eye Screened</span>
-              <span className="font-bold text-blue-700">{report.eye}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Screening Nurse</span>
-              <strong className="text-slate-900">{report.nurseName}</strong>
-            </div>
-            <div>
-              <span className="text-slate-400 block">Diabetes Duration</span>
-              <strong className="text-slate-900">{patient?.diabetesDurationYears ?? '—'} {patient?.diabetesDurationYears != null ? 'Years' : ''}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 2: IMAGE INFORMATION */}
-        <div>
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-            Image Information &amp; Quality Assessment
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-            <div>
-              <span className="text-slate-400 block">Image Filename</span>
-              <span className="font-mono text-slate-800 font-semibold truncate block">
-                {report.imageFileName}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400 block">File Size</span>
-              <span className="text-slate-800 font-semibold">{report.imageFileSize}</span>
-            </div>
-            {report.imageResolution && (
-              <div>
-                <span className="text-slate-400 block">Resolution</span>
-                <span className="text-slate-800 font-semibold font-mono">{report.imageResolution}</span>
-              </div>
-            )}
-            <div>
-              <span className="text-slate-400 block">Quality Status</span>
-              {qualityIsGood ? (
-                <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  <span>Good (Suitable for Analysis)</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200">
-                  <XCircle className="w-3 h-3 text-red-600" />
-                  <span>{report.imageQuality}</span>
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 3: AI SCREENING RESULT */}
-        <div>
-          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">
-            AI Screening Result
-          </h2>
-          <div className="p-5 rounded-xl bg-blue-50/60 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs text-blue-600 uppercase font-bold tracking-wider">Classification</span>
-              <h3 className="text-xl font-black text-slate-900 mt-0.5">
-                {report.drSeverityLevel || report.drSeverity}
-              </h3>
-              <p className="text-xs text-slate-600 mt-1">
-                Deep neural ensemble prediction calibrated for primary tele-screening.
-              </p>
-            </div>
-            <div className="text-left sm:text-right">
-              <span className="text-xs text-slate-500 uppercase font-semibold block">Confidence Score</span>
-              <span className="text-3xl font-black text-blue-700">{report.confidence}%</span>
-              <span className="text-[11px] text-slate-500 block">Threshold: &gt;85% High</span>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 4 & 5: AI DETECTED FEATURES & RETINAL ANATOMY */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* AI Detected Features */}
-          <div className="border border-slate-200 rounded-xl p-5 bg-white">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <span>AI-Detected Features</span>
-            </h3>
-            {lesionRows.length > 0 ? (
-              <ul className="space-y-2 text-xs">
-                {lesionRows.map(({ name, detected }) => (
-                  <li key={name} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
-                    <span className="text-slate-600">{name}</span>
-                    {detected ? (
-                      <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                        Present / Detected
-                      </span>
-                    ) : (
-                      <span className="font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                        Not observed
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-500">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>No lesion data available for this screening.</span>
-              </div>
-            )}
-          </div>
-
-          {/* Retinal Anatomy */}
-          <div className="border border-slate-200 rounded-xl p-5 bg-white">
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-blue-600" />
-              <span>Retinal Anatomy Localization</span>
-            </h3>
-            {anatomyRows ? (
-              <ul className="space-y-2 text-xs">
-                {anatomyRows.map((row) => (
-                  <li key={row.label} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
-                    <span className="text-slate-600">{row.label}</span>
-                    <div className="flex items-center gap-1.5">
-                      {row.extra && <span className="text-[10px] text-slate-400 font-mono">{row.extra}</span>}
-                      {row.detected ? (
-                        <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          Detected
-                        </span>
-                      ) : (
-                        <span className="font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                          Not detected
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-500">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>No anatomy localization data available for this screening.</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* SECTION 6: EXPLAINABILITY VISUALIZATIONS */}
-        <div>
-          <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-1">
-            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Explainability Visualizations
-            </h2>
-            {hasVisualizations && (
-              <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                Real ML Pipeline Outputs
-              </span>
-            )}
-          </div>
-
-          {hasVisualizations ? (
-            <div className="space-y-6">
-              {/* 4-Panel Visualization Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 1. Original Fundus */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">Original Fundus</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-700">
-                      Canonical 512×512
-                    </span>
-                  </div>
-                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-black border border-slate-300">
-                    <FundusRetinaCanvas
-                      mode="Original"
-                      imageOriginal={report.imageOriginal}
-                      className="w-full h-full"
-                    />
-                  </div>
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-950 text-white font-extrabold text-xs tracking-wider">
+                  RX
                 </div>
-
-                {/* 2. Lesion Segmentation Overlay */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">Lesion Segmentation</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700">
-                      MA • HE • EX • SE
-                    </span>
-                  </div>
-                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-black border border-slate-300">
-                    <FundusRetinaCanvas
-                      mode="Lesions"
-                      imageOriginal={report.imageOriginal}
-                      imageLesions={report.imageLesions}
-                      className="w-full h-full"
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Retinal Anatomy Localization */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">Retinal Anatomy Localization</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                      Vessels • Disc • Fovea
-                    </span>
-                  </div>
-                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-black border border-slate-300">
-                    <FundusRetinaCanvas
-                      mode="Anatomy"
-                      imageOriginal={report.imageOriginal}
-                      imageAnatomy={report.imageAnatomy}
-                      className="w-full h-full"
-                    />
-                  </div>
-                </div>
-
-                {/* 4. Combined / XAI Saliency Heatmap */}
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800">XAI / Combined Overlay</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-purple-100 text-purple-700">
-                      Multi-Task Fusion
-                    </span>
-                  </div>
-                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-black border border-slate-300">
-                    <FundusRetinaCanvas
-                      mode="Combined"
-                      imageOriginal={report.imageOriginal}
-                      imageGradCam={report.imageGradCam}
-                      imageCombined={report.imageCombined}
-                      className="w-full h-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* What do the markings mean? Lesion Legend */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-blue-600" />
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    What do the markings mean? — Clinical Lesion Legend
-                  </h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                  {/* MA */}
-                  <div className="p-3 bg-white rounded-lg border border-slate-200/80 space-y-1 shadow-2xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 rounded-sm bg-[#DC2626] shrink-0 border border-red-700 shadow-2xs" />
-                      <span className="font-bold text-slate-900">MA — Microaneurysm</span>
-                    </div>
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      Tiny outpouchings of retinal capillaries; earliest observable vascular sign of diabetic retinopathy.
-                    </p>
-                  </div>
-
-                  {/* HE */}
-                  <div className="p-3 bg-white rounded-lg border border-slate-200/80 space-y-1 shadow-2xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 rounded-sm bg-[#7C3AED] shrink-0 border border-purple-800 shadow-2xs" />
-                      <span className="font-bold text-slate-900">HE — Haemorrhage</span>
-                    </div>
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      Blood leakage into retinal layers resulting from damaged and ruptured microvessels.
-                    </p>
-                  </div>
-
-                  {/* EX */}
-                  <div className="p-3 bg-white rounded-lg border border-slate-200/80 space-y-1 shadow-2xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 rounded-sm bg-[#EAB308] shrink-0 border border-amber-600 shadow-2xs" />
-                      <span className="font-bold text-slate-900">EX — Hard Exudate</span>
-                    </div>
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      Lipid and proteinaceous deposits accumulating from persistent vascular permeability and leakage.
-                    </p>
-                  </div>
-
-                  {/* SE */}
-                  <div className="p-3 bg-white rounded-lg border border-slate-200/80 space-y-1 shadow-2xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 rounded-sm bg-[#10B981] shrink-0 border border-emerald-600 shadow-2xs" />
-                      <span className="font-bold text-slate-900">SE — Soft Exudate</span>
-                    </div>
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      Cotton-wool spots representing focal retinal nerve fiber layer micro-infarcts from ischemia.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quantitative Measurements & Spatial Analysis Cards */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <Activity className="w-4 h-4 text-blue-600" />
-                  <span>Real Model Measurements &amp; Quantitative Features</span>
-                </h3>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  {/* Blood Vessels Card */}
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <span className="text-slate-500 block text-[11px] font-semibold">Vessel Pixels</span>
-                    <strong className="text-sm font-mono text-slate-900 block">
-                      {anatomy?.blood_vessels?.pixels ? `${anatomy.blood_vessels.pixels.toLocaleString()} px` : '—'}
-                    </strong>
-                    <div className="text-[11px] text-slate-600 space-y-0.5 pt-1 border-t border-slate-200/60">
-                      <p>Density: <span className="font-mono font-semibold text-slate-800">{anatomy?.blood_vessels?.density ?? anatomy?.measurements?.vessel_density_pct ?? '—'}%</span></p>
-                      <p>Macular: <span className="font-mono font-semibold text-slate-800">{anatomy?.blood_vessels?.macular_density ?? anatomy?.measurements?.macular_vessel_density_pct ?? '—'}%</span></p>
-                    </div>
-                  </div>
-
-                  {/* Optic Disc Card */}
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <span className="text-slate-500 block text-[11px] font-semibold">Optic Disc Area</span>
-                    <strong className="text-sm font-mono text-slate-900 block">
-                      {anatomy?.optic_disc?.pixels ? `${anatomy.optic_disc.pixels.toLocaleString()} px` : '—'}
-                    </strong>
-                    <div className="text-[11px] text-slate-600 space-y-0.5 pt-1 border-t border-slate-200/60">
-                      <p>Status: <span className="font-semibold text-emerald-700">{anatomy?.optic_disc?.detected ? 'Localized' : '—'}</span></p>
-                      {anatomy?.optic_disc?.center && (
-                        <p>Center: <span className="font-mono text-slate-800">({anatomy.optic_disc.center[0]}, {anatomy.optic_disc.center[1]})</span></p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Fovea & Disc Distance Card */}
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <span className="text-slate-500 block text-[11px] font-semibold">Fovea Coordinates</span>
-                    <strong className="text-sm font-mono text-slate-900 block">
-                      {anatomy?.fovea ? `(${Math.round(anatomy.fovea.x)}, ${Math.round(anatomy.fovea.y)})` : '—'}
-                    </strong>
-                    <div className="text-[11px] text-slate-600 space-y-0.5 pt-1 border-t border-slate-200/60">
-                      <p>OD–Fovea: <span className="font-mono font-semibold text-slate-800">{anatomy?.fovea?.disc_distance ?? anatomy?.measurements?.disc_fovea_distance_px ?? '—'} px</span></p>
-                      <p>Macula ROI: <span className="font-semibold text-emerald-700">Present</span></p>
-                    </div>
-                  </div>
-
-                  {/* Lesion Region Counts Card */}
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <span className="text-slate-500 block text-[11px] font-semibold">Lesion Regions</span>
-                    <div className="text-[11px] text-slate-700 space-y-0.5 pt-0.5 font-mono">
-                      <p className="flex justify-between"><span className="text-red-700 font-bold">MA:</span> <span>{lesionData?.['MA']?.regions ?? 0} ({lesionData?.['MA']?.pixels ?? 0}px)</span></p>
-                      <p className="flex justify-between"><span className="text-fuchsia-700 font-bold">HE:</span> <span>{lesionData?.['HE']?.regions ?? 0} ({lesionData?.['HE']?.pixels ?? 0}px)</span></p>
-                      <p className="flex justify-between"><span className="text-amber-700 font-bold">EX:</span> <span>{lesionData?.['EX']?.regions ?? 0} ({lesionData?.['EX']?.pixels ?? 0}px)</span></p>
-                      <p className="flex justify-between"><span className="text-sky-700 font-bold">SE:</span> <span>{lesionData?.['SE']?.regions ?? 0} ({lesionData?.['SE']?.pixels ?? 0}px)</span></p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500">
-              <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
-              <span>No visualization maps available for this screening record. Run screening to generate overlays.</span>
-            </div>
-          )}
-        </div>
-
-      {/* SECTION 7: AI-ASSISTED EXPLANATION */}
-      <div>
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1">
-          AI-Assisted Plain-Language Explanation
-        </h2>
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed space-y-2">
-          {report.plainLanguageExplanation ? (
-            <p>{report.plainLanguageExplanation}</p>
-          ) : (
-            <div className="flex items-center gap-2 text-slate-500">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-              <span>Plain-language explanation was not generated for this screening record.</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SECTION 8: CLINICAL INFORMATION (RAG REFERENCE) */}
-      <div>
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1">
-          Clinical Reference Information
-        </h2>
-        <div className="p-4 rounded-xl bg-indigo-50/40 border border-indigo-100 text-xs text-slate-700 space-y-2">
-          <div className="flex items-center gap-1.5 text-indigo-900 font-bold">
-            <Info className="w-4 h-4 text-indigo-600 shrink-0" />
-            <span>Reference Information from Curated Clinical Guidelines</span>
-          </div>
-          <p className="text-slate-600 leading-relaxed">
-            Diabetic retinopathy is a microvascular complication of diabetes caused by prolonged high blood sugar levels damaging the tiny capillaries in the retina at the back of the eye. In its early stages, symptoms are frequently silent, yet irreversible vision loss can occur without systematic screening and timely glycemic and laser/anti-VEGF intervention.
-          </p>
-          <p className="text-[11px] text-slate-500 italic">
-            Source: International Council of Ophthalmology (ICO) Guidelines for Diabetic Eye Care.
-          </p>
-        </div>
-      </div>
-
-      {/* SECTION 9: REFERRAL & SPECIALIST REVIEW */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Referral Recommendation */}
-        <div className="p-5 rounded-xl bg-amber-50/50 border border-amber-200 space-y-2">
-          <h3 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-            Referral Recommendation
-          </h3>
-          {report.referralStatus === 'Referred to Specialist' || report.referralPriority ? (
-            <div className="space-y-1.5 text-xs text-slate-700">
-              <p><strong>Referral Status:</strong> {report.referralStatus}</p>
-              <p><strong>Priority:</strong> {report.referralPriority || '—'}</p>
-              <p><strong>Reason:</strong> {report.referralReason || '—'}</p>
-            </div>
-          ) : (
-            <div className="space-y-1.5 text-xs text-slate-700">
-              <p><strong>Referral:</strong> <span className="font-semibold text-slate-700">Not referred</span></p>
-              <p className="text-slate-500 text-[11px]">No immediate vitreo-retinal referral required based on current screening findings. Routine 12-month annual screening cycle advised.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Specialist Review */}
-        <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center justify-between">
-            <span>Specialist Review</span>
-            {report.specialistReview ? (
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
-                Reviewed
-              </span>
-            ) : (
-              <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-bold border border-amber-200">
-                Pending
-              </span>
-            )}
-          </h3>
-          {report.specialistReview ? (
-            <div className="text-xs text-slate-700 space-y-1">
-              <p><strong>Reviewer:</strong> {report.specialistReview.specialistName}</p>
-              <p><strong>Date:</strong> {report.specialistReview.reviewDate}</p>
-              <p><strong>Specialist Assessment:</strong> {report.specialistReview.assessment}</p>
-              <p><strong>Specialist Notes:</strong> {report.specialistReview.notes}</p>
-              <p><strong>Specialist Recommendation:</strong> {report.specialistReview.recommendation}</p>
-            </div>
-          ) : (
-            <div className="text-xs text-slate-700 space-y-1 py-1">
-              <p><strong>Specialist Review:</strong> <span className="font-semibold text-amber-700">Pending</span></p>
-              <p><strong>Specialist Assessment:</strong> <span className="text-slate-500 italic">Pending specialist evaluation</span></p>
-              <p><strong>Specialist Notes:</strong> <span className="text-slate-500 italic">Queued for tele-ophthalmology verification</span></p>
-              <p><strong>Specialist Recommendation:</strong> <span className="text-slate-500 italic">Pending clinical review by assigned specialist</span></p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* SECTION 10: FOLLOW-UP RECOMMENDATION */}
-      <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-        <span className="font-bold text-slate-900 block mb-1">Follow-up Recommendation</span>
-        <p className="text-slate-600">
-          {report.drSeverity === 'No DR'
-            ? 'Routine annual diabetic eye screening is recommended. Continue blood glucose (HbA1c < 7.0%) and blood pressure monitoring in consultation with the primary physician.'
-            : report.drSeverity === 'Mild'
-              ? 'Follow-up dilated eye examination within 6–12 months. Ensure strict blood glucose and blood pressure control.'
-              : <>Comprehensive dilated ophthalmology evaluation within <strong>2 to 4 weeks</strong>. Continue strict blood glucose (HbA1c &lt; 7.0%) and blood pressure monitoring in consultation with the primary physician.</>}
-        </p>
-      </div>
-
-      {/* SECTION 11: PATIENT PHONE & SEND REPORT */}
-      <div className="p-5 rounded-xl bg-blue-50/60 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider block">
-            Patient Phone
-          </span>
-          <div className="flex items-center gap-2 mt-1">
-            <Phone className="w-4 h-4 text-blue-600" />
-            <span className="text-base font-bold font-mono text-slate-900">
-              {patientPhoneNumber || '—'}
-            </span>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            {report.status === 'Sent to Patient'
-              ? '✓ Digital report was delivered to patient\'s registered phone number'
-              : 'Click Send Report to transmit a digital copy to the patient\'s registered mobile'}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsSendingModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#1E60D5] hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0 cursor-pointer"
-        >
-          <Send className="w-4 h-4" />
-          <span>{report.status === 'Sent to Patient' ? 'Resend Report' : 'Send Report'}</span>
-        </button>
-      </div>
-
-      {/* SECTION 12: OFFICIAL MEDICAL DISCLAIMER */}
-      <div className="pt-4 border-t border-slate-200 text-center text-[11px] text-slate-500 leading-relaxed">
-        <div className="flex items-center justify-center gap-1.5 font-semibold text-slate-700 mb-1">
-          <ShieldCheck className="w-4 h-4 text-blue-600" />
-          <span>Official Regulatory Disclaimer</span>
-        </div>
-        <p>
-          RETINA-X provides AI-assisted screening support and does not replace diagnosis by a qualified eye-care professional. Definitive clinical decisions should always be confirmed through direct dilated slit-lamp biomicroscopy or OCT by an ophthalmologist.
-        </p>
-      </div>
-    </div>
-
-      {/* SEND REPORT MODAL */ }
-  {
-    isSendingModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-        <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <Send className="w-5 h-5 text-blue-600" />
-              <h3 className="text-base font-bold text-slate-900">Send Report to Patient</h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsSendingModalOpen(false)}
-              className="text-slate-400 hover:text-slate-700 text-sm"
-            >
-              ✕
-            </button>
-          </div>
-
-          {sendSuccess ? (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-center space-y-2">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-                <Check className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-bold">Report Delivered Successfully</p>
-              <p className="text-xs text-emerald-700">
-                ✓ Report sent to patient&apos;s registered phone number:
-              </p>
-              <p className="font-mono text-sm font-bold text-emerald-900">
-                {patientPhoneNumber || '—'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
-                <p className="text-slate-500">Patient:</p>
-                <p className="font-bold text-slate-900 text-sm">{report.patientName} ({report.patientId})</p>
-                <div className="pt-2">
-                  <p className="text-slate-500">Registered Phone Number:</p>
-                  <p className="font-mono font-bold text-blue-700 text-sm">
-                    {patientPhoneNumber || '—'}
+                <div>
+                  <h1 className="text-lg font-black tracking-tight text-slate-900 leading-tight">
+                    TRINAY TELE-OPHTHALMOLOGY NETWORK
+                  </h1>
+                  <p className="text-[11px] font-bold text-slate-500 tracking-wide uppercase">
+                    Diabetic Retinopathy Clinical Decision-Support Report
                   </p>
                 </div>
               </div>
+              <h2 className="text-sm font-bold text-blue-700 uppercase tracking-wide mt-2">
+                AI Retinal Screening Decision-Support Summary
+              </h2>
+              <span className="inline-block mt-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                Confidential Clinical Document • For Eye-Care Decision Support Only
+              </span>
+            </div>
 
-              <p className="text-xs text-slate-500">
-                A direct link containing the digital PDF report and explainability visualizer will be transmitted via secure tele-health messaging.
+            <div className="sm:text-right text-xs space-y-1 font-mono text-slate-600 bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl border sm:border-0 border-slate-200">
+              <p><span className="text-slate-400 font-sans">Report ID:</span> <strong className="text-slate-900">{report.id}</strong></p>
+              <p><span className="text-slate-400 font-sans">Screening ID:</span> <strong className="text-slate-900">{report.screeningId}</strong></p>
+              <p><span className="text-slate-400 font-sans">Screening Date:</span> <span className="text-slate-800">{report.generatedDate}</span></p>
+              <p>
+                <span className="text-slate-400 font-sans">Examined Eye:</span>{' '}
+                <strong className="text-blue-700 font-bold font-sans">{report.eye} ({eyeShort})</strong>
               </p>
+              <div className="pt-1 flex sm:justify-end gap-1.5">
+                <span
+                  className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                    report.status === 'Sent to Patient'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-blue-50 text-blue-800 border-blue-200'
+                  }`}
+                >
+                  Status: {report.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2">
+        {/* ========================================================================= */}
+        {/* 1. PATIENT & EXAMINATION DETAILS */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-1-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                1
+              </span>
+              <h3 id="section-1-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Patient &amp; Examination Details
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">Demographics, Examination Parameters &amp; Clinical History</span>
+          </div>
+
+          <div className="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2.5">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Patient Name &amp; ID</span>
+                <div className="mt-0.5">
+                  <strong className="text-slate-900 font-bold block">{report.patientName}</strong>
+                  <span className="font-mono text-slate-500 text-[11px] block">{report.patientId}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Age &amp; Gender</span>
+                <span className="text-slate-800 font-medium block mt-0.5">
+                  {report.patientAge} Years / {report.patientGender}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Examination Date</span>
+                <span className="text-slate-800 font-medium block mt-0.5">
+                  {report.generatedDate || 'Not recorded'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Examined Eye</span>
+                <strong className="text-blue-700 font-bold block mt-0.5">
+                  {report.eye} ({eyeShort})
+                </strong>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Screening Operator</span>
+                <span className="text-slate-700 block mt-0.5">
+                  {report.nurseName || 'Recorded in screening protocol'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Relevant Medical History</span>
+                <span className="text-slate-700 block mt-0.5">
+                  {patientHistory || 'None recorded'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 2. SCREENING SUMMARY */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-2-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                2
+              </span>
+              <h3 id="section-2-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Screening Summary
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">Primary AI Staging, Model Score, Image Quality &amp; Review Status</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+            {/* DR Severity Staging */}
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 flex flex-col justify-between space-y-1.5">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Predicted DR Severity
+                </span>
+                <div className="mt-1">
+                  <span className={`px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wider border inline-block ${getSeverityBadgeClasses()}`}>
+                    {report.drSeverity || 'No DR'}
+                  </span>
+                </div>
+                <strong className="text-xs font-extrabold text-slate-900 block mt-1.5 leading-snug">
+                  {report.drSeverityLevel || report.drSeverity || 'No DR (Level 0)'}
+                </strong>
+              </div>
+              <span className="text-[10px] text-slate-400 block pt-1 border-t border-slate-200/60">
+                ICDR Classification Standard
+              </span>
+            </div>
+
+            {/* Model Output Score */}
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 flex flex-col justify-between space-y-1.5">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Model Output Score
+                </span>
+                <span className="text-lg font-black font-mono text-slate-900 block mt-0.5">
+                  {scoreExplanation.scoreDisplay}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-500 leading-snug pt-1 border-t border-slate-200/60 space-y-0.5">
+                <p className="font-medium text-slate-700">{scoreExplanation.explanation}</p>
+                <p className="text-slate-500 italic">{scoreExplanation.safetyNote}</p>
+              </div>
+            </div>
+
+            {/* Image Quality & Gradability */}
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 flex flex-col justify-between space-y-1.5">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Image Quality &amp; Gradability
+                </span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {isQualityGood ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  )}
+                  <strong className={`font-bold ${isQualityGood ? 'text-emerald-800' : 'text-amber-800'}`}>
+                    {qualityGrade}
+                  </strong>
+                  <span className="text-[10px] text-slate-500 font-medium">({gradabilityText})</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-500 leading-snug pt-1 border-t border-slate-200/60">
+                {isQualityUngradable ? (
+                  <span className="text-rose-700 font-medium">Ungradable. Repeat capture recommended.</span>
+                ) : !isQualityGood ? (
+                  <span className="text-amber-800">Borderline clarity; clinician review advised.</span>
+                ) : (
+                  <span className="text-emerald-800">Adequate for screening triage.</span>
+                )}
+              </div>
+            </div>
+
+            {/* Clinical Review Status */}
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 flex flex-col justify-between space-y-1.5">
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Clinical Review Status
+                </span>
+                <div className="mt-1">
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                      report.specialistReview
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}
+                  >
+                    {reviewStatusText}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] text-slate-400 block pt-1 border-t border-slate-200/60">
+                {report.specialistReview ? 'Specialist sign-off recorded' : 'Queued for specialist counter-check'}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 3. WHAT THE AI FOUND */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-3-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                3
+              </span>
+              <Activity className="w-4 h-4 text-blue-600" />
+              <h3 id="section-3-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                What the AI Found
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">
+              Inference Findings Present in Model Outputs
+            </span>
+          </div>
+
+          {/* Quick Doctor Summary of Actual Model Findings */}
+          <div className="p-3.5 bg-sky-50/70 rounded-xl border border-sky-200/80 text-xs space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-sky-950">
+              <CheckCircle className="w-4 h-4 text-blue-600" />
+              <span>Summary of Detected Findings:</span>
+            </div>
+            <ul className="space-y-1.5 pl-5 list-disc text-sky-900 text-[11.5px]">
+              <li>
+                <strong>Focal Retinal Lesions:</strong>{' '}
+                {detectedLesions.length > 0 ? (
+                  <span>
+                    Identified candidate regions for{' '}
+                    <strong className="text-slate-950">
+                      {detectedLesions.map(d => `${d.def.name} (${d.pixels.toLocaleString()} px area, ${d.regions} region${d.regions === 1 ? '' : 's'})`).join(', ')}
+                    </strong>
+                    .
+                  </span>
+                ) : (
+                  <span>
+                    No microaneurysms, hemorrhages, hard exudates, or soft exudates were detected across the examined field.
+                  </span>
+                )}
+              </li>
+              <li>
+                <strong>Retinal Landmarks:</strong>{' '}
+                {anatomy ? (
+                  <span>
+                    {anatomy.optic_disc?.pixels ? `Optic Disc localized (${anatomy.optic_disc.pixels.toLocaleString()} px)` : 'Optic Disc localized'}
+                    {anatomy.fovea ? ` • Fovea Centralis localized at (${Math.round(anatomy.fovea.x)}, ${Math.round(anatomy.fovea.y)})` : ''}
+                    {anatomy.fovea?.disc_distance ? ` with OD–Fovea distance of ${anatomy.fovea.disc_distance} px` : ''}
+                    {anatomy.blood_vessels?.pixels ? ` • Retinal vasculature tracked (${anatomy.blood_vessels.pixels.toLocaleString()} px, ${anatomy.blood_vessels.density != null ? `${anatomy.blood_vessels.density}% density` : ''})` : ''}
+                    .
+                  </span>
+                ) : (
+                  <span>Landmark localization was not evaluated for this image.</span>
+                )}
+              </li>
+              <li>
+                <strong>Image Clarity:</strong> Evaluated as <strong className="text-slate-950">{qualityGrade}</strong> ({gradabilityText}).
+              </li>
+            </ul>
+          </div>
+
+          {/* Compact Lesion Findings Table */}
+          <div className="overflow-hidden rounded-xl border border-slate-200 text-xs">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-slate-900 text-white text-[11px] uppercase tracking-wide">
+                  <th className="px-3.5 py-2 text-left font-bold">Pathological Finding</th>
+                  <th className="px-3.5 py-2 text-left font-bold">Detection Status</th>
+                  <th className="px-3.5 py-2 text-right font-bold">Existing Measured Result</th>
+                  <th className="px-3.5 py-2 text-right font-bold print:hidden">Evidence / Overlay</th>
+                </tr>
+              </thead>
+              <tbody>
+                {structuredLesions.map((item, idx) => {
+                  const isAssessed = item.isAssessed;
+                  const isDetected = isAssessed && item.detected && item.pixels > 0;
+
+                  return (
+                    <tr
+                      key={item.code}
+                      className={idx % 2 === 0 ? 'bg-white border-b border-slate-100' : 'bg-slate-50/60 border-b border-slate-100 last:border-0'}
+                    >
+                      <td className="px-3.5 py-2.5">
+                        <span className="inline-flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs"
+                            style={{ backgroundColor: item.def.colorHex }}
+                          />
+                          <span className="font-semibold text-slate-900">{item.def.fullName}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">({item.code})</span>
+                        </span>
+                      </td>
+
+                      <td className="px-3.5 py-2.5">
+                        {!isAssessed ? (
+                          <span className="inline-flex items-center gap-1 font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
+                            Not evaluated
+                          </span>
+                        ) : isDetected ? (
+                          <span className="inline-flex items-center gap-1 font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded text-[11px] border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            Detected
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200">
+                            Not detected
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-3.5 py-2.5 text-right font-mono text-slate-800">
+                        {!isAssessed ? (
+                          <span className="text-slate-400 italic font-sans text-[11px]">Unavailable</span>
+                        ) : isDetected ? (
+                          <span className="font-bold text-slate-900">
+                            {item.pixels.toLocaleString()} px detected area
+                            {item.regions > 0 ? (
+                              <span className="text-slate-500 font-normal text-[11px]"> ({item.regions} segmented region{item.regions === 1 ? '' : 's'})</span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">0 px detected</span>
+                        )}
+                      </td>
+
+                      <td className="px-3.5 py-2.5 text-right print:hidden">
+                        {isDetected ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveXaiTab('Lesions');
+                              setHighlightedLesion(item.code);
+                              openFullscreen('Lesions');
+                            }}
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 hover:text-blue-900 hover:underline cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>View Overlay</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-300 text-[11px]">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-slate-400 italic">
+            Note: Detected areas represent raw segmented pixel footprints from the multi-task lesion network and are not clinical microaneurysm counts.
+          </p>
+
+          {/* Retinal Anatomical Localization Strip */}
+          <div className="rounded-xl border border-slate-200 p-3 bg-slate-50/70 space-y-1.5 text-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className="font-bold text-slate-900 text-[11px] uppercase tracking-wider">
+                  Retinal Anatomical Landmarks ({report.eye})
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400">Pipeline Landmark Detection</span>
+            </div>
+
+            {anatomy ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Optic Disc</span>
+                  <span className="font-bold text-slate-900 font-mono text-xs block mt-0.5">
+                    {formatPx(anatomy.optic_disc?.pixels) || (anatomy.optic_disc?.detected !== false ? 'Localized' : 'Not localized')}
+                  </span>
+                  {anatomy.optic_disc?.center && (
+                    <span className="text-[10px] text-slate-500 font-mono block">
+                      Centroid: ({anatomy.optic_disc.center[0]}, {anatomy.optic_disc.center[1]})
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Fovea Centralis</span>
+                  <span className="font-bold text-slate-900 font-mono text-xs block mt-0.5">
+                    {anatomy.fovea ? formatCoord(anatomy.fovea.x, anatomy.fovea.y) : 'Not localized'}
+                  </span>
+                  {anatomy.fovea?.disc_distance && (
+                    <span className="text-[10px] text-slate-500 font-mono block">
+                      OD–Fovea: {anatomy.fovea.disc_distance} px
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Macula Region</span>
+                  <span className="font-bold text-slate-900 text-xs block mt-0.5">
+                    Estimated ROI
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">
+                    r = 56 px (geometric proxy)
+                  </span>
+                </div>
+
+                <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Retinal Blood Vessels</span>
+                  <span className="font-bold text-slate-900 font-mono text-xs block mt-0.5">
+                    {formatPx(anatomy.blood_vessels?.pixels) || (anatomy.blood_vessels?.detected ? 'Segmented' : 'Not evaluated')}
+                  </span>
+                  {anatomy.blood_vessels?.density != null && (
+                    <span className="text-[10px] text-slate-500 font-mono block">
+                      Density: {anatomy.blood_vessels.density}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-500 italic">
+                Anatomical landmark measurements were not evaluated or recorded for this screening record.
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 4. WHAT THIS MEANS (CLINICAL INTERPRETATION) */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-4-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                4
+              </span>
+              <Sparkles className="w-4 h-4 text-indigo-600" />
+              <h3 id="section-4-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                What This Means
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">
+              Clinical Context &amp; Decision-Support Significance
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200 space-y-3 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Predicted Screening Category
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">
+                  {whatThisMeans.categoryTitle}
+                </h4>
+              </div>
+              <span className="px-2.5 py-0.5 rounded text-[10.5px] font-bold uppercase tracking-wide bg-blue-50 text-blue-800 border border-blue-200">
+                AI Decision Support
+              </span>
+            </div>
+
+            {/* Clinical Meaning */}
+            <div className="space-y-1">
+              <strong className="text-slate-800 text-xs block">Clinical Relevance of Category:</strong>
+              <p className="text-slate-700 leading-relaxed text-[11.5px]">
+                {whatThisMeans.clinicalMeaning}
+              </p>
+            </div>
+
+            {/* Verification Notice */}
+            <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200/90 text-amber-950 text-[11px] space-y-1">
+              <strong className="font-bold flex items-center gap-1.5 text-amber-900">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                Clinical Verification Required:
+              </strong>
+              <p className="leading-relaxed text-amber-900/90 font-medium">
+                {whatThisMeans.verificationNotice}
+              </p>
+            </div>
+
+            {/* Concordance summary */}
+            <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-600 space-y-1">
+              <p>
+                <strong>Model Output Concordance:</strong> {interpretation.concordanceTitle} — {interpretation.concordanceDetail}
+              </p>
+              <p className="text-slate-500 italic">
+                {interpretation.distinctionNote}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 5. VISUAL EVIDENCE */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-5-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                5
+              </span>
+              <Layers className="w-4 h-4 text-blue-600" />
+              <h3 id="section-5-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Visual Evidence
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-semibold">
+              {eyeShort} • Original, Lesions, Attention Heatmap, Anatomy &amp; Combined AI Overlay
+            </span>
+          </div>
+
+          {hasVisualizations ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {/* Panel 1: Original Fundus */}
+              <figure className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-900 truncate">
+                      {VISUALIZATION_EXPLANATIONS.original.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openFullscreen('Original')}
+                      className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-0.5 cursor-pointer print:hidden"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="aspect-[4/3] w-full bg-black flex items-center justify-center p-1">
+                    <FundusRetinaCanvas mode="Original" imageOriginal={originalImg} className="w-full h-full" />
+                  </div>
+                </div>
+                <figcaption className="p-2.5 text-[10.5px] text-slate-600 border-t border-slate-100 leading-snug">
+                  <strong className="text-slate-800 block text-[10px] uppercase font-bold text-slate-500 mb-0.5">
+                    {VISUALIZATION_EXPLANATIONS.original.short}
+                  </strong>
+                  {VISUALIZATION_EXPLANATIONS.original.description}
+                </figcaption>
+              </figure>
+
+              {/* Panel 2: Candidate Lesions Overlay */}
+              <figure className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-900 truncate">
+                      {VISUALIZATION_EXPLANATIONS.lesions.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openFullscreen('Lesions')}
+                      className="text-[10px] font-semibold text-rose-700 hover:text-rose-900 flex items-center gap-0.5 cursor-pointer print:hidden"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="aspect-[4/3] w-full bg-black flex items-center justify-center p-1">
+                    <FundusRetinaCanvas
+                      mode="Lesions"
+                      imageOriginal={originalImg}
+                      imageLesions={lesionsImg}
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+                <figcaption className="p-2.5 text-[10.5px] text-slate-600 border-t border-slate-100 leading-snug">
+                  <strong className="text-slate-800 block text-[10px] uppercase font-bold text-slate-500 mb-0.5">
+                    {VISUALIZATION_EXPLANATIONS.lesions.short}
+                  </strong>
+                  {VISUALIZATION_EXPLANATIONS.lesions.description}
+                </figcaption>
+              </figure>
+
+              {/* Panel 3: Grad-CAM++ Attention */}
+              <figure className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-900 truncate">
+                      {VISUALIZATION_EXPLANATIONS.gradcam.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openFullscreen('Grad-CAM++')}
+                      className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-0.5 cursor-pointer print:hidden"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="aspect-[4/3] w-full bg-black flex items-center justify-center p-1">
+                    <FundusRetinaCanvas
+                      mode="Grad-CAM++"
+                      opacity={heatmapOpacity}
+                      imageOriginal={originalImg}
+                      imageGradCam={gradCamImg}
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+                <figcaption className="p-2.5 text-[10.5px] text-slate-600 border-t border-slate-100 leading-snug">
+                  <strong className="text-slate-800 block text-[10px] uppercase font-bold text-slate-500 mb-0.5">
+                    {VISUALIZATION_EXPLANATIONS.gradcam.short}
+                  </strong>
+                  {VISUALIZATION_EXPLANATIONS.gradcam.description}
+                </figcaption>
+              </figure>
+
+              {/* Panel 4: Retinal Anatomy Landmarks */}
+              <figure className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-900 truncate">
+                      {VISUALIZATION_EXPLANATIONS.anatomy.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openFullscreen('Anatomy')}
+                      className="text-[10px] font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-0.5 cursor-pointer print:hidden"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="aspect-[4/3] w-full bg-black flex items-center justify-center p-1">
+                    <FundusRetinaCanvas
+                      mode="Anatomy"
+                      imageOriginal={originalImg}
+                      imageAnatomy={anatomyImg}
+                      imageDebugAnatomy={debugAnatomyImg}
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+                <figcaption className="p-2.5 text-[10.5px] text-slate-600 border-t border-slate-100 leading-snug">
+                  <strong className="text-slate-800 block text-[10px] uppercase font-bold text-slate-500 mb-0.5">
+                    {VISUALIZATION_EXPLANATIONS.anatomy.short}
+                  </strong>
+                  {VISUALIZATION_EXPLANATIONS.anatomy.description}
+                </figcaption>
+              </figure>
+
+              {/* Panel 5: Combined Multi-Layer Overlay */}
+              <figure className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 bg-slate-50 border-b border-slate-200">
+                    <span className="text-[11px] font-bold text-slate-900 truncate">
+                      {VISUALIZATION_EXPLANATIONS.combined.title}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openFullscreen('Combined')}
+                      className="text-[10px] font-semibold text-blue-700 hover:text-blue-900 flex items-center gap-0.5 cursor-pointer print:hidden"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="aspect-[4/3] w-full bg-black flex items-center justify-center p-1">
+                    <FundusRetinaCanvas
+                      mode="Combined"
+                      imageOriginal={originalImg}
+                      imageCombined={combinedImg}
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+                <figcaption className="p-2.5 text-[10.5px] text-slate-600 border-t border-slate-100 leading-snug">
+                  <strong className="text-slate-800 block text-[10px] uppercase font-bold text-slate-500 mb-0.5">
+                    {VISUALIZATION_EXPLANATIONS.combined.short}
+                  </strong>
+                  {VISUALIZATION_EXPLANATIONS.combined.description}
+                </figcaption>
+              </figure>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
+              <span>Visual evidence overlays have not been generated for this screening record.</span>
+            </div>
+          )}
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 6. RECOMMENDED CLINICAL ACTION */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-6-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                6
+              </span>
+              <Compass className="w-4 h-4 text-blue-600" />
+              <h3 id="section-6-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Recommended Next Steps &amp; Follow-Up
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">
+              Triage Referral Recommendation, Follow-Up Interval &amp; Protocol Basis
+            </span>
+          </div>
+
+          <div
+            className={`p-4 rounded-xl border space-y-2.5 text-xs ${
+              recommendedAction.isReferral
+                ? 'bg-amber-50/60 border-amber-200 text-amber-950'
+                : 'bg-slate-50/80 border-slate-200 text-slate-800'
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  AI-Generated Recommendation (Subject to Clinician Confirmation)
+                </span>
+                <h4 className="text-sm font-bold text-slate-900 mt-0.5">
+                  {recommendedAction.actionTitle}
+                </h4>
+              </div>
+
+              <span
+                className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded border ${
+                  recommendedAction.isReferral
+                    ? 'bg-amber-100 text-amber-900 border-amber-300'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                }`}
+              >
+                {recommendedAction.priorityBadge}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-700 leading-relaxed font-medium">
+              {recommendedAction.actionSummary}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200/80 text-[11px]">
+              <div>
+                <span className="text-slate-400 uppercase font-bold text-[10px] block">Follow-Up Interval:</span>
+                <strong className="text-slate-900 font-semibold">{recommendedAction.timingGuideline}</strong>
+              </div>
+              <div>
+                <span className="text-slate-400 uppercase font-bold text-[10px] block">Guideline Basis:</span>
+                <span className="text-slate-600">{recommendedAction.protocolBasis}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 7. MODEL LIMITATIONS & QUALITY ASSESSMENT */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-7-heading" className="space-y-3">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                7
+              </span>
+              <Info className="w-4 h-4 text-slate-600" />
+              <h3 id="section-7-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Model Limitations &amp; Quality Notes
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">
+              Pipeline Boundary Conditions &amp; Capture Constraints
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200 text-xs space-y-2">
+            {modelLimitations.length > 0 ? (
+              <ul className="space-y-1.5 list-disc pl-5 text-slate-700 text-[11.5px]">
+                {modelLimitations.map((lim, idx) => (
+                  <li key={idx} className="leading-relaxed">
+                    {lim}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-[11.5px] text-slate-600 leading-relaxed">
+                No model pipeline limitations or missing modalities identified. Retinal photography clarity is adequate for automated diabetic retinopathy decision support across the 45° central field. Automated outputs do not inspect peripheral retina beyond the captured field.
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 8. OPHTHALMOLOGIST REVIEW */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-8-heading" className="space-y-3 pt-1">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                8
+              </span>
+              <FileSignature className="w-4 h-4 text-blue-600" />
+              <h3 id="section-8-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Ophthalmologist Review
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">Clinical Attestation, Specialist Assessment &amp; Counter-Verification Sign-Off</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200 space-y-3 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span className="text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                Tele-Ophthalmology Verification Status
+              </span>
+              {report.specialistReview ? (
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Verified by Specialist ✓
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                  Pending Specialist Review
+                </span>
+              )}
+            </div>
+
+            {report.specialistReview ? (
+              <div className="space-y-1 text-slate-800">
+                <p><strong>Reviewing Specialist:</strong> {report.specialistReview.specialistName || 'Not available'}</p>
+                <p><strong>Review Date:</strong> {report.specialistReview.reviewDate || 'Not available'}</p>
+                <p><strong>Assessment Notes:</strong> {report.specialistReview.assessment || 'Not available'}</p>
+                {report.specialistReview.notes && <p><strong>Additional Notes:</strong> {report.specialistReview.notes}</p>}
+                {report.specialistReview.recommendation && <p><strong>Recommendation:</strong> {report.specialistReview.recommendation}</p>}
+              </div>
+            ) : (
+              <div className="space-y-1 text-slate-600">
+                <p><strong>Assigned Review Queue:</strong> Regional Tele-Ophthalmology Network</p>
+                <p><strong>Specialist Assessment:</strong> <span className="text-slate-500 italic">Pending specialist clinical evaluation</span></p>
+                <p><strong>Clinical Notes:</strong> <span className="text-slate-500 italic">Queued for ophthalmologist counter-verification</span></p>
+              </div>
+            )}
+
+            {/* Formal Medical Sign-off Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+              <div>
+                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">
+                  Reviewing Ophthalmologist
+                </span>
+                <span className="text-slate-900 font-semibold block text-xs mt-0.5">
+                  {report.specialistReview?.specialistName || 'Dr. ___________________________'}
+                </span>
+                <div className="mt-3 border-b border-slate-300" />
+              </div>
+
+              <div>
+                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">
+                  Medical Registration / License
+                </span>
+                <span className="text-slate-900 font-mono block text-xs mt-0.5">
+                  {(report.specialistReview as any)?.registrationNumber || 'MCI / Reg: ____________________'}
+                </span>
+                <div className="mt-3 border-b border-slate-300" />
+              </div>
+
+              <div>
+                <span className="text-slate-400 text-[10px] uppercase font-bold tracking-wider block">
+                  Clinical Signature &amp; Date
+                </span>
+                <span className="text-slate-900 block text-xs mt-0.5">
+                  {report.specialistReview?.reviewDate ? `Date: ${report.specialistReview.reviewDate}` : 'Date: ________________________'}
+                </span>
+                <div className="mt-3 border-b border-slate-300" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 9. DISCLAIMER */}
+        {/* ========================================================================= */}
+        <section aria-labelledby="section-9-heading" className="space-y-3 pt-1">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-200">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-black">
+                9
+              </span>
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              <h3 id="section-9-heading" className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Disclaimer
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500 font-medium">Regulatory &amp; Tele-Ophthalmology Decision-Support Notice</span>
+          </div>
+
+          <footer className="p-4 rounded-xl bg-slate-50/80 border border-slate-200 text-center text-[10px] text-slate-500 space-y-1.5">
+            <div className="flex items-center justify-center gap-1.5 font-bold text-slate-700">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              <span>Official Tele-Ophthalmology Decision-Support Disclaimer</span>
+            </div>
+            <p className="max-w-3xl mx-auto leading-relaxed text-slate-600">
+              TRINAY is an artificial intelligence decision-support tool intended for tele-retinal screening and primary triage. It does not provide an autonomous medical diagnosis. All automated classifications, lesion segmentations, and landmark localizations must be clinically correlated and verified by a licensed ophthalmologist through direct clinical examination (slit-lamp biomicroscopy / OCT).
+            </p>
+            <p className="text-slate-400 font-mono pt-1 border-t border-slate-200/60">
+              Report ID: {report.id} • Screening ID: {report.screeningId} • Generated: {report.generatedDate} • Eye: {report.eye} ({eyeShort})
+            </p>
+          </footer>
+        </section>
+      </div>
+
+      {/* Fullscreen Deep Inspection Modal */}
+      {isFullscreenOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col p-4 sm:p-6 animate-in fade-in duration-150 print:hidden">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <h4 className="text-xs font-bold text-white tracking-wide uppercase">
+                High-Resolution Evidence Inspection — {activeXaiTab}
+              </h4>
+              <span className="text-xs text-slate-400 font-mono hidden sm:inline">
+                ({report.eye} • 512×512 Canonical)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs">
+                {(['Original', 'Lesions', 'Grad-CAM++', 'Anatomy', 'Combined'] as XaiTab[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setActiveXaiTab(mode)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                      activeXaiTab === mode ? 'bg-[#0284C7] text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+
+              {(activeXaiTab === 'Grad-CAM++' || activeXaiTab === 'Combined') && (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-300">
+                  <Sliders className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-[11px] text-slate-400">Heatmap:</span>
+                  <input
+                    type="range"
+                    min="20"
+                    max="95"
+                    value={heatmapOpacity}
+                    onChange={(e) => setHeatmapOpacity(Number(e.target.value))}
+                    className="w-16 accent-[#0284C7] cursor-pointer"
+                  />
+                  <span className="text-[11px] font-mono text-slate-400">{heatmapOpacity}%</span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setIsFullscreenOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-lg hover:bg-slate-700 transition-colors cursor-pointer"
+                title="Close Fullscreen"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 w-full h-full flex items-center justify-center p-2 overflow-hidden">
+            <FundusRetinaCanvas
+              mode={activeXaiTab}
+              opacity={heatmapOpacity}
+              className="w-full h-full"
+              imageOriginal={originalImg}
+              imageGradCam={gradCamImg}
+              imageLesions={lesionsImg}
+              imageAnatomy={anatomyImg}
+              imageCombined={combinedImg}
+              imageDebugAnatomy={debugAnatomyImg}
+              highlightLesion={highlightedLesion}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Send to Patient Phone Modal */}
+      {isSendingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150 print:hidden">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 max-w-md w-full space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-blue-600" />
+                <h4 className="text-sm font-bold text-slate-900">Send Report Link to Patient</h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSendingModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Send an automated SMS containing a secure link to access this official screening report:
+            </p>
+
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 text-xs">
+              <p><span className="text-slate-400">Patient:</span> <strong>{report.patientName}</strong></p>
+              <p><span className="text-slate-400">Phone:</span> <strong className="font-mono">{patientPhoneNumber}</strong></p>
+              <p><span className="text-slate-400">Report ID:</span> <span className="font-mono text-slate-700">{report.id}</span></p>
+            </div>
+
+            {sendSuccess ? (
+              <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Report sent successfully to {patientPhoneNumber}!</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsSendingModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -845,27 +1356,25 @@ export const DetailedReportPage: React.FC = () => {
                   type="button"
                   disabled={isSending}
                   onClick={handleSimulateSend}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg shadow-xs flex items-center gap-2"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
                 >
                   {isSending ? (
                     <>
-                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>Sending...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="w-3.5 h-3.5" />
+                      <Phone className="w-3.5 h-3.5" />
                       <span>Confirm &amp; Send</span>
                     </>
                   )}
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    )
-  }
-    </div >
+      )}
+    </div>
   );
 };

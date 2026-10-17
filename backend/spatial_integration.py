@@ -561,6 +561,11 @@ def build_spatial_analysis(
         ),
 
         "macula_mask": macula_mask,
+        "macula_is_segmented": False,
+        "macula_is_estimated": True,
+        "macula_method": "fovea_centered_roi_estimation",
+        "macula_radius_ratio": 0.12,
+        "macula_radius_pixels": int(min(h, w) * 0.12),
 
         "vessel_analysis": vessel_features,
 

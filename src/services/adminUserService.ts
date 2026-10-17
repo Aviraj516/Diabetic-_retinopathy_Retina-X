@@ -169,7 +169,7 @@ export async function fetchAdminUsers(): Promise<{ success: boolean; users?: Use
 
     const formatted: UserAccount[] = (profiles || []).map((p) => {
       const rawRole = String(p.role || 'nurse').toLowerCase() as UserRole;
-      let title = 'Primary Healthcare Worker';
+      let title = 'Ophthalmologist';
       if (rawRole === 'admin') title = 'Hospital System Administrator';
       if (rawRole === 'specialist') title = 'Consultant Ophthalmologist';
 

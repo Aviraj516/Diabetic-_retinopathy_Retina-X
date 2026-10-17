@@ -23,8 +23,9 @@ const path = require('path');
   await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
   
   // Login
-  await page.waitForSelector('#btn-quick-nurse', { timeout: 5000 });
-  await page.click('#btn-quick-nurse');
+  await page.waitForSelector('#login-identifier', { timeout: 5000 });
+  await page.type('#login-identifier', 'avi@gmail.com');
+  await page.type('#login-password', 'password');
   await new Promise(r => setTimeout(r, 400));
   await page.click('#login-submit-btn');
   await page.waitForFunction(() => document.body.innerText.includes('New Screening'), { timeout: 10000 });

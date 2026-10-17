@@ -1,0 +1,53 @@
+{
+  "common": {
+    "dashboard": "డాష్‌బోర్డ్",
+    "patients": "రోగులు",
+    "screening": "స్క్రీనింగ్",
+    "medical_records": "వైద్య రికార్డులు",
+    "analytics": "విశ్లేషణలు",
+    "reports": "నివేదికలు",
+    "profile": "ప్రొఫైల్",
+    "settings": "సెట్టింగ్‌లు",
+    "logout": "లాగౌట్",
+    "save": "సేవ్ చేయండి",
+    "cancel": "రద్దు చేయండి",
+    "close": "మూసివేయండి",
+    "loading": "లోడ్ అవుతోంది...",
+    "error": "లోపం"
+  },
+  "dashboard": {
+    "welcome": "తిరిగి స్వాగతం",
+    "recent_patients": "ఇటీవలి రోగులు",
+    "screenings_today": "నేటి స్క్రీనింగ్‌లు",
+    "pending_reviews": "పెండింగ్‌లో ఉన్న సమీక్షలు",
+    "view_all": "అన్నీ చూడండి"
+  },
+  "patient": {
+    "add_patient": "రోగిని జోడించండి",
+    "edit_patient": "రోగిని సవరించండి",
+    "delete_patient": "రోగిని తొలగించండి",
+    "search": "రోగులను శోధించండి...",
+    "full_name": "పూర్తి పేరు",
+    "age": "వయస్సు",
+    "gender": "లింగం"
+  },
+  "screening": {
+    "title": "కంటి స్క్రీనింగ్",
+    "start": "స్క్రీనింగ్ ప్రారంభించండి",
+    "processing": "చిత్రాన్ని విశ్లేషిస్తోంది...",
+    "status": "స్థితి",
+    "results": "ఫలితాలు",
+    "recommendations": "సిఫార్సులు",
+    "explanations": "క్లినికల్ వివరణలు"
+  },
+  "results": {
+    "normal": "సాధారణం",
+    "cataract": "శుక్లం",
+    "glaucoma": "గ్లకోమా",
+    "dr": "డయాబెటిక్ రెటినోపతి",
+    "amd": "AMD",
+    "refer": "కంటి వైద్యుడికి సూచించండి",
+    "good": "మంచిది",
+    "bad": "చెడ్డది"
+  }
+}

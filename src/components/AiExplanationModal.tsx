@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Info, ExternalLink, ShieldAlert, Sparkles } from 'lucide-react';
+import { X, Info, Sparkles } from 'lucide-react';
 import { EVIDENCE_CARDS } from '../data/retinaImages';
 import { useApp } from '../context/AppContext';
 
@@ -19,18 +19,18 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header matching reference image #10 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600">
-              <Sparkles className="w-4 h-4" />
+      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header matching clinical ophthalmology design */}
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-sky-50 text-[#0284C7] border border-sky-100">
+              <Sparkles className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-sm font-bold text-slate-900">
                 {t.aiExplanation}
               </h2>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 font-medium">
                 {t.xaiFeatureAttribution}
               </p>
             </div>
@@ -38,20 +38,20 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Buttons: Why this result? | Explanation | Clinical References */}
-        <div className="flex border-b border-slate-100 px-6 bg-slate-50/50">
+        <div className="flex border-b border-slate-100 px-6 bg-slate-50/40">
           <button
             type="button"
             onClick={() => setActiveTab('why')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
               activeTab === 'why'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-[#0284C7] text-[#0284C7] bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -60,9 +60,9 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('explanation')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
               activeTab === 'explanation'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-[#0284C7] text-[#0284C7] bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -71,9 +71,9 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('clinical')}
-            className={`py-3 px-4 text-xs font-semibold border-b-2 transition-colors ${
+            className={`py-3 px-4 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
               activeTab === 'clinical'
-                ? 'border-blue-600 text-blue-700 bg-white'
+                ? 'border-[#0284C7] text-[#0284C7] bg-white'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -86,12 +86,12 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
           {activeTab === 'why' && (
             <>
               {/* Heading Callout */}
-              <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl">
+              <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-xl">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-bold tracking-wider uppercase text-amber-800">
                     {t.aiScreeningResult}
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
                     Moderate DR — Level 2
                   </span>
                 </div>
@@ -102,7 +102,7 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
                 </p>
               </div>
 
-              {/* Key Visual Evidence Grid (4 cards from reference image #10) */}
+              {/* Key Visual Evidence Grid */}
               <div>
                 <h3 className="font-bold text-slate-900 mb-3 text-xs uppercase tracking-wider">
                   {t.keyVisualEvidence}
@@ -111,7 +111,7 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
                   {EVIDENCE_CARDS.map((card) => (
                     <div
                       key={card.id}
-                      className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between"
+                      className="p-3 bg-slate-50 border border-slate-200/90 rounded-xl flex flex-col justify-between"
                     >
                       {/* Stylized Thumbnail Graphic */}
                       <div className="aspect-square w-full rounded-lg bg-slate-900 mb-2.5 overflow-hidden flex items-center justify-center relative">
@@ -135,7 +135,7 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
                           </div>
                         )}
                         {card.id === 'gradcam' && (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-600 via-yellow-500 to-red-500 opacity-90" />
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#0284C7] via-amber-400 to-rose-500 opacity-90" />
                         )}
                       </div>
 
@@ -156,7 +156,7 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
 
           {activeTab === 'explanation' && (
             <div className="space-y-3.5 leading-relaxed text-slate-700">
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/90">
                 <h4 className="font-bold text-slate-900 mb-1">{t.spatialFeatureAttribution}</h4>
                 <p className="text-xs">
                   The model utilized a multi-scale convolutional backbone with Guided Grad-CAM++
@@ -165,13 +165,13 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
                   hemorrhages.
                 </p>
               </div>
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/90">
                 <h4 className="font-bold text-slate-900 mb-1">{t.differentialStagingReasoning}</h4>
-                <p className="text-xs">
-                  - <strong>Level 0 (No DR):</strong> Excluded due to presence of verified vascular abnormalities.<br />
-                  - <strong>Level 1 (Mild DR):</strong> Excluded because lesions exceed isolated microaneurysms, including intraretinal hemorrhages.<br />
-                  - <strong>Level 2 (Moderate DR):</strong> High probability match (87%) based on the International Clinical Diabetic Retinopathy (ICDR) scale.<br />
-                  - <strong>Level 3+ (Severe / PDR):</strong> Excluded due to absence of venous beading or neovascularization.
+                <p className="text-xs space-y-1">
+                  • <strong>Level 0 (No DR):</strong> Excluded due to presence of verified vascular abnormalities.<br />
+                  • <strong>Level 1 (Mild DR):</strong> Excluded because lesions exceed isolated microaneurysms, including intraretinal hemorrhages.<br />
+                  • <strong>Level 2 (Moderate DR):</strong> High probability match (87%) based on the International Clinical Diabetic Retinopathy (ICDR) scale.<br />
+                  • <strong>Level 3+ (Severe / PDR):</strong> Excluded due to absence of venous beading or neovascularization.
                 </p>
               </div>
             </div>
@@ -179,20 +179,20 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
 
           {activeTab === 'clinical' && (
             <div className="space-y-3 text-slate-700">
-              <p className="text-xs font-semibold text-slate-900">
+              <p className="text-xs font-bold text-slate-900">
                 {t.peerReviewedGuidelines}:
               </p>
               <ul className="space-y-2.5 text-xs">
-                <li className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="font-semibold text-slate-900">
+                <li className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90">
+                  <p className="font-bold text-slate-900">
                     AAO Preferred Practice Pattern: Diabetic Retinopathy (2024)
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
                     American Academy of Ophthalmology clinical staging and referral guidelines.
                   </p>
                 </li>
-                <li className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <p className="font-semibold text-slate-900">
+                <li className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/90">
+                  <p className="font-bold text-slate-900">
                     Proposed International Clinical Diabetic Retinopathy Disease Severity Scale
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -203,21 +203,21 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
             </div>
           )}
 
-          {/* Blue Info Callout (Required terminology: AI-Assisted Explanation, NOT diagnosis) */}
-          <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-2.5 text-blue-900">
-            <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+          {/* Blue Info Callout */}
+          <div className="p-4 bg-sky-50/80 border border-sky-200 rounded-xl flex items-start gap-3 text-sky-950">
+            <Info className="w-4.5 h-4.5 text-[#0284C7] shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed">
-              <strong>{t.clinicalAdvisory}:</strong> {t.clinicalAdvisoryDesc}
+              <strong className="text-sky-900">{t.clinicalAdvisory}:</strong> {t.clinicalAdvisoryDesc}
             </p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-white bg-[#1E60D5] hover:bg-blue-700 rounded-lg transition-colors"
+            className="px-5 py-2 text-xs font-bold text-white bg-[#0284C7] hover:bg-sky-700 rounded-xl shadow-xs transition-colors cursor-pointer"
           >
             {t.close}
           </button>
@@ -226,3 +226,4 @@ export const AiExplanationModal: React.FC<AiExplanationModalProps> = ({
     </div>
   );
 };
+
