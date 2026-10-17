@@ -1,527 +1,78 @@
-RETINA-X — Explainable AI-Assisted Diabetic Retinopathy Screening
-RETINA-X is an AI-assisted retinal screening system that takes a fundus image and moves it through a sequence of real machine-learning models.
+# RETINA-X: Deep Learning for Diabetic Retinopathy Screening
 
-The main idea is simple:
+RETINA-X is a research and software project for analyzing retinal fundus images. The repository contains code for a five-class diabetic retinopathy (DR) severity workflow as well as additional retinal image-analysis components. This README focuses on the DR-related scope and distinguishes model code from experimental evidence.
 
-Check the image → predict DR severity → analyze retinal anatomy and lesions → visualize the findings → explain the AI output.
+> **Research-use notice:** This software is not a medical device and must not be used as the sole basis for diagnosis or treatment. Outputs require assessment by a qualified eye-care professional.
 
-Important: RETINA-X is a screening/research system. AI results should not be treated as a final medical diagnosis without appropriate clinical review.
+## Contents
 
-1. Complete System Flow
-                         ┌───────────────────────┐
-                         │     FUNDUS IMAGE      │
-                         │      USER UPLOAD      │
-                         └───────────┬───────────┘
-                                     │
-                                     ▼
-                       ┌──────────────────────────┐
-                       │ 1. IMAGE QUALITY MODEL   │
-                       │      Random Forest       │
-                       │                          │
-                       │ Sharpness                 │
-                       │ Brightness                │
-                       │ Illumination              │
-                       │ Contrast                  │
-                       │ Noise                     │
-                       │ FOV                       │
-                       └────────────┬─────────────┘
-                                    │
-                         ┌──────────┴──────────┐
-                         │                     │
-                   BAD / UNSUITABLE         GOOD
-                         │                     │
-                         ▼                     ▼
-                 ┌───────────────┐   ┌──────────────────────┐
-                 │ ASK USER TO   │   │ 2. DR SEVERITY MODEL │
-                 │ RETAKE IMAGE  │   │     EfficientNet-B0  │
-                 └───────────────┘   │                      │
-                                     │ No DR                │
-                                     │ Mild                 │
-                                     │ Moderate             │
-                                     │ Severe               │
-                                     │ Proliferative DR     │
-                                     └───────────┬──────────┘
-                                                 │
-                                                 ▼
-                              ┌─────────────────────────────────┐
-                              │ 3. TRINAY ANATOMY + LESION      │
-                              │                                 │
-                              │ ANATOMY                         │
-                              │ ├─ Blood Vessels                │
-                              │ ├─ Optic Disc                   │
-                              │ └─ Fovea                        │
-                              │                                 │
-                              │ LESIONS                         │
-                              │ ├─ MA                           │
-                              │ ├─ HE                           │
-                              │ ├─ EX                           │
-                              │ └─ SE                           │
-                              └──────────────┬──────────────────┘
-                                             │
-                                             ▼
-                              ┌─────────────────────────────────┐
-                              │ 4. SPATIAL + VISUAL ANALYSIS    │
-                              │                                 │
-                              │ • Vessel measurements           │
-                              │ • Disc–fovea relationship       │
-                              │ • Macular region                │
-                              │ • Lesion measurements            │
-                              │ • Anatomy overlay               │
-                              │ • Lesion overlay                │
-                              │ • Combined overlay              │
-                              └──────────────┬──────────────────┘
-                                             │
-                                             ▼
-                              ┌─────────────────────────────────┐
-                              │ 5. XAI                          │
-                              │     Integrated Gradients        │
-                              │                                 │
-                              │ Anatomy XAI                      │
-                              │ Lesion XAI                       │
-                              │ Combined XAI                     │
-                              └──────────────┬──────────────────┘
-                                             │
-                                             ▼
-                              ┌─────────────────────────────────┐
-                              │       RETINA-X DASHBOARD        │
-                              │                                 │
-                              │ Real-time results +             │
-                              │ visual evidence + XAI           │
-                              └─────────────────────────────────┘
-2. What Happens After Image Upload?
-When a user uploads a retinal image, RETINA-X first reads basic file information:
+- [Project Scope](#project-scope)
+- [DR Severity Classification](#dr-severity-classification)
+- [Related Retinal Analysis Components](#related-retinal-analysis-components)
+- [Repository Structure](#repository-structure)
+- [Environment and Installation](#environment-and-installation)
+- [Running the Application](#running-the-application)
+- [Datasets and Training](#datasets-and-training)
+- [Evaluation and Reporting](#evaluation-and-reporting)
+- [Limitations](#limitations)
+- [Security and Data Handling](#security-and-data-handling)
 
-Filename
-File size
-Image width
-Image height
-Resolution
-The original retinal image is preserved for display and analysis.
+## Project Scope
 
-3. Step 1 — Image Quality Assessment
-The first model answers one question:
+The DR component is intended to classify a retinal fundus image into one of five severity categories. The repository also contains code for retinal image quality handling, vessel segmentation, optic-disc segmentation, fovea localization, and lesion segmentation. These tasks are related, but they are not interchangeable: a severity classifier produces an image-level category, whereas segmentation models produce pixel-level masks and a localization model produces coordinates.
 
-Is this retinal image good enough for AI analysis?
+## DR Severity Classification
 
-The existing model is:
+The repository includes a checkpoint path named `model/dr_severity_efficientnet_b0.pth` and README-level documentation describing an EfficientNet-B0 classifier with the following label mapping:
 
-model/best_quality_model.pkl
-It is a Random Forest model.
+| Label | Category |
+|---:|---|
+| 0 | No DR |
+| 1 | Mild DR |
+| 2 | Moderate DR |
+| 3 | Severe DR |
+| 4 | Proliferative DR |
 
-Features used
-The image-quality pipeline uses six features:
+**Important implementation status:** the checkpoint's presence/name and the documented label mapping do not, by themselves, establish how the checkpoint was trained, which exact dataset split was used, or its held-out performance. The training protocol and evaluation metrics should be added only after the relevant training/evaluation code, data split records, and reproducible test outputs have been verified.
 
-Feature	Simple meaning
-Sharpness	How focused or blurry the image is
-Brightness	How dark or bright the image is
-Illumination	How evenly the retina is illuminated
-Contrast	How clearly structures can be separated
-Noise	How much unwanted image variation exists
-FOV	How much of the retinal field is visible
-Output
-The quality model classifies an image as:
+### Suggested inference workflow
 
-Good
-Borderline
-Ungradable
-Quality gate
-The workflow should behave like this:
+1. Provide a retinal fundus image.
+2. Apply the exact preprocessing used during classifier training.
+3. Load the corresponding trained checkpoint and architecture.
+4. Run inference and map the model output to the documented class labels.
+5. Return the prediction with clear limitations and, where available, calibrated confidence.
 
-Image
-  ↓
-Quality Model
-  ↓
-Good?
- ├── NO → ask for clearer/re-taken image
- └── YES → continue
-A poor-quality image should not be passed to the later diagnostic stages because doing so can make the downstream output less reliable.
+The exact inference entry point and preprocessing for the DR severity model should be verified against the application code before documenting a standalone prediction command.
 
-4. Step 2 — DR Severity Classification
-If the image passes the quality stage, it is sent to:
+## Related Retinal Analysis Components
 
-model/dr_severity_efficientnet_b0.pth
-The model is based on EfficientNet-B0.
+The repository contains these additional model definitions or model references:
 
-It predicts five DR severity classes:
+| Component | What the code is intended to produce | Repository evidence |
+|---|---|---|
+| Image quality | Image-quality classification/gating | Quality-model definitions and quality checkpoint references exist; verify label scheme and the active implementation before use |
+| Blood-vessel segmentation | A binary vessel mask | `backend/unet_efficientnet.py` defines a U-Net using an EfficientNet-B0 encoder, 3-channel input and one output channel |
+| Optic-disc segmentation | A binary optic-disc mask | `backend/optic_disc_unet.py` defines a U-Net using an EfficientNet-B0 encoder and one output channel |
+| Fovea localization | Two normalized coordinates (x, y) | `backend/fovea_net.py` defines an EfficientNet-B0-based regressor with a two-value output |
+| Retinal lesion segmentation | Four lesion channels | `backend/model.py` defines a standard U-Net with output channels mapped to MA, HE, EX and SE |
 
-0 → No DR
-1 → Mild
-2 → Moderate
-3 → Severe
-4 → Proliferative DR
-The dashboard can display:
+Lesion abbreviations used in the current code/documentation:
 
-Predicted Severity
-Severity Level
-Model Confidence
-Simple flow:
+- **MA:** Microaneurysm
+- **HE:** Haemorrhage
+- **EX:** Hard exudate
+- **SE:** Soft exudate
 
-Good Fundus Image
-       ↓
-EfficientNet-B0
-       ↓
-DR Severity
-5. Step 3 — TRINAY
-TRINAY is the main anatomy and retinal-lesion analysis system.
+These components are supplemental retinal-analysis tasks; their presence does not prove that all outputs have been clinically validated or that every model checkpoint is available and usable in a fresh installation.
 
-It contains two major parts:
+## Repository Structure
 
-                 TRINAY
-                    │
-          ┌─────────┴─────────┐
-          │                   │
-          ▼                   ▼
-      ANATOMY               LESIONS
-          │                   │
-      ┌───┼───┐           ┌───┼───┬───┐
-      │   │   │           │   │   │   │
-    Vessels Disc Fovea   MA  HE  EX  SE
-6. Anatomy Analysis
-6.1 Blood Vessels
-The blood-vessel model identifies retinal vessels at the pixel level.
+A selected overview of relevant files and directories:
 
-Architecture:
-
-EfficientNet-B0 Encoder
-          +
-      U-Net Decoder
-          ↓
-   Vessel Segmentation
-The result is a real binary vessel mask.
-
-The dashboard can calculate:
-
-Vessel pixels
-Vessel density
-Connected components
-Largest connected component
-Macular vessel density
-The visualization must use the real predicted vessel mask rather than manually drawn vessel lines.
-
-6.2 Optic Disc
-The optic-disc model identifies the optic disc.
-
-The output gives the predicted optic-disc region.
-
-From that mask the system can calculate information such as:
-
-Detected / not detected
-Optic disc area
-Area ratio
-Centroid
-Circularity
-Bounding box
-The dashboard can draw the detected boundary directly on the fundus image.
-
-6.3 Fovea
-The fovea model predicts a location rather than a segmentation mask.
-
-The main output is:
-
-X coordinate
-Y coordinate
-That location is used for:
-
-Fovea marker
-Macular ROI
-Disc–fovea distance
-Macular spatial analysis
-7. Macula
-The current TRINAY pipeline uses the predicted fovea location to create a fovea-centered region representing the macular area for computational analysis.
-
-Predicted Fovea
-      ↓
-Fovea-centered ROI
-      ↓
-Macular Analysis
-This can be used for:
-
-macular vessel density
-
-lesion overlap with the macular region
-
-The current ROI is a computational approximation; it is not a separately trained macula segmentation model.
-
-8. Retinal Lesion Analysis
-The lesion model is a four-class U-Net.
-
-Fundus Image
-      ↓
-     U-Net
-      ↓
- ┌────┬────┬────┬────┐
- MA   HE   EX   SE
-MA — Microaneurysm
-Small retinal abnormalities associated with tiny blood vessels. In fundus images they can appear as very small dark/red spots.
-
-HE — Haemorrhage
-Areas of retinal bleeding.
-
-EX — Hard Exudate
-Bright or yellowish deposits visible on the retina.
-
-SE — Soft Exudate
-Pale retinal lesions commonly described as cotton-wool type lesions.
-
-9. MA / HE / EX / SE Legend
-For users, the short legend is:
-
-MA → Microaneurysm
-HE → Haemorrhage
-EX → Hard Exudate
-SE → Soft Exudate
-The visualization colors should match the legend colors.
-
-Image marking
-     =
-Legend color
-     =
-Lesion card color
-This makes the dashboard easier to understand.
-
-10. Existing Lesion Thresholds
-The current lesion inference pipeline uses:
-
-MA = 0.30
-HE = 0.10
-EX = 0.25
-SE = 0.10
-These values belong to the current inference configuration.
-
-Changing them changes which pixels are considered detected, so they should only be changed intentionally and documented.
-
-11. Post-Processing
-Raw neural-network predictions can contain very small unwanted regions.
-
-The post-processing stage:
-
-Raw lesion mask
-      ↓
-Remove tiny components
-      ↓
-Clean / smooth regions
-      ↓
-Final visualization mask
-The processed masks are then used for:
-
-Region counting
-Pixel counting
-Visualization
-Spatial analysis
-12. Spatial Integration
-An important part of TRINAY is understanding where anatomy and lesions are located relative to one another.
-
-For example:
-
-Optic Disc
-     │
-     │ distance
-     ▼
-   Fovea
-The pipeline can calculate:
-
-Vessel measurements
-Global vessel density
-Macular vessel density
-Connected components
-Largest vessel component
-Optic disc measurements
-Area
-Centroid
-Circularity
-Area ratio
-Fovea measurements
-X coordinate
-Y coordinate
-Spatial relationship
-Disc-to-fovea distance
-Lesion/macula relationship
-Total lesion pixels
-Lesion pixels in macular ROI
-Macular overlap ratio
-This converts segmentation results into measurable information.
-
-13. Visualization
-The visualization layer should always preserve the original fundus image.
-
-The concept is:
-
-                 REAL FUNDUS
-                      │
-       ┌──────────────┼──────────────┐
-       │              │              │
-       ▼              ▼              ▼
-    ANATOMY         LESIONS          XAI
-       │              │              │
-       ▼              ▼              ▼
-   vessels        MA/HE/EX/SE    attribution
-   optic disc                     heatmaps
-   fovea
-       │              │              │
-       └──────────────┼──────────────┘
-                      ▼
-             COMBINED VISUALIZATION
-Anatomy visualization
-The real fundus should show:
-
-Blood vessels
-Optic disc
-Fovea
-Macular region
-Lesion visualization
-The real fundus should show:
-
-MA
-HE
-EX
-SE
-Combined visualization
-The combined image shows:
-
-Real fundus
-+
-Real anatomy predictions
-+
-Real lesion predictions
-14. Anatomical Labels
-For easier understanding, the visualization can include callouts such as:
-
-Optic Disc
-      │
-      ▼
-   [real predicted disc]
-
-Fovea
-  │
-  ▼
-[real predicted fovea]
-
-Macula
-  │
-  ▼
-[real fovea-centered ROI]
-
-Blood Vessels
-  │
-  ▼
-[real vessel mask]
-The marker locations must come from the model outputs.
-
-The system should never draw fixed or hardcoded anatomy locations.
-
-15. Explainable AI
-RETINA-X uses Integrated Gradients to provide model explainability.
-
-The simple question XAI tries to answer is:
-
-Which areas of the retinal image contributed to the model output?
-
-Anatomy XAI
-The anatomy branch can produce:
-
-Blood Vessel XAI
-Optic Disc XAI
-Fovea XAI
-These can then be combined into:
-
-Combined Anatomy XAI
-Lesion XAI
-The lesion model can produce explanations for detected lesions:
-
-MA XAI
-HE XAI
-EX XAI
-SE XAI
-Only detected classes need to be explained in the lightweight workflow.
-
-Combined XAI
-The final visualization combines:
-
-Anatomy attribution
-          +
-Lesion attribution
-          ↓
-Combined Anatomy + Lesion XAI
-This is a visualization-level fusion of attribution maps from the separate models. It is not a new trained model.
-
-16. Fast XAI
-Integrated Gradients can require substantial memory because it needs repeated forward/backward computation.
-
-The fast XAI version therefore uses a smaller workload:
-
-XAI input       192 × 192
-IG steps        2
-Target pixels   limited
-Lesions         detected classes only
-Device          CPU
-Normal model inference and XAI are separate concerns:
-
-Normal inference
-    ↓
-regular model input
-
-XAI
-    ↓
-smaller input
-    ↓
-lighter computation
-This design is intended to reduce memory pressure on a laptop.
-
-17. Final Dashboard Flow
-The user experience is:
-
-┌────────────────────────────────────────┐
-│            RETINA-X DASHBOARD          │
-└────────────────────────────────────────┘
-                     │
-                     ▼
-              Upload Fundus Image
-                     │
-                     ▼
-              Image Information
-                     │
-                     ▼
-               Image Quality
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-       Not Good                Good
-          │                     │
-          ▼                     ▼
-     Retake image          DR Severity
-                                │
-                                ▼
-                         TRINAY Analysis
-                                │
-                   ┌────────────┴────────────┐
-                   │                         │
-                Anatomy                  Lesions
-                   │                         │
-                   └────────────┬────────────┘
-                                │
-                                ▼
-                         Visualization
-                                │
-                                ▼
-                                XAI
-                                │
-                                ▼
-                           View Report
-18. Final Project Structure
-retina-x/
-│
-├── model/
-│   ├── best_quality_model.pkl
-│   ├── dr_severity_efficientnet_b0.pth
-│   │
-│   └── trinay/
-│       ├── best_vessel_unet.pth
-│       ├── best_optic_disc_unet.pth
-│       ├── best_fovea_net.pth
-│       └── standard_unet_ddr_finetuned.pth
-│
+```text
+.
 ├── backend/
-│   ├── anatomy_assessment.py
 │   ├── fovea_net.py
 │   ├── model.py
 │   ├── optic_disc_unet.py
@@ -530,240 +81,156 @@ retina-x/
 │   ├── trinay_anatomy_lesion_pipeline.py
 │   ├── trinay_xai_fast.py
 │   └── unet_efficientnet.py
-│
+├── model/
+│   ├── best_fovea_net.pth
+│   ├── best_optic_disc_unet.pth
+│   ├── best_quality_model.pkl
+│   ├── best_vessel_unet.pth
+│   ├── dr_severity_efficientnet_b0.pth
+│   └── standard_unet_ddr_finetuned.pth
+├── pipeline/
+├── trinay/
 ├── src/
-│   └── React / TypeScript dashboard
-│
-├── server/
-│   └── Existing project server code
-│
 ├── server.ts
 ├── package.json
-└── README.md
-19. What Each Important Backend File Does
-File	Purpose
-model.py	Lesion U-Net architecture
-unet_efficientnet.py	Blood vessel segmentation model
-optic_disc_unet.py	Optic disc segmentation model
-fovea_net.py	Fovea localization model
-postprocess.py	Cleans predicted lesion masks
-spatial_integration.py	Calculates spatial relationships and measurements
-anatomy_assessment.py	Calculates anatomy-related features/status information used by the current pipeline
-trinay_anatomy_lesion_pipeline.py	Main TRINAY anatomy + lesion inference and visualization
-trinay_xai_fast.py	Lightweight Integrated Gradients XAI
-20. Models and Their Jobs
-best_quality_model.pkl
-        ↓
-Image Quality
+└── requirements.txt
+```
 
-dr_severity_efficientnet_b0.pth
-        ↓
-DR Severity
+This tree is illustrative, not a guarantee that all listed weight files are valid distributable checkpoints. Verify file contents, paths, and runtime compatibility locally before use. Some Git-hosted weight files may be placeholders or Git LFS pointer files rather than usable weights.
 
-best_vessel_unet.pth
-        ↓
-Blood Vessel Segmentation
+## Environment and Installation
 
-best_optic_disc_unet.pth
-        ↓
-Optic Disc Segmentation
+The repository has both JavaScript/TypeScript application dependencies and Python machine-learning dependencies.
 
-best_fovea_net.pth
-        ↓
-Fovea Localization
+### Prerequisites
 
-standard_unet_ddr_finetuned.pth
-        ↓
-MA / HE / EX / SE Segmentation
-21. Why Multiple Models?
-Each model has a specialized job.
+- Git
+- Node.js compatible with the versions required by the project's package dependencies
+- Python 3.10 or another version compatible with the installed PyTorch and project libraries
+- Sufficient memory and storage for computer-vision dependencies and model files
 
-Quality Model
-   ↓
-Is the image usable?
+The Python dependency list is maintained in `requirements.txt`; the frontend/server dependency list is maintained in `package.json`.
 
-Severity Model
-   ↓
-How severe is DR?
+### Clone the repository
 
-Vessel Model
-   ↓
-Where are blood vessels?
+```bash
+git clone https://github.com/Aviraj516/Diabetic-_retinopathy_Retina-X.git
+cd Diabetic-_retinopathy_Retina-X
+```
 
-Optic Disc Model
-   ↓
-Where is the optic disc?
+### Install JavaScript dependencies
 
-Fovea Model
-   ↓
-Where is the fovea?
-
-Lesion Model
-   ↓
-Where are retinal lesions?
-
-XAI
-   ↓
-Which image areas contributed to the output?
-This makes the complete system modular and easier to develop and debug.
-
-22. Running the Project
-From the project root:
-
+```bash
 npm install
+```
+
+### Create a Python environment
+
+Windows PowerShell:
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+macOS/Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Dependency versions and hardware support can affect reproducibility. For research, record the operating system, Python version, PyTorch/torchvision versions, device type, and exact dependency versions used in the experiment.
+
+## Running the Application
+
+The package manifest defines the following scripts:
+
+```bash
 npm run dev
-For standalone TRINAY testing:
+npm run build
+npm start
+npm run lint
+```
 
-python backend/trinay_anatomy_lesion_pipeline.py "path/to/fundus_image.jpg"
-For standalone XAI testing:
+- `npm run dev` starts the configured TypeScript server entry point.
+- `npm run build` builds the frontend and bundles the server.
+- `npm start` starts the built server.
+- `npm run lint` runs the TypeScript compiler without emitting files.
 
-python backend/trinay_xai_fast.py "path/to/fundus_image.jpg"
-Required Python packages include:
+Application environment variables may be required. Create a local `.env` file using the variable names listed in `.env.example`, and supply your own values privately. Do not commit credentials or private keys.
 
-pip install torch torchvision
-pip install segmentation-models-pytorch
-pip install opencv-python numpy pillow
-pip install matplotlib scikit-learn pandas tqdm
-pip install captum
-23. Example End-to-End Case
-Suppose a nurse uploads:
+These commands describe the scripts declared in the repository; they do not guarantee that every service is configured on a new machine.
 
-patient_eye.jpg
-RETINA-X first displays:
+## Datasets and Training
 
-Filename
-File Size
-Resolution
-Then:
+A research-quality description must document, at minimum:
 
-Image Quality
-      ↓
-Good
-Then:
+- Dataset name, release/version, access source, and permitted usage
+- Number of images used per split and per class
+- Patient-level or image-level split strategy, including seed
+- Label definitions and any label aggregation
+- Image decoding, resizing, normalization and augmentation
+- Model initialization and pretrained weights
+- Loss function, optimizer, learning rate, batch size, epochs and early-stopping rule
+- Checkpoint-selection rule
+- Exact independent test set and exclusion criteria
 
-DR Severity
-      ↓
-Moderate
-Then TRINAY analyzes:
+The repository overview alone is not sufficient to confirm the complete DR model training procedure, exact dataset counts or split, or the validity of any performance figures. Do not infer these from filenames or from a separate project summary. Add them here after checking the original scripts and logs.
 
-Blood Vessels
-Optic Disc
-Fovea
-MA
-HE
-EX
-SE
-Then:
+## Evaluation and Reporting
 
-Spatial Measurements
-Then:
+For five-class DR grading, report more than overall accuracy. Recommended reporting includes:
 
-Anatomy Visualization
-Lesion Visualization
-Combined Visualization
-Then:
+- Per-class precision, recall/sensitivity and F1-score
+- Macro-F1 and balanced accuracy
+- Confusion matrix
+- Quadratic weighted kappa (QWK), when appropriate for ordinal grades
+- ROC-AUC with a clearly defined multiclass or referable-DR protocol, if calculated
+- Sensitivity and specificity for a precisely defined referable-DR threshold
+- Confidence intervals and the number of test images
 
-Anatomy XAI
-Lesion XAI
-Combined XAI
-Finally the report page displays all results for that specific uploaded image.
+All metrics should be computed on an independent held-out set that was not used for training, model selection, threshold tuning or repeated experimentation. Clearly state whether the unit of separation is patient or image, and avoid leakage across splits. Report only values that can be reproduced from code, saved predictions/labels, or experiment logs.
 
-24. Poor-Quality Image Example
-A poor image should stop the workflow early:
+### Results table template
 
-Upload
-  ↓
-Quality Model
-  ↓
-Borderline / Ungradable
-  ↓
-STOP
-  ↓
-Please retake or upload a clearer retinal image.
-The system should not continue to:
+Replace the placeholders only after validating the experiments.
 
-DR Severity
-Anatomy
-Lesions
-XAI
-for a rejected image.
+| Evaluation item | Result |
+|---|---|
+| Test dataset/version | To be verified |
+| Number of independent test images/patients | To be verified |
+| Accuracy | To be measured/reproduced |
+| Macro-F1 | To be measured/reproduced |
+| Quadratic weighted kappa | To be measured/reproduced |
+| Confusion matrix | To be generated |
+| Referable-DR sensitivity/specificity | To be measured using a stated threshold |
+| Confidence intervals | To be calculated |
 
-25. Real-Time Requirement
-Every result must belong to the current uploaded image.
+## Limitations
 
-Image A
-   ↓
-Results A
+- A stored model file and an architectural definition do not prove that training completed successfully or that the model generalizes.
+- Results may be affected by camera type, image quality, class imbalance, dataset source and population differences.
+- Confidence values are not necessarily calibrated probabilities.
+- Research performance does not establish clinical safety, regulatory approval or suitability for unsupervised diagnosis.
+- Reproducibility requires versioned datasets or manifests, recorded splits, training configuration, checkpoint hashes and saved test predictions.
 
-New Image B
-   ↓
-Results B
-There must be no stale results from Image A remaining when Image B is analyzed.
+## Security and Data Handling
 
-The report page must also update to the newly generated result.
+- Never commit API keys, Supabase service-role keys, passwords, access tokens, patient data or other secrets.
+- Store local credentials in an ignored `.env` file and keep `.env.example` limited to non-secret placeholders.
+- If a real credential has ever been pushed to a public repository, rotate/revoke it; deleting it from the latest commit alone does not remove it from history.
+- Do not upload patient-identifiable retinal images or records without appropriate authorization and privacy safeguards.
+- Check model-weight licensing and dataset terms before redistributing data or checkpoints.
 
-26. Important Implementation Rules
-The final project should never use:
+## Citation
 
-Hardcoded severity
-Hardcoded confidence
-Hardcoded lesion counts
-Hardcoded anatomy coordinates
-Hardcoded vessel paths
-Static sample report values
-Static sample visualization
-Fake XAI
-Only definitions such as:
+If you use this code or its models in a paper, cite the repository with the actual access date and commit identifier, and cite each dataset and base architecture using its original publication. Do not describe the implementation as novel or clinically validated unless a supported comparison and appropriate validation have been completed.
 
-MA = Microaneurysm
-HE = Haemorrhage
-EX = Hard Exudate
-SE = Soft Exudate
-can remain static.
+---
 
-27. Final Objective
-RETINA-X combines several specialized AI components into one workflow:
-
-                RETINA-X
-                    │
-                    ▼
-              CHECK QUALITY
-                    │
-                    ▼
-              DETECT DR STAGE
-                    │
-                    ▼
-            ANALYZE RETINA
-                    │
-           ┌────────┴────────┐
-           │                 │
-        ANATOMY            LESIONS
-           │                 │
-           └────────┬────────┘
-                    │
-                    ▼
-              MEASURE + MAP
-                    │
-                    ▼
-               EXPLAIN AI
-                    │
-                    ▼
-             SHOW TO USER
-In simple words:
-
-RETINA-X checks whether the retinal image is usable, estimates diabetic retinopathy severity, analyzes retinal anatomy and lesions, shows the findings directly on the fundus image, and explains the model output with XAI.
-
-28. Development Principle
-The project should always follow:
-
-REAL IMAGE
-    ↓
-REAL MODEL
-    ↓
-REAL RESULT
-    ↓
-REAL VISUALIZATION
-    ↓
-REAL EXPLANATION
-This keeps the dashboard connected to the actual trained machine-learning models rather than demo or placeholder data.
-
+**Repository:** https://github.com/Aviraj516/Diabetic-_retinopathy_Retina-X
