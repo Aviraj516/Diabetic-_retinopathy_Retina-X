@@ -33,17 +33,27 @@ The repository includes a checkpoint path named `model/dr_severity_efficientnet_
 | 3 | Severe DR |
 | 4 | Proliferative DR |
 
-**Important implementation status:** the checkpoint's presence/name and the documented label mapping do not, by themselves, establish how the checkpoint was trained, which exact dataset split was used, or its held-out performance. The training protocol and evaluation metrics should be added only after the relevant training/evaluation code, data split records, and reproducible test outputs have been verified.
+### Inference implementation currently documented in the repository
+
+The current `app.py` contains a `run_dr_severity` function that:
+
+- Instantiates `torchvision.models.efficientnet_b0(weights=None)` and replaces its final classifier layer with a five-output linear layer.
+- Loads `model/dr_severity_efficientnet_b0.pth` and accepts a checkpoint dictionary containing `model_state_dict`, `state_dict`, or a raw state dictionary.
+- Converts the uploaded image from OpenCV BGR to RGB.
+- Resizes it to 224 × 224 pixels, converts it to a tensor, and normalizes channels using means `[0.485, 0.456, 0.406]` and standard deviations `[0.229, 0.224, 0.225]`.
+- Applies softmax to the five logits and returns the predicted class, its confidence-like score, and class-wise scores.
+
+The implementation calls `load_state_dict(..., strict=False)`. For reproducible experiments, inspect the returned missing/unexpected-key information and verify that the checkpoint really matches the instantiated architecture. The value called confidence is the top softmax score; it should not be described as a calibrated probability unless calibration has been evaluated.
+
+**Training evidence gap:** the repository files reviewed for this README did not establish a complete DR training script, a locked split manifest, or a reproducible test-evaluation script. Therefore, the training dataset, training hyperparameters and held-out model performance remain unverified. The current inference preprocessing is visible in code, but its identity with the original training preprocessing cannot be independently confirmed from the training artifacts reviewed.
 
 ### Suggested inference workflow
 
 1. Provide a retinal fundus image.
-2. Apply the exact preprocessing used during classifier training.
-3. Load the corresponding trained checkpoint and architecture.
-4. Run inference and map the model output to the documented class labels.
-5. Return the prediction with clear limitations and, where available, calibrated confidence.
-
-The exact inference entry point and preprocessing for the DR severity model should be verified against the application code before documenting a standalone prediction command.
+2. Convert it to RGB, resize it to 224 × 224, and apply the normalization used in `app.py`.
+3. Load the EfficientNet-B0 architecture and the corresponding checkpoint.
+4. Apply softmax and map the winning output index to the five labels above.
+5. Display the prediction as a research screening output, with clinical review and appropriate limitations.
 
 ## Related Retinal Analysis Components
 
@@ -72,6 +82,7 @@ A selected overview of relevant files and directories:
 
 ```text
 .
+├── app.py                         # Flask ML inference service, including DR severity inference
 ├── backend/
 │   ├── fovea_net.py
 │   ├── model.py
@@ -164,7 +175,7 @@ npm run lint
 
 Application environment variables may be required. Create a local `.env` file using the variable names listed in `.env.example`, and supply your own values privately. Do not commit credentials or private keys.
 
-These commands describe the scripts declared in the repository; they do not guarantee that every service is configured on a new machine.
+These commands describe the scripts declared in the repository; they do not guarantee that every service is configured on a new machine. The Python DR inference function is defined in `app.py`; there is no verified standalone DR training command documented here.
 
 ## Datasets and Training
 
