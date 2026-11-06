@@ -10,6 +10,7 @@ __pycache__/
 
 # Operating system metadata
 .DS_Store
+<<<<<<< HEAD
 **/.DS_Store
 Thumbs.db
 
@@ -28,3 +29,11 @@ uploads/screenings_cache.json
 
 # Environment files
 .env.local
+=======
+.git/
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
+>>>>>>> b829d2dcb8b0599f196fecca8ea441003fc1f58c
