@@ -311,7 +311,9 @@ export const CataractReportPage: React.FC = () => {
               {isCataract ? 'AI SCREENING RESULT: CATARACT DETECTED' : 'AI SCREENING RESULT: NO CATARACT DETECTED'}
             </div>
             <p className="text-xs text-slate-600 max-w-xl">
-              {screening.clinicalRecommendation ||
+              {(typeof screening.clinicalRecommendation === 'string'
+                ? screening.clinicalRecommendation
+                : ((screening.clinicalRecommendation as any)?.recommendation || (screening.clinicalRecommendation as any)?.clinicalRecommendation)) ||
                 (isCataract
                   ? 'If cataract is detected by the AI screening model, recommend ophthalmologist evaluation and slit-lamp examination for clinical confirmation.'
                   : 'Clear crystalline lens pattern identified. Continue routine preventive ophthalmic checkup schedule.')}

@@ -31,10 +31,11 @@ function getSupabaseAdmin() {
 
 authRouter.post('/login', async (req: Request, res: Response) => {
   try {
-    const { identifier, password } = req.body || {};
+    const { identifier, password, contact_no, phone } = req.body || {};
+    const doctorContact = (contact_no || phone || '').trim();
 
     if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
-      return res.status(400).json({ success: false, error: 'Email or User ID is required.' });
+      return res.status(400).json({ success: false, error: 'Email, Gmail, or Doctor ID is required.' });
     }
 
     if (!password || typeof password !== 'string' || !password.trim()) {
@@ -59,11 +60,21 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     let targetEmail = trimmedInput;
     if (!targetEmail.includes('@')) {
       if (supabaseAdmin) {
-        // Look up by username or ID in profiles
+        // Look up by username, phone, or ID in profiles safely
+        const digits = trimmedInput.replace(/\D/g, '');
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmedInput);
+        const filterParts = [`email.ilike.${trimmedInput}@%`, `full_name.ilike.${trimmedInput}`];
+        if (isUuid) {
+          filterParts.push(`id.eq.${trimmedInput}`);
+        }
+        if (digits.length >= 7) {
+          filterParts.push(`phone.ilike.%${digits.slice(-10)}%`);
+        }
+
         const { data: profile } = await supabaseAdmin
           .from('profiles')
           .select('email')
-          .or(`email.ilike.${trimmedInput}@%,id.eq.${trimmedInput},full_name.ilike.${trimmedInput}`)
+          .or(filterParts.join(','))
           .maybeSingle();
 
         const profileRecord = profile as { email?: string } | null;
@@ -89,6 +100,15 @@ authRouter.post('/login', async (req: Request, res: Response) => {
         success: false,
         error: 'Invalid email/user ID or password.',
       });
+    }
+
+    // Update doctor contact number if provided
+    if (supabaseAdmin && authData.user?.id && doctorContact) {
+      try {
+        await supabaseAdmin.from('profiles').update({ phone: doctorContact }).eq('id', authData.user.id);
+      } catch (updateErr) {
+        console.warn('[authService] Doctor contact update warning:', updateErr);
+      }
     }
 
     // 3. Generate secure magic link token for client-side session creation if admin key available

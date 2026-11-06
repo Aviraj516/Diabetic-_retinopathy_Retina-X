@@ -16,8 +16,10 @@ import os
 import sys
 import gc
 import re
+import json
 import time
 import base64
+import threading
 import traceback
 import numpy as np
 import cv2
@@ -1067,6 +1069,9 @@ def cataract_analyze_endpoint():
         patient_code = request.headers.get("x-patient-id") or request.form.get("patientId") or request.form.get("patient_id") or ""
         patient_name = request.headers.get("x-patient-name") or request.form.get("patientName") or request.form.get("patient_name") or ""
         eye_side = request.headers.get("x-eye-side") or request.form.get("eyeSide") or request.form.get("eye") or "Right Eye"
+        patient_age = request.headers.get("x-patient-age") or request.form.get("patientAge") or request.form.get("patient_age") or None
+        patient_gender = request.headers.get("x-patient-gender") or request.form.get("patientGender") or request.form.get("patient_gender") or None
+        patient_phone = request.headers.get("x-patient-phone") or request.form.get("patientPhone") or request.form.get("patient_phone") or ""
 
         cat_vis = result.get("visualizations", {})
         cat_artifacts = {
@@ -1243,14 +1248,19 @@ def cataract_analyze_endpoint():
             date_str = time.strftime("%d %b %Y", time.gmtime())
             prob_v = float(result.get("cataract", {}).get("cataractProbability", 1.0))
             pred_v = result.get("cataract", {}).get("prediction", "CATARACT")
+            try:
+                resolved_age = int(patient_age or (patient_row.get("age") if patient_row else 55))
+            except (ValueError, TypeError):
+                resolved_age = 55
+
             cat_rec = {
                 "id": rec_id,
                 "session_id": rec_id,
-                "patientId": patient_code or (patient_row.get("patient_id") if patient_row else "2"),
+                "patientId": patient_code or (patient_row.get("patient_id") if patient_row else (patient_row.get("id") if patient_row else f"PX-{int(time.time()*1000) % 10000}")),
                 "patientDbId": patient_db_id,
-                "patientName": patient_name or (patient_row.get("name") if patient_row else "Khushi Nanekar"),
-                "patientAge": patient_age or (patient_row.get("age") if patient_row else 20),
-                "patientGender": patient_gender or (patient_row.get("gender") if patient_row else "Female"),
+                "patientName": patient_name or (patient_row.get("name") if patient_row else "Patient information unavailable"),
+                "patientAge": resolved_age,
+                "patientGender": patient_gender or (patient_row.get("gender") if patient_row else "Other"),
                 "patientPhone": patient_phone or (patient_row.get("phone") if patient_row else ""),
                 "eye": eye_side,
                 "eyeSide": eye_side,
@@ -1367,11 +1377,16 @@ def glaucoma_analyze_endpoint():
 
         glc_vis = result.get("visualizations", {})
         glc_artifacts = {
-            "original": image_bgr,
+            "original": glc_vis.get("original") or image_bgr,
+            "raw_original": image_bgr,
             "original_fundus": glc_vis.get("original") or image_bgr,
+            "canonical": glc_vis.get("original") or image_bgr,
             "optic_nerve": glc_vis.get("opticNerve"),
             "opticNerve": glc_vis.get("opticNerve"),
             "optic_disc_cup": glc_vis.get("opticNerve"),
+            "rim": glc_vis.get("rim"),
+            "oct_rnfl": glc_vis.get("octRnfl"),
+            "octRnfl": glc_vis.get("octRnfl"),
             "vessels": glc_vis.get("retinalAnatomy"),
             "retinalAnatomy": glc_vis.get("retinalAnatomy"),
             "vessel_segmentation": glc_vis.get("retinalAnatomy"),
@@ -1496,60 +1511,69 @@ def glaucoma_analyze_endpoint():
                         }
                         requests.post(f"{SUPABASE_URL}/rest/v1/screening_results", headers=headers, json=res_payload, timeout=4)
 
-                        # 4. Upload artifacts to Supabase Storage with bounded retry
-                        for art_type, b64_val in [
-                            ("original_fundus", glc_vis.get("original")),
-                            ("optic_nerve", glc_vis.get("opticNerve")),
-                            ("rim", glc_vis.get("rim")),
-                            ("vessels", glc_vis.get("retinalAnatomy")),
-                            ("gradcam", glc_vis.get("gradcam")),
-                            ("workflow", glc_vis.get("workflow")),
-                            ("combined_xai", glc_vis.get("workflow")),
-                        ]:
-                            if not b64_val:
-                                continue
-                            try:
-                                if "," in b64_val:
-                                    b64_val = b64_val.split(",", 1)[1]
-                                raw_img = base64.b64decode(b64_val)
-                                storage_path = f"glaucoma/{patient_db_id}/{session_id}/{art_type}.png"
-                                upload_ok = False
-                                for attempt in range(2):
-                                    try:
-                                        up_resp = requests.post(
-                                            f"{SUPABASE_URL}/storage/v1/object/medical-screenings/{storage_path}",
-                                            headers={
-                                                "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                                                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                                                "Content-Type": "image/png",
-                                                "x-upsert": "true"
-                                            },
-                                            data=raw_img,
-                                            timeout=12
-                                        )
-                                        if up_resp.status_code in [200, 201]:
-                                            upload_ok = True
-                                            break
-                                    except Exception:
-                                        if attempt == 0:
-                                            time.sleep(0.3)
+                        # 4. Upload artifacts to Supabase Storage in background thread
+                        # Eliminates the 4-15 second network latency lag when glaucoma screening finishes
+                        def _bg_upload_glaucoma_artifacts(p_id, s_id, d_id, e_side, vis_dict, req_headers):
+                            for art_type, b64_val in [
+                                ("original_fundus", vis_dict.get("original")),
+                                ("optic_nerve", vis_dict.get("opticNerve")),
+                                ("rim", vis_dict.get("rim")),
+                                ("oct_rnfl", vis_dict.get("octRnfl")),
+                                ("vessels", vis_dict.get("retinalAnatomy")),
+                                ("gradcam", vis_dict.get("gradcam")),
+                                ("workflow", vis_dict.get("workflow")),
+                                ("combined_xai", vis_dict.get("workflow")),
+                            ]:
+                                if not b64_val:
+                                    continue
+                                try:
+                                    if "," in b64_val:
+                                        b64_val = b64_val.split(",", 1)[1]
+                                    raw_img = base64.b64decode(b64_val)
+                                    storage_path = f"glaucoma/{p_id}/{s_id}/{art_type}.png"
+                                    upload_ok = False
+                                    for attempt in range(2):
+                                        try:
+                                            up_resp = requests.post(
+                                                f"{SUPABASE_URL}/storage/v1/object/medical-screenings/{storage_path}",
+                                                headers={
+                                                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                                                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                                                    "Content-Type": "image/png",
+                                                    "x-upsert": "true"
+                                                },
+                                                data=raw_img,
+                                                timeout=8
+                                            )
+                                            if up_resp.status_code in [200, 201]:
+                                                upload_ok = True
+                                                break
+                                        except Exception:
+                                            if attempt == 0:
+                                                time.sleep(0.2)
 
-                                if upload_ok:
-                                    art_row = {
-                                        "screening_session_id": session_id,
-                                        "doctor_id": doctor_id,
-                                        "patient_id": patient_db_id,
-                                        "artifact_type": art_type,
-                                        "bucket_id": "medical-screenings",
-                                        "storage_path": storage_path,
-                                        "mime_type": "image/png",
-                                        "file_size_bytes": len(raw_img),
-                                        "eye_side": eye_side,
-                                    }
-                                    requests.post(f"{SUPABASE_URL}/rest/v1/screening_artifacts", headers=headers, json=art_row, timeout=4)
-                            except Exception as art_err:
-                                print(f"[Supabase Glaucoma Artifact Error] {art_type}: {art_err}")
-                        print(f"[Supabase] Glaucoma screening session {session_id} persisted successfully.")
+                                    if upload_ok:
+                                        art_row = {
+                                            "screening_session_id": s_id,
+                                            "doctor_id": d_id,
+                                            "patient_id": p_id,
+                                            "artifact_type": art_type,
+                                            "bucket_id": "medical-screenings",
+                                            "storage_path": storage_path,
+                                            "mime_type": "image/png",
+                                            "file_size_bytes": len(raw_img),
+                                            "eye_side": e_side,
+                                        }
+                                        requests.post(f"{SUPABASE_URL}/rest/v1/screening_artifacts", headers=req_headers, json=art_row, timeout=4)
+                                except Exception as art_err:
+                                    print(f"[Supabase Glaucoma Artifact Error] {art_type}: {art_err}")
+                            print(f"[Supabase] Glaucoma screening session {s_id} artifacts persisted asynchronously.")
+
+                        threading.Thread(
+                            target=_bg_upload_glaucoma_artifacts,
+                            args=(patient_db_id, session_id, doctor_id, eye_side, dict(glc_vis), dict(headers)),
+                            daemon=True
+                        ).start()
             except Exception as se:
                 print(f"[Supabase Glaucoma Sync Exception] {se}")
 
@@ -1585,6 +1609,8 @@ def glaucoma_analyze_endpoint():
                 "probability": prob_v,
                 "imageOriginal": result.get("artifacts", {}).get("original_fundus") or result.get("artifacts", {}).get("original") or f"/api/screenings/{rec_id}/artifacts/original_fundus",
                 "imageOpticNerve": result.get("artifacts", {}).get("optic_nerve") or f"/api/screenings/{rec_id}/artifacts/optic_nerve",
+                "imageRim": result.get("artifacts", {}).get("rim") or f"/api/screenings/{rec_id}/artifacts/rim",
+                "imageOctRnfl": result.get("artifacts", {}).get("oct_rnfl") or f"/api/screenings/{rec_id}/artifacts/oct_rnfl",
                 "imageRetinalAnatomy": result.get("artifacts", {}).get("vessels") or f"/api/screenings/{rec_id}/artifacts/vessels",
                 "imageGradCam": result.get("artifacts", {}).get("gradcam") or f"/api/screenings/{rec_id}/artifacts/gradcam",
                 "imageWorkflow": result.get("artifacts", {}).get("workflow") or result.get("artifacts", {}).get("combined") or f"/api/screenings/{rec_id}/artifacts/workflow",
@@ -1653,6 +1679,10 @@ def get_screening_artifact_endpoint(screening_id, artifact_name):
         "optic_nerve": ["optic_nerve", "opticNerve", "optic_disc_cup"],
         "opticNerve": ["opticNerve", "optic_nerve", "optic_disc_cup"],
         "optic_disc_cup": ["optic_disc_cup", "optic_nerve", "opticNerve"],
+        "rim": ["rim", "neuroretinal_rim", "rim_analysis"],
+        "neuroretinal_rim": ["rim", "neuroretinal_rim", "rim_analysis"],
+        "oct_rnfl": ["oct_rnfl", "octRnfl", "oct", "rnfl", "oct_evidence"],
+        "octRnfl": ["oct_rnfl", "octRnfl", "oct", "rnfl", "oct_evidence"],
         "vessels": ["vessels", "retinalAnatomy", "vessel_segmentation"],
         "retinalAnatomy": ["retinalAnatomy", "vessels", "vessel_segmentation"],
         "vessel_segmentation": ["vessel_segmentation", "vessels", "retinalAnatomy"],
@@ -1911,8 +1941,13 @@ def auth_login_endpoint():
     if "@" not in target_email:
         if headers and SUPABASE_URL:
             try:
+                import re
+                is_uuid = bool(re.match(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", target_email, re.I))
+                filter_cond = f"(email.ilike.{target_email}@*,full_name.ilike.{target_email})"
+                if is_uuid:
+                    filter_cond = f"(id.eq.{target_email},email.ilike.{target_email}@*,full_name.ilike.{target_email})"
                 prof_resp = requests.get(
-                    f"{SUPABASE_URL}/rest/v1/profiles?or=(email.ilike.{target_email}@*,id.eq.{target_email},full_name.ilike.{target_email})&select=email",
+                    f"{SUPABASE_URL}/rest/v1/profiles?or={filter_cond}&select=email",
                     headers=headers,
                     timeout=3
                 )
@@ -2049,6 +2084,91 @@ def create_patient_endpoint():
 
 
 
+SCREENINGS_CACHE_FILE = os.path.join(PROJECT_ROOT, "uploads", "screenings_cache.json")
+_screenings_cache_lock = threading.Lock()
+
+def _sanitize_for_json(obj):
+    """Recursively convert NumPy scalars/arrays, dates, and non-serializable objects to native JSON types."""
+    if obj is None:
+        return None
+    if isinstance(obj, (str, int, float, bool)):
+        if isinstance(obj, float) and (np.isnan(obj) or np.isinf(obj)):
+            return None
+        return obj
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating,)):
+        val = float(obj)
+        return None if (np.isnan(val) or np.isinf(val)) else val
+    if isinstance(obj, (np.bool_,)):
+        return bool(obj)
+    if isinstance(obj, (np.ndarray,)):
+        return [_sanitize_for_json(x) for x in obj.tolist()]
+    if isinstance(obj, dict):
+        return {str(k): _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [_sanitize_for_json(x) for x in obj]
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    return str(obj)
+
+def load_screenings_cache():
+    try:
+        with _screenings_cache_lock:
+            if os.path.exists(SCREENINGS_CACHE_FILE):
+                if os.path.getsize(SCREENINGS_CACHE_FILE) == 0:
+                    return []
+                with open(SCREENINGS_CACHE_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        return data
+    except Exception as e:
+        print(f"[Load Screenings Cache Warning] {e}", flush=True)
+    return []
+
+def save_screenings_cache(records):
+    if not isinstance(records, list):
+        print(f"[Save Screenings Cache Warning] Expected list, got {type(records)}", flush=True)
+        return False
+    try:
+        with _screenings_cache_lock:
+            clean_records = _sanitize_for_json(records)
+            seen_ids = set()
+            deduped = []
+            for rec in clean_records:
+                if not isinstance(rec, dict):
+                    continue
+                rec_id = str(rec.get("id") or rec.get("session_id") or "")
+                if rec_id and rec_id in seen_ids:
+                    continue
+                if rec_id:
+                    seen_ids.add(rec_id)
+                deduped.append(rec)
+            
+            deduped = deduped[:300]
+            payload = json.dumps(deduped, indent=2, ensure_ascii=False)
+            
+            cache_dir = os.path.dirname(SCREENINGS_CACHE_FILE)
+            os.makedirs(cache_dir, exist_ok=True)
+            
+            temp_path = f"{SCREENINGS_CACHE_FILE}.tmp.{os.getpid()}"
+            with open(temp_path, "w", encoding="utf-8") as f:
+                f.write(payload)
+                f.flush()
+                os.fsync(f.fileno())
+            
+            os.replace(temp_path, SCREENINGS_CACHE_FILE)
+            return True
+    except Exception as e:
+        print(f"[Save Screenings Cache Error] {e}", flush=True)
+        if "temp_path" in locals() and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
+        return False
+
+
 @app.route("/api/screenings/<screening_id>", methods=["GET", "OPTIONS"])
 def get_screening_by_id_endpoint(screening_id):
     if request.method == "OPTIONS":
@@ -2130,8 +2250,16 @@ def get_screening_by_id_endpoint(screening_id):
                     "severity": res.get("severity") or "Normal",
                     "confidence": conf,
                     "confidenceScore": conf,
-                    "probability": prob_val,
-                    "recommendation": res.get("recommendations") or "",
+                    "recommendation": (
+                        res.get("recommendations", {}).get("recommendation")
+                        if isinstance(res.get("recommendations"), dict)
+                        else (res.get("recommendation") or res.get("recommendations") or res.get("clinical_summary") or "")
+                    ),
+                    "clinicalRecommendation": (
+                        res.get("recommendations", {}).get("recommendation")
+                        if isinstance(res.get("recommendations"), dict)
+                        else (res.get("clinicalRecommendation") or res.get("recommendation") or res.get("recommendations") or res.get("clinical_summary") or "")
+                    ),
                     "clinicalSummary": res.get("clinical_summary") or "",
                     "imageOriginal": artifacts_dict.get("original") or artifacts_dict.get("original_fundus") or artifacts_dict.get("canonical") or f"/api/screenings/{session_id_val}/artifacts/original",
                     "imageOpticNerve": artifacts_dict.get("optic_nerve") or artifacts_dict.get("opticNerve") or f"/api/screenings/{session_id_val}/artifacts/optic_nerve",
@@ -2221,28 +2349,14 @@ def get_screening_by_id_endpoint(screening_id):
                 return jsonify({"success": True, "screening": rec, "data": rec})
         except Exception as e:
             print(f"[Get Screening By ID Warning] {e}")
-    return jsonify({"success": False, "error": "Internal error"}), 500
+    # Local cache fallback
+    cached = load_screenings_cache()
+    for rec in cached:
+        if str(rec.get("id")) == str(screening_id) or str(rec.get("session_id")) == str(screening_id):
+            return jsonify({"success": True, "screening": rec, "data": rec})
+    return jsonify({"success": False, "error": "Screening not found"}), 404
 
-SCREENINGS_CACHE_FILE = os.path.join(PROJECT_ROOT, "uploads", "screenings_cache.json")
 
-def load_screenings_cache():
-    try:
-        if os.path.exists(SCREENINGS_CACHE_FILE):
-            with open(SCREENINGS_CACHE_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return data
-    except Exception:
-        pass
-    return []
-
-def save_screenings_cache(records):
-    try:
-        os.makedirs(os.path.dirname(SCREENINGS_CACHE_FILE), exist_ok=True)
-        with open(SCREENINGS_CACHE_FILE, "w", encoding="utf-8") as f:
-            json.dump(records, f)
-    except Exception:
-        pass
 
 @app.route("/api/screenings", methods=["GET", "OPTIONS"])
 def get_screenings_endpoint():
@@ -2319,7 +2433,16 @@ def get_screenings_endpoint():
                         "confidence": conf,
                         "confidenceScore": conf,
                         "probability": prob_val,
-                        "recommendation": res.get("recommendations") or "",
+                        "recommendation": (
+                            res.get("recommendations", {}).get("recommendation")
+                            if isinstance(res.get("recommendations"), dict)
+                            else (res.get("recommendation") or res.get("recommendations") or res.get("clinical_summary") or "")
+                        ),
+                        "clinicalRecommendation": (
+                            res.get("recommendations", {}).get("recommendation")
+                            if isinstance(res.get("recommendations"), dict)
+                            else (res.get("clinicalRecommendation") or res.get("recommendation") or res.get("recommendations") or res.get("clinical_summary") or "")
+                        ),
                         "clinicalSummary": res.get("clinical_summary") or "",
                         "imageOriginal": artifacts_dict.get("original") or artifacts_dict.get("original_fundus") or artifacts_dict.get("canonical") or f"/api/screenings/{session_id_val}/artifacts/original",
                         "imageOpticNerve": artifacts_dict.get("optic_nerve") or artifacts_dict.get("opticNerve") or f"/api/screenings/{session_id_val}/artifacts/optic_nerve",

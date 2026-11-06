@@ -249,8 +249,8 @@ export const GlaucomaScreeningFlow: React.FC = () => {
 
         const imageOriginal =
           result.signedVisualizations?.original ||
-          result.artifacts?.original ||
           result.artifacts?.original_fundus ||
+          result.artifacts?.original ||
           (result.visualizations?.original ? b64Url(result.visualizations.original) : undefined) ||
           previewUrl ||
           undefined;
@@ -382,49 +382,51 @@ export const GlaucomaScreeningFlow: React.FC = () => {
   );
 
   // Active images derived from ML result / saved record
+  // Prioritize instant in-memory base64 when mlResult is live, falling back to artifact URLs for persisted history
   const currentImageOriginal =
+    b64Url(mlResult?.visualizations?.original) ||
     savedScreeningRecord?.imageOriginal ||
     mlResult?.signedVisualizations?.original ||
+    mlResult?.artifacts?.original_fundus ||
     mlResult?.artifacts?.original ||
-    b64Url(mlResult?.visualizations?.original) ||
     previewUrl;
 
   const currentImageOpticNerve =
+    b64Url(mlResult?.visualizations?.opticNerve) ||
     savedScreeningRecord?.imageOpticNerve ||
     mlResult?.signedVisualizations?.opticNerve ||
     mlResult?.artifacts?.optic_nerve ||
     mlResult?.artifacts?.opticNerve ||
-    b64Url(mlResult?.visualizations?.opticNerve) ||
     currentImageOriginal;
 
   const currentImageRim =
+    b64Url(mlResult?.visualizations?.rim) ||
     savedScreeningRecord?.imageRim ||
     mlResult?.signedVisualizations?.rim ||
     mlResult?.artifacts?.rim ||
-    b64Url(mlResult?.visualizations?.rim) ||
     currentImageOpticNerve;
 
   const currentImageRetinalAnatomy =
+    b64Url(mlResult?.visualizations?.retinalAnatomy) ||
     savedScreeningRecord?.imageRetinalAnatomy ||
     mlResult?.signedVisualizations?.retinalAnatomy ||
     mlResult?.artifacts?.vessels ||
     mlResult?.artifacts?.retinalAnatomy ||
-    b64Url(mlResult?.visualizations?.retinalAnatomy) ||
     currentImageOriginal;
 
   const currentImageGradCam =
+    b64Url(mlResult?.visualizations?.gradcam) ||
     savedScreeningRecord?.imageGradCam ||
     mlResult?.signedVisualizations?.gradcam ||
     mlResult?.artifacts?.gradcam ||
-    b64Url(mlResult?.visualizations?.gradcam) ||
     currentImageOriginal;
 
   const currentImageWorkflow =
+    b64Url(mlResult?.visualizations?.workflow) ||
     savedScreeningRecord?.imageWorkflow ||
     mlResult?.signedVisualizations?.workflow ||
     mlResult?.artifacts?.combined ||
     mlResult?.artifacts?.workflow ||
-    b64Url(mlResult?.visualizations?.workflow) ||
     currentImageOpticNerve;
 
   const bokehHtml =
@@ -950,7 +952,9 @@ export const GlaucomaScreeningFlow: React.FC = () => {
             </h3>
             <p className="text-slate-300 leading-relaxed">
               {mlResult?.message ||
-                savedScreeningRecord?.clinicalRecommendation ||
+                (typeof savedScreeningRecord?.clinicalRecommendation === 'string'
+                  ? savedScreeningRecord.clinicalRecommendation
+                  : ((savedScreeningRecord?.clinicalRecommendation as any)?.recommendation || (savedScreeningRecord?.clinicalRecommendation as any)?.clinicalRecommendation)) ||
                 'Optic disc or cup boundary could not be delineated with anatomical validity. To protect patient safety, automated CDR calculation and Random Forest classification were inhibited. No fabricated fallback values were used.'}
             </p>
             <div className="pt-1 flex items-center gap-2 text-[11px] text-amber-400 font-semibold">
@@ -1018,7 +1022,9 @@ export const GlaucomaScreeningFlow: React.FC = () => {
         </div>
 
         {/* Large Canvas Area */}
-        <div className="relative w-full h-[520px] sm:h-[600px] md:h-[680px] rounded-xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center p-2">
+        <div className={`relative w-full rounded-xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center p-2 ${
+          activeVisualMode === 'Clinical Evidence' ? 'min-h-[640px] lg:h-[680px]' : 'h-[520px] sm:h-[600px] md:h-[680px]'
+        }`}>
           <GlaucomaRetinaCanvas
             mode={(activeVisualMode === 'Clinical Workflow' ? 'Clinical Evidence' : activeVisualMode) as any}
             onModeChange={(m) => setActiveVisualMode(m as any)}
@@ -1369,7 +1375,9 @@ export const GlaucomaScreeningFlow: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
-              {mlResult?.glaucoma?.clinicalRecommendation ||
+              {(typeof mlResult?.glaucoma?.clinicalRecommendation === 'string'
+                ? mlResult.glaucoma.clinicalRecommendation
+                : ((mlResult?.glaucoma?.clinicalRecommendation as any)?.recommendation || (mlResult?.glaucoma?.clinicalRecommendation as any)?.clinicalRecommendation)) ||
                 (isGlaucomaSuspect
                   ? 'Elevated cup-to-disc ratio or structural feature suspicion. Dilated ophthalmoscopy, tonometry, and visual field evaluation advised.'
                   : 'Optic nerve head morphology and cup-to-disc measurements are within physiologic limits.')}

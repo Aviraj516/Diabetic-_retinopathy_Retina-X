@@ -1,0 +1,182 @@
+{
+  "dataset_size": 5000,
+  "overall_accuracy": 0.864,
+  "balanced_accuracy": 0.8420978790601431,
+  "quadratic_weighted_kappa": 0.8409693665246254,
+  "linear_weighted_kappa": 0.8250964396754825,
+  "cohens_kappa_unweighted": 0.7956731997156251,
+  "macro_f1": 0.8130105179675337,
+  "weighted_f1": 0.8668415026637677,
+  "macro_precision": 0.7903574343734473,
+  "macro_recall": 0.8420978790601431,
+  "macro_ovr_roc_auc": 0.958,
+  "micro_ovr_roc_auc": 0.964,
+  "referable_dr": {
+    "sensitivity": 0.9422222222222222,
+    "specificity": 0.9278125,
+    "ppv": 0.8801245459263103,
+    "npv": 0.9661568499837293,
+    "f1_score": 0.9101153742956801,
+    "roc_auc": 0.962,
+    "tp": 1696,
+    "fp": 231,
+    "fn": 104,
+    "tn": 2969
+  },
+  "per_class": [
+    {
+      "stage": 0,
+      "class_name": "Stage 0 (No DR)",
+      "short_name": "No DR",
+      "tp": 2348,
+      "fp": 122,
+      "fn": 302,
+      "tn": 2228,
+      "precision": 0.9506072874493927,
+      "recall_sensitivity": 0.8860377358490567,
+      "specificity": 0.9480851063829787,
+      "npv": 0.8806324110671937,
+      "f1_score": 0.9171875000000002,
+      "support": 2650,
+      "ovr_roc_auc": 0.978
+    },
+    {
+      "stage": 1,
+      "class_name": "Stage 1 (Mild)",
+      "short_name": "Mild",
+      "tp": 417,
+      "fp": 186,
+      "fn": 133,
+      "tn": 4264,
+      "precision": 0.6915422885572139,
+      "recall_sensitivity": 0.7581818181818182,
+      "specificity": 0.9582022471910112,
+      "npv": 0.969752103707073,
+      "f1_score": 0.7233304423243712,
+      "support": 550,
+      "ovr_roc_auc": 0.912
+    },
+    {
+      "stage": 2,
+      "class_name": "Stage 2 (Moderate)",
+      "short_name": "Moderate",
+      "tp": 951,
+      "fp": 140,
+      "fn": 129,
+      "tn": 3780,
+      "precision": 0.8716773602199817,
+      "recall_sensitivity": 0.8805555555555555,
+      "specificity": 0.9642857142857143,
+      "npv": 0.9669992325402916,
+      "f1_score": 0.8760939659143252,
+      "support": 1080,
+      "ovr_roc_auc": 0.948
+    },
+    {
+      "stage": 3,
+      "class_name": "Stage 3 (Severe)",
+      "short_name": "Severe",
+      "tp": 344,
+      "fp": 104,
+      "fn": 76,
+      "tn": 4476,
+      "precision": 0.7678571428571429,
+      "recall_sensitivity": 0.819047619047619,
+      "specificity": 0.977292576419214,
+      "npv": 0.9833040421792618,
+      "f1_score": 0.7926267281105991,
+      "support": 420,
+      "ovr_roc_auc": 0.965
+    },
+    {
+      "stage": 4,
+      "class_name": "Stage 4 (PDR)",
+      "short_name": "PDR",
+      "tp": 260,
+      "fp": 128,
+      "fn": 40,
+      "tn": 4572,
+      "precision": 0.6701030927835051,
+      "recall_sensitivity": 0.8666666666666667,
+      "specificity": 0.9727659574468085,
+      "npv": 0.9913269731136166,
+      "f1_score": 0.7558139534883721,
+      "support": 300,
+      "ovr_roc_auc": 0.989
+    }
+  ],
+  "confusion_matrix_raw": [
+    [
+      2348,
+      145,
+      78,
+      41,
+      38
+    ],
+    [
+      59,
+      417,
+      36,
+      20,
+      18
+    ],
+    [
+      27,
+      30,
+      951,
+      27,
+      45
+    ],
+    [
+      22,
+      7,
+      20,
+      344,
+      27
+    ],
+    [
+      14,
+      4,
+      6,
+      16,
+      260
+    ]
+  ],
+  "confusion_matrix_normalized_pct": [
+    [
+      88.6,
+      5.47,
+      2.94,
+      1.55,
+      1.43
+    ],
+    [
+      10.73,
+      75.82,
+      6.55,
+      3.64,
+      3.27
+    ],
+    [
+      2.5,
+      2.78,
+      88.06,
+      2.5,
+      4.17
+    ],
+    [
+      5.24,
+      1.67,
+      4.76,
+      81.9,
+      6.43
+    ],
+    [
+      4.67,
+      1.33,
+      2.0,
+      5.33,
+      86.67
+    ]
+  ]
+}

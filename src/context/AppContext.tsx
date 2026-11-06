@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   UserRole,
   UserProfile,
@@ -37,15 +37,17 @@ const loadUserProfileFromDatabase = async (
   let role: UserRole = 'nurse';
   let name = user.email ? user.email.split('@')[0] : 'RETINA-X User';
   let title = 'Ophthalmologist';
+  let profileRow: any = null;
 
   try {
-    const { data: profileRow, error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (!error && profileRow) {
+    if (!error && data) {
+      profileRow = data;
       if (profileRow.role) {
         const raw = String(profileRow.role).toLowerCase();
         if (raw === 'admin') role = 'admin';
@@ -83,7 +85,8 @@ const loadUserProfileFromDatabase = async (
           ? 'Hospital System Administrator'
           : 'Ophthalmologist');
     }
-  } catch {
+  } catch (err) {
+    console.warn('[loadUserProfileFromDatabase] Profile query error (non-fatal):', err);
     const metadata = user.user_metadata || {};
     const matched = userList.find((u) => u.email.toLowerCase() === (user.email || '').toLowerCase());
     const rawRole = (
@@ -112,12 +115,35 @@ const loadUserProfileFromDatabase = async (
     name = 'Dr. Aviraj Murkute';
   }
 
+  // Handle pending doctor contact number if set during login or Gmail OAuth
+  try {
+    const pendingContact = typeof window !== 'undefined' ? localStorage.getItem('trinay_pending_dr_contact') : null;
+    if (pendingContact && user.id) {
+      localStorage.removeItem('trinay_pending_dr_contact');
+      await supabase.from('profiles').update({
+        phone: pendingContact,
+      }).eq('id', user.id);
+      if (profileRow) {
+        profileRow.phone = pendingContact;
+      }
+    }
+  } catch {}
+
+  const userMetadata = (user.user_metadata as any) || {};
+  const phone = profileRow?.phone || profileRow?.contact_no || userMetadata.phone || '';
+  const contactNo = profileRow?.contact_no || profileRow?.phone || userMetadata.contact_no || phone;
+  const userEmail = user.email || '';
+  const gmail = profileRow?.gmail || (userEmail.toLowerCase().endsWith('@gmail.com') ? userEmail : '') || userMetadata.gmail || '';
+
   return {
     id: user.id,
     name,
     role,
     title,
-    email: user.email || '',
+    email: userEmail,
+    phone,
+    contactNo,
+    gmail,
     avatarLetter: name.charAt(0).toUpperCase() || 'U',
   };
 };
@@ -167,7 +193,12 @@ const mapDrSessionToReport = (sess: any): ReportRecord => {
     nurseName: sess?.nurseName || 'Clinic Staff',
     referralStatus: 'Routine Screening',
     status: 'Generated',
-    recommendation: sess?.clinicalRecommendation || result?.clinical_summary || '',
+    recommendation: (() => {
+      const rawRec = sess?.clinicalRecommendation || sess?.recommendation || result?.clinical_summary || result?.recommendations || '';
+      return typeof rawRec === 'string'
+        ? rawRec
+        : (rawRec && typeof rawRec === 'object' ? (rawRec.recommendation || rawRec.clinicalRecommendation || '') : '');
+    })(),
   };
 };
 
@@ -180,7 +211,7 @@ interface AppContextType {
   pendingUser: UserProfile | null;
   pendingFactorId: string | null;
   users: UserAccount[];
-  loginWithCredentials: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithCredentials: (email: string, pass: string, contactNo?: string) => Promise<{ success: boolean; error?: string }>;
   confirmTwoFactorLogin: () => Promise<void>;
   cancelTwoFactor: () => Promise<void>;
   switchToTwoFactorChallenge: (factorId?: string) => void;
@@ -388,7 +419,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {
       // ignore parse error
     }
-    return DEFAULT_USER;
+    return null;
   });
   const [isAuthRestoring, setIsAuthRestoring] = useState<boolean>(false);
 
@@ -399,8 +430,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const currentRole: UserRole = currentUser ? currentUser.role : 'nurse';
 
-  // Navigation page
-  const [activePage, setActivePage] = useState<NavigationPage>('dashboard');
+  // Navigation page with session persistence so screening flows & result views never get dropped
+  const [activePage, setActivePageState] = useState<NavigationPage>(() => {
+    try {
+      const saved = sessionStorage.getItem('retina_x_active_page') as NavigationPage | null;
+      if (saved) return saved;
+    } catch {}
+    return 'dashboard';
+  });
+
+  const setActivePage = React.useCallback((page: NavigationPage) => {
+    setActivePageState(page);
+    try {
+      sessionStorage.setItem('retina_x_active_page', page);
+    } catch {}
+  }, []);
+
+  const currentUserRef = useRef<UserProfile | null>(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  const usersRef = useRef<UserAccount[]>(users);
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
   const [activePatientId, setActivePatientId] = useState<string | null>(null);
   const [activeReportId, setActiveReportIdState] = useState<string | null>(() => {
     try { return localStorage.getItem('retina_x_active_report_id'); } catch { return null; }
@@ -514,7 +568,14 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
       const s = localStorage.getItem('retina_x_v3_reports');
       if (s) {
         const parsed = JSON.parse(s);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.map((r: any) => ({
+            ...r,
+            recommendation: typeof r.recommendation === 'object' && r.recommendation !== null
+              ? (r.recommendation.recommendation || r.recommendation.clinicalRecommendation || '')
+              : (r.recommendation || ''),
+          }));
+        }
       }
     } catch {}
     return [];
@@ -600,7 +661,7 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
                 }
               }
             } catch {}
-            setCurrentUser(DEFAULT_USER);
+            setCurrentUser(null);
             setPendingUser(null);
             setPendingFactorId(null);
             setAuthStage('login');
@@ -610,7 +671,7 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
         }
 
         const user = data.session.user;
-        const profile = await loadUserProfileFromDatabase(user, users);
+        const profile = await loadUserProfileFromDatabase(user, usersRef.current);
 
         // Check Authenticator Assurance Level and TOTP Factors
         const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -653,7 +714,51 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
     restoreSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT' || !session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+        if (isMounted) {
+          const profile = await loadUserProfileFromDatabase(session.user, usersRef.current);
+
+          // Verify MFA requirements before admitting user to the dashboard to avoid 1-second flash
+          try {
+            const { data: aalData, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            const { data: factorsData } = await supabase.auth.mfa.listFactors();
+            const verifiedTotpFactors = (factorsData?.totp || []).filter(
+              (f) => f.factor_type === 'totp' && f.status === 'verified'
+            );
+
+            if (!aalError && aalData && aalData.currentLevel === 'aal2') {
+              setCurrentUser(profile);
+              setPendingUser(null);
+              setPendingFactorId(null);
+              setAuthStage('login');
+              // Only redirect to dashboard on fresh initial sign-in from an unauthenticated state.
+              // Never redirect an already authenticated user who is screening or viewing results.
+              if (!currentUserRef.current) {
+                setActivePage('dashboard');
+              }
+            } else if (verifiedTotpFactors.length > 0) {
+              setPendingUser(profile);
+              setPendingFactorId(verifiedTotpFactors[0].id);
+              setAuthStage('mfa');
+              setCurrentUser(null);
+            } else {
+              setPendingUser(profile);
+              setPendingFactorId(null);
+              setAuthStage('mfa-enroll');
+              setCurrentUser(null);
+            }
+          } catch (mfaCheckErr) {
+            console.warn('[onAuthStateChange] MFA check error, defaulting to profile:', mfaCheckErr);
+            setCurrentUser(profile);
+            setPendingUser(null);
+            setPendingFactorId(null);
+            setAuthStage('login');
+            if (!currentUserRef.current) {
+              setActivePage('dashboard');
+            }
+          }
+        }
+      } else if (event === 'SIGNED_OUT' || !session?.user) {
         if (isMounted) {
           setCurrentUser(null);
           setPendingUser(null);
@@ -667,7 +772,7 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
       isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, [users]);
+  }, []);
 
   // Fetch registered users from Supabase whenever an Admin is authenticated
   useEffect(() => {
@@ -789,8 +894,15 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
 
       (allDbScreenings || []).forEach((sess: any) => {
         const resolved = resolvePatientForRecord(sess);
+        const rawRec = sess.recommendation || sess.clinicalRecommendation || sess.result?.clinical_summary || '';
+        const safeRec = typeof rawRec === 'string'
+          ? rawRec
+          : (rawRec && typeof rawRec === 'object' ? (rawRec.recommendation || rawRec.clinicalRecommendation || '') : '');
+
         const resolvedSess = {
           ...sess,
+          recommendation: safeRec,
+          clinicalRecommendation: safeRec,
           patientName: resolved.patientName,
           patientId: resolved.patientId,
           patientAge: resolved.patientAge,
@@ -923,7 +1035,12 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
         }
         const dbIds = new Set(dbDrReports.map((r) => r.id));
         const localOnly = localRecords.filter((r) => r && r.id && !dbIds.has(r.id) && (!r.screeningId || !dbIds.has(r.screeningId)));
-        const merged = [...dbDrReports, ...localOnly];
+        const merged = [...dbDrReports, ...localOnly].map((r: any) => ({
+          ...r,
+          recommendation: typeof r.recommendation === 'object' && r.recommendation !== null
+            ? (r.recommendation.recommendation || r.recommendation.clinicalRecommendation || '')
+            : (r.recommendation || ''),
+        }));
         if (merged.length > 0) {
           try { localStorage.setItem('retina_x_v3_reports', JSON.stringify(merged)); } catch {}
         }
@@ -990,7 +1107,8 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
   // Calls supabase.auth.signInWithPassword with email/username and password
   const loginWithCredentials = async (
     identifier: string,
-    pass: string
+    pass: string,
+    contactNo?: string
   ): Promise<{ success: boolean; error?: string }> => {
     const rawIdentifier = (identifier || '').trim();
     if (!rawIdentifier) {
@@ -1012,6 +1130,25 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
       );
       if (match) {
         targetEmail = match.email.toLowerCase();
+      } else if (isSupabaseConfigured()) {
+        try {
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(targetEmail);
+          const filter = isUuid
+            ? `id.eq.${targetEmail},email.ilike.${targetEmail}@%,full_name.ilike.${targetEmail}`
+            : `email.ilike.${targetEmail}@%,full_name.ilike.${targetEmail}`;
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('email')
+            .or(filter)
+            .maybeSingle();
+          if (prof?.email) {
+            targetEmail = prof.email.toLowerCase();
+          } else {
+            targetEmail = `${targetEmail}@gmail.com`;
+          }
+        } catch {
+          targetEmail = `${targetEmail}@gmail.com`;
+        }
       } else {
         targetEmail = `${targetEmail}@gmail.com`;
       }
@@ -1037,6 +1174,18 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
           const verifiedTotpFactors = (factorsData?.totp || []).filter(
             (f) => f.factor_type === 'totp' && f.status === 'verified'
           );
+
+          if (contactNo && contactNo.trim()) {
+            try {
+              await supabase.from('profiles').update({
+                phone: contactNo.trim(),
+              }).eq('id', data.user.id);
+              profile.phone = contactNo.trim();
+              profile.contactNo = contactNo.trim();
+            } catch (updateErr) {
+              console.warn('[loginWithCredentials] Contact number update non-critical:', updateErr);
+            }
+          }
 
           if (aalData?.currentLevel === 'aal2') {
             setCurrentUser(profile);
@@ -1070,7 +1219,7 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
         const helperRes = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ identifier: rawIdentifier, password: inputPass }),
+          body: JSON.stringify({ identifier: rawIdentifier, password: inputPass, contact_no: contactNo }),
         });
         const helperData = await helperRes.json();
 
@@ -1171,6 +1320,9 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
     } catch (err) {
       console.warn('Error during Supabase sign out:', err);
     }
+    try {
+      sessionStorage.removeItem('retina_x_active_page');
+    } catch {}
     setCurrentUser(null);
     setPendingUser(null);
     setPendingFactorId(null);
@@ -1973,7 +2125,16 @@ const INITIAL_GLAUCOMA: GlaucomaScreeningRecord[] = [];
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.screening) {
-          const fetched = data.screening;
+          const rawScreening = data.screening;
+          const rawRec = rawScreening.recommendation || rawScreening.clinicalRecommendation || '';
+          const safeRec = typeof rawRec === 'string'
+            ? rawRec
+            : (rawRec && typeof rawRec === 'object' ? (rawRec.recommendation || rawRec.clinicalRecommendation || '') : '');
+          const fetched = {
+            ...rawScreening,
+            recommendation: safeRec,
+            clinicalRecommendation: safeRec,
+          };
           const rawType = String(fetched.screeningType || fetched.screening_type || '').toLowerCase();
           setActiveScreeningForModal(fetched);
           if (rawType === 'cataract') {

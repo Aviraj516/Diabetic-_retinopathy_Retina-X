@@ -52,29 +52,29 @@ const DiseaseCard: React.FC<DiseaseCardProps> = ({ id, icon }) => {
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs p-5 flex flex-col h-full hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-2xl border border-slate-200/85 p-5 flex flex-col h-full hover:border-sky-300 hover:shadow-[0_10px_25px_-5px_rgba(15,23,42,0.05),0_8px_10px_-6px_rgba(15,23,42,0.02)] transition-all duration-200 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)]">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-center shrink-0">
             {icon}
           </div>
-          <h3 className="text-lg font-bold text-slate-900 leading-tight">
+          <h3 className="text-base font-extrabold text-[#0F172A] leading-tight">
             {title}
           </h3>
         </div>
 
-        <p className="text-base text-slate-600 leading-relaxed mb-4 line-clamp-3">
+        <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed mb-3.5 line-clamp-2">
           {overview}
         </p>
 
-        <div className="space-y-3 mb-5 flex-1">
+        <div className="space-y-3 mb-4 flex-1">
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
               Key Symptoms
             </h4>
-            <ul className="space-y-1.5">
+            <ul className="space-y-1">
               {symptoms.slice(0, 3).map((symptom, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-base text-slate-700">
-                  <span className="w-1 h-1 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+                <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1 shrink-0" />
                   <span className="leading-snug">{symptom}</span>
                 </li>
               ))}
@@ -82,24 +82,25 @@ const DiseaseCard: React.FC<DiseaseCardProps> = ({ id, icon }) => {
           </div>
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 mt-4">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
               Screening Focus
             </h4>
-            <p className="text-[15px] text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+            <p className="text-xs text-slate-700 leading-relaxed bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/60 font-medium">
               {screeningFocus}
             </p>
           </div>
         </div>
 
-        <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+        <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
           <button
+            type="button"
             onClick={() => setIsModalOpen(true)}
-            className="text-base font-bold text-[#0284C7] hover:text-sky-700 flex items-center gap-1 transition-colors"
+            className="text-xs font-bold text-[#0284C7] hover:text-sky-700 flex items-center gap-1 transition-colors cursor-pointer"
           >
-            Learn more <ChevronRight className="w-4 h-4" />
+            Learn more <ChevronRight className="w-3.5 h-3.5" />
           </button>
-          <span className="text-xs font-medium text-slate-400">
-            Source: Mayo Clinic
+          <span className="text-[11px] font-medium text-slate-400">
+            Mayo Clinic Guidelines
           </span>
         </div>
       </div>

@@ -8,6 +8,8 @@ export interface UserAccount {
   role: UserRole;
   title: string;
   phone?: string;
+  contactNo?: string;
+  gmail?: string;
   status: 'Active' | 'Inactive';
   createdAt: string;
   avatarLetter: string;
@@ -19,6 +21,9 @@ export interface UserProfile {
   role: UserRole;
   title: string;
   email: string;
+  phone?: string;
+  contactNo?: string;
+  gmail?: string;
   avatarLetter?: string;
   institution?: string;
   mfaEnabled?: boolean;

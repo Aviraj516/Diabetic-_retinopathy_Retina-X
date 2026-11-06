@@ -84,6 +84,9 @@ export const DetailedReportPage: React.FC = () => {
         nurseName: matchedScreening.nurseName || 'Clinic Staff',
         referralStatus: matchedScreening.status === 'Referred' ? 'Specialist Referral Initiated' : 'Routine Screening',
         status: 'Generated',
+        recommendation: typeof matchedScreening.recommendation === 'object' && matchedScreening.recommendation !== null
+          ? ((matchedScreening.recommendation as any).recommendation || (matchedScreening.recommendation as any).clinicalRecommendation || '')
+          : (matchedScreening.recommendation || ''),
       };
     }
   }
@@ -223,7 +226,9 @@ export const DetailedReportPage: React.FC = () => {
     referralStatus: report.referralStatus,
     referralPriority: report.referralPriority,
     referralReason: report.referralReason,
-    recommendation: report.recommendation,
+    recommendation: typeof report.recommendation === 'object' && report.recommendation !== null
+      ? ((report.recommendation as any).recommendation || (report.recommendation as any).clinicalRecommendation || '')
+      : report.recommendation,
   });
 
   // Retinal anatomy data
@@ -1068,7 +1073,9 @@ export const DetailedReportPage: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-700 leading-relaxed font-medium">
-              {recommendedAction.actionSummary}
+              {typeof recommendedAction.actionSummary === 'string'
+                ? recommendedAction.actionSummary
+                : ((recommendedAction.actionSummary as any)?.recommendation || (recommendedAction.actionSummary as any)?.clinicalRecommendation || '')}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-slate-200/80 text-[11px]">
@@ -1158,8 +1165,14 @@ export const DetailedReportPage: React.FC = () => {
                 <p><strong>Reviewing Specialist:</strong> {report.specialistReview.specialistName || 'Not available'}</p>
                 <p><strong>Review Date:</strong> {report.specialistReview.reviewDate || 'Not available'}</p>
                 <p><strong>Assessment Notes:</strong> {report.specialistReview.assessment || 'Not available'}</p>
-                {report.specialistReview.notes && <p><strong>Additional Notes:</strong> {report.specialistReview.notes}</p>}
-                {report.specialistReview.recommendation && <p><strong>Recommendation:</strong> {report.specialistReview.recommendation}</p>}
+                {report.specialistReview.recommendation && (
+                  <p>
+                    <strong>Recommendation:</strong>{' '}
+                    {typeof report.specialistReview.recommendation === 'string'
+                      ? report.specialistReview.recommendation
+                      : ((report.specialistReview.recommendation as any)?.recommendation || (report.specialistReview.recommendation as any)?.clinicalRecommendation || '')}
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-1 text-slate-600">

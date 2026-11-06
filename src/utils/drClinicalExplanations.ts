@@ -343,12 +343,21 @@ export function getRecommendedAction(params: {
   const isMild = severity.includes('mild') || severity.includes('level 1');
   const isExplicitlyReferred = params.referralStatus === 'Referred' || params.referralStatus === 'Referred to Specialist' || params.referralPriority != null;
 
+  const rawRec = params.recommendation as any;
+  const recText = typeof rawRec === 'string'
+    ? (rawRec.trim() || undefined)
+    : (rawRec && typeof rawRec === 'object'
+        ? ((typeof rawRec.recommendation === 'string' && rawRec.recommendation.trim()) ||
+           (typeof rawRec.clinicalRecommendation === 'string' && rawRec.clinicalRecommendation.trim()) ||
+           undefined)
+        : undefined);
+
   if (isSevereOrPDR || params.referralPriority === 'High') {
     return {
       actionTitle: 'Comprehensive Ophthalmology Referral (Prompt Evaluation)',
       actionSummary:
         params.referralReason ||
-        params.recommendation ||
+        recText ||
         'Refer to a vitreo-retinal specialist for comprehensive dilated fundus examination, slit-lamp biomicroscopy, and macular optical coherence tomography (OCT).',
       timingGuideline: 'Within 2 to 4 weeks (Prompt Specialist Review)',
       protocolBasis: 'International Council of Ophthalmology (ICO) Guidelines for Severe / Proliferative DR',
@@ -362,7 +371,7 @@ export function getRecommendedAction(params: {
       actionTitle: 'Specialist Eye Care Referral',
       actionSummary:
         params.referralReason ||
-        params.recommendation ||
+        recText ||
         'Referral to eye care specialist for dilated clinical staging, assessment of macular involvement, and baseline retinal documentation.',
       timingGuideline: 'Within 1 to 3 months',
       protocolBasis: 'ICO Guidelines for Moderate Non-Proliferative Diabetic Retinopathy',
@@ -375,7 +384,7 @@ export function getRecommendedAction(params: {
     return {
       actionTitle: 'Clinical Surveillance & Medical Glycemic Review',
       actionSummary:
-        params.recommendation ||
+        recText ||
         'Continue periodic surveillance. Coordinate with primary physician to optimize glycemic control (target HbA1c < 7.0%), lipid panel, and blood pressure.',
       timingGuideline: 'Follow-up eye examination in 6 to 12 months',
       protocolBasis: 'ICO Guidelines for Mild Non-Proliferative Diabetic Retinopathy',
@@ -388,7 +397,7 @@ export function getRecommendedAction(params: {
   return {
     actionTitle: 'Routine Annual Diabetic Eye Screening Cycle',
     actionSummary:
-      params.recommendation ||
+      recText ||
       'No referable retinopathy detected. Continue standard annual preventive diabetic eye screening and maintain strict systemic glycemic and blood pressure targets.',
     timingGuideline: 'Rescreen in 12 months (Annual Screening Cycle)',
     protocolBasis: 'Standard Annual Tele-Retinal Diabetic Eye Screening Protocol',

@@ -789,7 +789,9 @@ export const CataractScreeningFlow: React.FC = () => {
                   <span className="font-semibold text-teal-700">{selectedEye}</span>
                 </div>
                 <p className="text-xs text-slate-600 max-w-xl">
-                  {mlResult.cataract?.clinicalRecommendation}
+                  {typeof mlResult.cataract?.clinicalRecommendation === 'string'
+                    ? mlResult.cataract.clinicalRecommendation
+                    : ((mlResult.cataract?.clinicalRecommendation as any)?.recommendation || (mlResult.cataract?.clinicalRecommendation as any)?.clinicalRecommendation || '')}
                 </p>
               </div>
 

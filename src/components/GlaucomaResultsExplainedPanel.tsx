@@ -453,10 +453,14 @@ export const GlaucomaResultsExplainedPanel: React.FC<GlaucomaResultsExplainedPan
             </div>
 
             {/* Dynamic clinical recommendation from model */}
-            {data.clinicalRecommendation && (
+            {Boolean(data.clinicalRecommendation) && (
               <div className="p-3 rounded-lg bg-sky-50/70 border border-sky-100 text-slate-800 space-y-0.5 text-[11px]">
                 <strong className="font-bold text-sky-900 block">Clinical Recommendation:</strong>
-                <p className="leading-relaxed text-slate-700">{data.clinicalRecommendation}</p>
+                <p className="leading-relaxed text-slate-700">
+                  {typeof data.clinicalRecommendation === 'string'
+                    ? data.clinicalRecommendation
+                    : ((data.clinicalRecommendation as any)?.recommendation || (data.clinicalRecommendation as any)?.clinicalRecommendation || '')}
+                </p>
               </div>
             )}
           </div>

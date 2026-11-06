@@ -25,7 +25,7 @@ import cv2
 import joblib
 import numpy as np
 try:
-    import shap
+    import shap  # type: ignore
 except ImportError:
     shap = None
 
@@ -33,13 +33,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.pipeline import Pipeline
-import segmentation_models_pytorch as smp
 
 try:
-    from bokeh.embed import file_html
-    from bokeh.models import Arrow, Label, NormalHead, Range1d
-    from bokeh.plotting import figure
-    from bokeh.resources import CDN
+    import segmentation_models_pytorch as smp  # type: ignore
+except ImportError:
+    smp = None
+
+try:
+    from bokeh.embed import file_html  # type: ignore
+    from bokeh.models import Range1d  # type: ignore
+    from bokeh.plotting import figure  # type: ignore
+    from bokeh.resources import CDN  # type: ignore
 except ImportError:
     file_html = None
     figure = None
@@ -212,6 +216,11 @@ class AttentionUNet(nn.Module):
 class VesselUNet(nn.Module):
     def __init__(self):
         super().__init__()
+        if smp is None:
+            raise ImportError(
+                "segmentation_models_pytorch is required for VesselUNet. "
+                "Install it via: pip install segmentation-models-pytorch"
+            )
         self.model = smp.Unet(
             encoder_name="efficientnet-b0",
             encoder_weights=None,
@@ -782,28 +791,22 @@ class GlaucomaService:
         gradcam_orig = cv2.resize(gradcam_512, (w_orig, h_orig), interpolation=cv2.INTER_LINEAR)
 
         # --------------------------------------------------------
-        # Panel 1: Original Fundus (Untouched)
+        # Panel 1: Original Fundus (Pristine 512x512 Canonical)
         # --------------------------------------------------------
         panel1 = canonical_512.copy()
-        # Add small metadata pill
-        cv2.rectangle(panel1, (16, 16), (220, 52), (15, 23, 42), -1)
-        cv2.putText(panel1, "Original Fundus", (28, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2, cv2.LINE_AA)
-        cv2.rectangle(panel1, (IMAGE_SIZE - 170, 16), (IMAGE_SIZE - 16, 52), (15, 23, 42), -1)
-        cv2.putText(panel1, "512x512 Canonical", (IMAGE_SIZE - 160, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (14, 165, 233), 1, cv2.LINE_AA)
 
-        # --------------------------------------------------------
-        # Panel 2: Optic Nerve Analysis
-        # --------------------------------------------------------
-        panel2 = canonical_512.copy()
-        # Contours on 512
+        # Contours on 512 space
         disc_cnts, _ = cv2.findContours(disc_mask_512, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cup_cnts, _ = cv2.findContours(cup_mask_512, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        # Green for Optic Disc, Magenta/Red for Optic Cup
+        # --------------------------------------------------------
+        # Panel 2: Optic Disc & Cup Segmentation (Clean & Precise)
+        # --------------------------------------------------------
+        panel2 = canonical_512.copy()
+        # Antialiased green contour for Optic Disc (Green) and Magenta for Optic Cup
         cv2.drawContours(panel2, disc_cnts, -1, (50, 205, 50), 2, cv2.LINE_AA)
         cv2.drawContours(panel2, cup_cnts, -1, (255, 0, 255), 2, cv2.LINE_AA)
 
-        # Measurement crosshairs & Center
         if cdr_features.get("status") == "VALID":
             dx, dy, dw, dh = cdr_features["disc_x"], cdr_features["disc_y"], cdr_features["disc_width"], cdr_features["disc_height"]
             cx, cy, cw, ch = cdr_features["cup_x"], cdr_features["cup_y"], cdr_features["cup_width"], cdr_features["cup_height"]
@@ -811,63 +814,26 @@ class GlaucomaService:
             disc_center_x, disc_center_y = dx + dw // 2, dy + dh // 2
             cup_center_x, cup_center_y = cx + cw // 2, cy + ch // 2
 
-            # Center dots
-            cv2.circle(panel2, (disc_center_x, disc_center_y), 4, (50, 205, 50), -1, cv2.LINE_AA)
-            cv2.circle(panel2, (cup_center_x, cup_center_y), 4, (255, 0, 255), -1, cv2.LINE_AA)
+            # Subtle center anchor points
+            cv2.circle(panel2, (disc_center_x, disc_center_y), 3, (50, 205, 50), -1, cv2.LINE_AA)
+            cv2.circle(panel2, (cup_center_x, cup_center_y), 3, (255, 0, 255), -1, cv2.LINE_AA)
 
-            # Measurement lines: Vertical Disc & Cup
+            # Fine caliper measurement axes (vertical cup & disc diameters)
             cv2.line(panel2, (disc_center_x, dy), (disc_center_x, dy + dh), (50, 205, 50), 1, cv2.LINE_AA)
-            cv2.line(panel2, (cup_center_x, cy), (cup_center_x, cy + ch), (255, 0, 255), 2, cv2.LINE_AA)
-
-            # Pointer Arrows & Labels
-            # Disc Arrow
-            label_dx = min(IMAGE_SIZE - 120, max(20, disc_center_x + 60))
-            label_dy = max(50, disc_center_y - 60)
-            cv2.arrowedLine(panel2, (label_dx, label_dy), (disc_center_x, disc_center_y), (50, 205, 50), 2, tipLength=0.2)
-            cv2.rectangle(panel2, (label_dx - 6, label_dy - 20), (label_dx + 110, label_dy + 6), (15, 23, 42), -1)
-            cv2.putText(panel2, "OPTIC DISC", (label_dx, label_dy - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (50, 205, 50), 1, cv2.LINE_AA)
-
-            # Cup Arrow
-            label_cx = min(IMAGE_SIZE - 120, max(20, cup_center_x + 60))
-            label_cy = min(IMAGE_SIZE - 40, cup_center_y + 60)
-            cv2.arrowedLine(panel2, (label_cx, label_cy), (cup_center_x, cup_center_y), (255, 0, 255), 2, tipLength=0.2)
-            cv2.rectangle(panel2, (label_cx - 6, label_cy - 20), (label_cx + 100, label_cy + 6), (15, 23, 42), -1)
-            cv2.putText(panel2, "OPTIC CUP", (label_cx, label_cy - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 255), 1, cv2.LINE_AA)
-
-            # Compact CDR Info Card at bottom
-            v_cdr = cdr_features["vertical_cdr"]
-            h_cdr = cdr_features["horizontal_cdr"]
-            a_cdr = cdr_features["area_cdr"]
-            cdr_text = f"V-CDR: {v_cdr:.3f} | H-CDR: {h_cdr:.3f} | Area-CDR: {a_cdr:.3f}"
-            cv2.rectangle(panel2, (16, IMAGE_SIZE - 46), (IMAGE_SIZE - 16, IMAGE_SIZE - 14), (15, 23, 42), -1)
-            cv2.putText(panel2, cdr_text, (26, IMAGE_SIZE - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (255, 255, 255), 1, cv2.LINE_AA)
-        else:
-            fail_text = f"SEGMENTATION UNGRADABLE ({cdr_features.get('status', 'INVALID')}) — CDR NOT COMPUTED"
-            cv2.rectangle(panel2, (16, IMAGE_SIZE - 46), (IMAGE_SIZE - 16, IMAGE_SIZE - 14), (15, 23, 42), -1)
-            cv2.putText(panel2, fail_text, (24, IMAGE_SIZE - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 165, 255), 1, cv2.LINE_AA)
+            cv2.line(panel2, (cup_center_x, cy), (cup_center_x, cy + ch), (255, 0, 255), 1, cv2.LINE_AA)
 
         # --------------------------------------------------------
-        # Panel 3: Retinal Anatomy (Thin clean vessel overlay + Disc/Cup)
+        # Panel 3: Retinal Vessels & Microvasculature
         # --------------------------------------------------------
         panel3 = canonical_512.copy()
-        # Thin vessel contours rather than solid fill
         vessel_cnts, _ = cv2.findContours(vessel_mask_512, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(panel3, vessel_cnts, -1, (0, 220, 255), 1, cv2.LINE_AA) # Yellow-Cyan fine lines
+        cv2.drawContours(panel3, vessel_cnts, -1, (0, 220, 255), 1, cv2.LINE_AA)
         cv2.drawContours(panel3, disc_cnts, -1, (50, 205, 50), 2, cv2.LINE_AA)
         cv2.drawContours(panel3, cup_cnts, -1, (255, 0, 255), 2, cv2.LINE_AA)
 
-        # Top anatomy title
-        cv2.rectangle(panel3, (16, 16), (200, 52), (15, 23, 42), -1)
-        cv2.putText(panel3, "Retinal Anatomy", (26, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2, cv2.LINE_AA)
-
-        # Anatomy legend
-        leg_text = "YELLOW = VESSELS | GREEN = DISC | MAGENTA = CUP"
-        cv2.rectangle(panel3, (16, IMAGE_SIZE - 46), (IMAGE_SIZE - 16, IMAGE_SIZE - 14), (15, 23, 42), -1)
-        cv2.putText(panel3, leg_text, (24, IMAGE_SIZE - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.44, (255, 255, 255), 1, cv2.LINE_AA)
-
         # --------------------------------------------------------
-        # Panel: Neuroretinal Rim Evidence (View C)
-        # Tissue between outer disc boundary and inner cup boundary
+        # Panel: Neuroretinal Rim Evidence
+        # Annular tissue between outer disc boundary and inner cup boundary
         # --------------------------------------------------------
         panel_rim = canonical_512.copy()
         if cdr_features.get("status") == "VALID":
@@ -875,28 +841,19 @@ class GlaucomaService:
             rim_overlay = panel_rim.copy()
             # Highlight rim region in subtle sky-blue/cyan (235, 180, 50 in BGR)
             rim_overlay[rim_mask > 0] = (235, 180, 50)
-            cv2.addWeighted(rim_overlay, 0.40, panel_rim, 0.60, 0, panel_rim)
-
-            # Draw outer disc boundary in green, inner cup in magenta
+            cv2.addWeighted(rim_overlay, 0.35, panel_rim, 0.65, 0, panel_rim)
             cv2.drawContours(panel_rim, disc_cnts, -1, (50, 205, 50), 2, cv2.LINE_AA)
             cv2.drawContours(panel_rim, cup_cnts, -1, (255, 0, 255), 2, cv2.LINE_AA)
 
-            disc_a = int(cdr_features.get("disc_area", 0))
-            cup_a = int(cdr_features.get("cup_area", 0))
-            rim_a = max(0, disc_a - cup_a)
-            rim_text = f"RIM AREA: {rim_a:,} px | DISC: {disc_a:,} px | CUP: {cup_a:,} px"
-            cv2.rectangle(panel_rim, (16, IMAGE_SIZE - 46), (IMAGE_SIZE - 16, IMAGE_SIZE - 14), (15, 23, 42), -1)
-            cv2.putText(panel_rim, rim_text, (24, IMAGE_SIZE - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1, cv2.LINE_AA)
-        else:
-            fail_text = f"NEURORETINAL RIM UNGRADABLE ({cdr_features.get('status', 'INVALID')})"
-            cv2.rectangle(panel_rim, (16, IMAGE_SIZE - 46), (IMAGE_SIZE - 16, IMAGE_SIZE - 14), (15, 23, 42), -1)
-            cv2.putText(panel_rim, fail_text, (24, IMAGE_SIZE - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 165, 255), 1, cv2.LINE_AA)
-
-        cv2.rectangle(panel_rim, (16, 16), (240, 52), (15, 23, 42), -1)
-        cv2.putText(panel_rim, "Neuroretinal Rim", (26, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2, cv2.LINE_AA)
+        # --------------------------------------------------------
+        # Panel: OCT / RNFL Assessment
+        # Explicitly not rendered from 2D fundus photography
+        # (physical optical coherence tomography hardware required)
+        # --------------------------------------------------------
+        panel_oct = None
 
         # --------------------------------------------------------
-        # Panel 4: XAI / Combined Overlay (Vessels + Disc + Cup + Subtle Grad-CAM)
+        # Panel 4: XAI / Grad-CAM Overlay
         # --------------------------------------------------------
         panel4 = canonical_512.copy()
         heatmap = cv2.applyColorMap((np.clip(gradcam_512, 0, 1) * 255).astype(np.uint8), cv2.COLORMAP_JET)
@@ -908,16 +865,11 @@ class GlaucomaService:
         cv2.drawContours(panel4, disc_cnts, -1, (50, 205, 50), 2, cv2.LINE_AA)
         cv2.drawContours(panel4, cup_cnts, -1, (255, 0, 255), 2, cv2.LINE_AA)
 
-        cv2.rectangle(panel4, (16, 16), (230, 52), (15, 23, 42), -1)
-        cv2.putText(panel4, "XAI / Grad-CAM Overlay", (26, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255, 255, 255), 2, cv2.LINE_AA)
-
-        cv2.rectangle(panel4, (16, IMAGE_SIZE - 46), (IMAGE_SIZE - 16, IMAGE_SIZE - 14), (15, 23, 42), -1)
-        cv2.putText(panel4, "GRAD-CAM SALIENCY + SEGMENTATION CO-LOCALIZATION", (22, IMAGE_SIZE - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (14, 165, 233), 1, cv2.LINE_AA)
-
         return {
             "original": bgr_to_b64(panel1),
             "optic_nerve": bgr_to_b64(panel2),
             "rim": bgr_to_b64(panel_rim),
+            "oct_rnfl": None,
             "vessels": bgr_to_b64(panel3),
             "gradcam": bgr_to_b64(heatmap),
             "combined": bgr_to_b64(panel4),
@@ -1114,11 +1066,22 @@ class GlaucomaService:
         )
         visualizations["bokeh_html"] = bokeh_html
 
+        outcome_category = (
+            "Glaucoma Suspect — Clinical Assessment Required"
+            if (is_segmentation_valid and clf_result["flagged"])
+            else (
+                "Low-Risk Classification — Does Not Exclude Glaucoma"
+                if is_segmentation_valid
+                else "Inconclusive — Reliable Measurements Could Not Be Obtained"
+            )
+        )
+
         return {
             "success": True,
             "pipeline": "glaucoma",
             "status": "COMPLETE" if is_segmentation_valid else "SEGMENTATION_UNGRADABLE",
             "screeningStatus": "VALID_SCREENING_RESULT" if is_segmentation_valid else "INCONCLUSIVE",
+            "outcomeCategory": outcome_category,
             "segmentationStatus": seg_status,
             "message": (
                 "Glaucoma screening completed successfully."
@@ -1166,6 +1129,12 @@ class GlaucomaService:
                 "pixels": vessel_pixels,
                 "density": float(vessel_fraction),
             },
+            "octRnfl": {
+                "status": "NOT_ASSESSED",
+                "isAvailable": False,
+                "dataProvided": False,
+                "message": "OCT / RNFL cross-sectional scan data not provided. 2D fundus photography screening only. Dedicated physical optical coherence tomography device required for RNFL thickness measurements.",
+            },
             "glaucoma": {
                 "prediction": ("GLAUCOMA_SUSPECT" if clf_result["flagged"] else "NORMAL") if is_segmentation_valid else "INCONCLUSIVE",
                 "glaucomaProbability": float(clf_result["probability"]) if is_segmentation_valid else 0.0,
@@ -1183,6 +1152,8 @@ class GlaucomaService:
                 "original": visualizations.get("original"),
                 "opticNerve": visualizations.get("optic_nerve"),
                 "rim": visualizations.get("rim"),
+                "octRnfl": visualizations.get("oct_rnfl"),
+                "oct_rnfl": visualizations.get("oct_rnfl"),
                 "retinalAnatomy": visualizations.get("vessels"),
                 "gradcam": visualizations.get("gradcam"),
                 "workflow": visualizations.get("combined"),

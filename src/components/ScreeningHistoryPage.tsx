@@ -347,14 +347,14 @@ export const ScreeningHistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-in fade-in duration-200">
+    <div className="space-y-4 w-full max-w-full min-w-0 pb-8 animate-in fade-in duration-200">
       {/* 1. Header Card (Exact 1:1 Reference Match) */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-[30px] font-extrabold text-[#0F172A] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">
             Screening Archive
           </h1>
-          <p className="text-sm font-medium text-slate-500 mt-1.5">
+          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">
             Comprehensive log of all AI-assisted anterior segment and retinal fundus screenings
           </p>
         </div>
@@ -362,38 +362,38 @@ export const ScreeningHistoryPage: React.FC = () => {
         <button
           type="button"
           onClick={handleRunNewScreening}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#0284C7] hover:bg-sky-700 active:bg-sky-800 text-white text-sm font-bold rounded-full shadow-xs transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0284C7] hover:bg-sky-700 active:bg-sky-800 text-white text-xs sm:text-[13px] font-bold rounded-lg shadow-xs transition-colors cursor-pointer shrink-0 h-9 sm:h-9.5"
         >
-          <PlusCircle className="w-5 h-5 shrink-0" />
+          <PlusCircle className="w-4 h-4 shrink-0" />
           <span>+ Run New Screening</span>
         </button>
       </div>
 
       {/* 2. Main Table Card (Exact 1:1 Reference Match) */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
         {/* Optional Collapsible Filter Bar to maintain pristine cleanliness like reference */}
         {(showFilters || search) && (
-          <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3.5 bg-slate-50/60 animate-in fade-in duration-150">
+          <div className="p-3 sm:p-3.5 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/60 animate-in fade-in duration-150">
             <div className="relative w-full sm:max-w-md">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                <Search className="w-4 h-4" />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <Search className="w-3.5 h-3.5" />
               </div>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search patient, ID, discipline..."
-                className="w-full pl-9 pr-4 py-1.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:border-[#0284C7]"
+                className="w-full pl-9 pr-3.5 py-1.5 text-xs text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-hidden focus:border-[#0284C7]"
               />
             </div>
 
-            <div className="flex items-center gap-3 self-end sm:self-auto text-xs">
+            <div className="flex items-center gap-2.5 self-end sm:self-auto text-xs">
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-500 font-medium">Discipline:</span>
+                <span className="text-slate-500 font-medium text-xs">Discipline:</span>
                 <select
                   value={disciplineFilter}
                   onChange={(e) => setDisciplineFilter(e.target.value)}
-                  className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold text-xs"
+                  className="px-2 py-1 bg-white border border-slate-200 rounded-md text-slate-800 font-bold text-xs"
                 >
                   <option value="All">All</option>
                   <option value="Diabetic Retinopathy">Diabetic Retinopathy</option>
@@ -405,11 +405,11 @@ export const ScreeningHistoryPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-500 font-medium">Status:</span>
+                <span className="text-slate-500 font-medium text-xs">Status:</span>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold text-xs"
+                  className="px-2 py-1 bg-white border border-slate-200 rounded-md text-slate-800 font-bold text-xs"
                 >
                   <option value="All">All</option>
                   <option value="Awaiting Review">Awaiting Review</option>
@@ -423,22 +423,22 @@ export const ScreeningHistoryPage: React.FC = () => {
 
         {/* Responsive Table */}
         {filtered.length === 0 ? (
-          <div className="p-16 text-center text-slate-500 text-sm">
+          <div className="p-12 text-center text-slate-500 text-xs sm:text-sm">
             No screening records match your filter criteria.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse text-xs sm:text-[13px]">
               <thead>
                 <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  <th className="pl-6 pr-3 py-4 w-24 whitespace-nowrap">SCREENING ID</th>
-                  <th className="px-3.5 py-4 whitespace-nowrap">PATIENT</th>
-                  <th className="px-3.5 py-4 whitespace-nowrap">DISCIPLINE</th>
-                  <th className="px-3.5 py-4 whitespace-nowrap">EXAMINED EYE</th>
-                  <th className="px-3.5 py-4">AI FINDINGS</th>
-                  <th className="px-3.5 py-4 whitespace-nowrap">CONFIDENCE</th>
-                  <th className="px-3.5 py-4 whitespace-nowrap">STATUS</th>
-                  <th className="pr-6 pl-2 py-4 text-right whitespace-nowrap">
+                  <th className="pl-4 pr-2.5 py-3 w-20 whitespace-nowrap">SCREENING ID</th>
+                  <th className="px-3 py-3 whitespace-nowrap">PATIENT</th>
+                  <th className="px-3 py-3 whitespace-nowrap">DISCIPLINE</th>
+                  <th className="px-3 py-3 whitespace-nowrap">EXAMINED EYE</th>
+                  <th className="px-3 py-3">AI FINDINGS</th>
+                  <th className="px-3 py-3 whitespace-nowrap">CONFIDENCE</th>
+                  <th className="px-3 py-3 whitespace-nowrap">STATUS</th>
+                  <th className="pr-4 pl-2 py-3 text-right whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => setShowFilters(!showFilters)}
@@ -459,15 +459,15 @@ export const ScreeningHistoryPage: React.FC = () => {
                       className="hover:bg-slate-50/70 transition-colors group cursor-pointer"
                       onClick={() => handleViewReport(item)}
                     >
-                      {/* 1. SCREENING ID: 3-line blue wrap exactly like reference SCR- 2026- XXXX */}
-                      <td className="pl-6 pr-3 py-4 align-top w-24">
+                      {/* 1. SCREENING ID */}
+                      <td className="pl-4 pr-2.5 py-2.5 sm:py-3 align-top w-20">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewReport(item);
                           }}
-                          className="font-bold font-mono text-[#0284C7] hover:underline cursor-pointer text-xs sm:text-[13px] leading-tight text-left block"
+                          className="font-bold font-mono text-[#0284C7] hover:underline cursor-pointer text-xs leading-tight text-left block"
                         >
                           {idParts.length >= 3 ? (
                             <>
@@ -481,8 +481,8 @@ export const ScreeningHistoryPage: React.FC = () => {
                         </button>
                       </td>
 
-                      {/* 2. PATIENT: Two lines, Bold Name over PT-ID */}
-                      <td className="px-3.5 py-4 align-top">
+                      {/* 2. PATIENT */}
+                      <td className="px-3 py-2.5 sm:py-3 align-top">
                         <div
                           className="cursor-pointer group-hover:text-[#0284C7] transition-colors"
                           onClick={(e) => {
@@ -490,25 +490,25 @@ export const ScreeningHistoryPage: React.FC = () => {
                             openPatientProfile(item.rawPatientId || item.patientId);
                           }}
                         >
-                          <div className="font-bold text-[#0F172A] text-sm leading-snug">
+                          <div className="font-bold text-[#0F172A] text-xs sm:text-[13px] leading-snug">
                             {item.patientName}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-400 font-medium mt-0.5">
+                          <div className="text-[10px] sm:text-[11px] font-mono text-slate-400 font-medium mt-0.5">
                             {item.patientId}
                           </div>
                         </div>
                       </td>
 
                       {/* 3. DISCIPLINE */}
-                      <td className="px-3.5 py-4 align-top">
-                        <span className="text-sm font-semibold text-[#0F172A] leading-snug">
+                      <td className="px-3 py-2.5 sm:py-3 align-top">
+                        <span className="text-xs sm:text-[13px] font-semibold text-[#0F172A] leading-snug">
                           {item.discipline}
                         </span>
                       </td>
 
-                      {/* 4. EXAMINED EYE: Two-line format Right Eye over (OD) */}
-                      <td className="px-3.5 py-4 align-top whitespace-nowrap">
-                        <div className="text-xs sm:text-sm text-slate-500 font-medium leading-tight">
+                      {/* 4. EXAMINED EYE */}
+                      <td className="px-3 py-2.5 sm:py-3 align-top whitespace-nowrap">
+                        <div className="text-xs text-slate-500 font-medium leading-tight">
                           {item.examinedEye.includes('(') ? (
                             <>
                               <div>{item.examinedEye.split('(')[0].trim()}</div>
@@ -520,25 +520,25 @@ export const ScreeningHistoryPage: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* 5. AI FINDINGS: Truncated single-line with ellipsis */}
-                      <td className="px-3.5 py-4 align-top max-w-[220px] lg:max-w-[280px]">
+                      {/* 5. AI FINDINGS */}
+                      <td className="px-3 py-2.5 sm:py-3 align-top max-w-[220px] lg:max-w-[280px]">
                         <span
-                          className="text-xs sm:text-sm text-slate-700 font-medium truncate block"
+                          className="text-xs text-slate-700 font-medium truncate block"
                           title={item.aiFindings}
                         >
                           {item.aiFindings}
                         </span>
                       </td>
 
-                      {/* 6. CONFIDENCE: Soft mint green pill badge */}
-                      <td className="px-3.5 py-4 align-top whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E8F8F0] text-[#059669] border border-[#A7F3D0]/60">
+                      {/* 6. CONFIDENCE */}
+                      <td className="px-3 py-2.5 sm:py-3 align-top whitespace-nowrap">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#E8F8F0] text-[#059669] border border-[#A7F3D0]/60">
                           {item.confidence.toFixed(1)}%
                         </span>
                       </td>
 
-                      {/* 7. STATUS: Subtitle dark text matching reference */}
-                      <td className="px-3.5 py-4 align-top whitespace-nowrap">
+                      {/* 7. STATUS */}
+                      <td className="px-3 py-2.5 sm:py-3 align-top whitespace-nowrap">
                         {item.status === 'Awaiting Review' ? (
                           <div className="text-xs font-bold text-slate-700 leading-tight">
                             <div>Awaiting</div>
@@ -551,18 +551,18 @@ export const ScreeningHistoryPage: React.FC = () => {
                         )}
                       </td>
 
-                      {/* 8. ACTION: Subtle view report icon button */}
-                      <td className="pr-6 pl-2 py-4 align-top text-right whitespace-nowrap">
+                      {/* 8. ACTION */}
+                      <td className="pr-4 pl-2 py-2.5 sm:py-3 align-top text-right whitespace-nowrap">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewReport(item);
                           }}
-                          className="inline-flex items-center p-1.5 rounded-full text-[#0284C7] hover:bg-sky-50 transition-colors opacity-70 group-hover:opacity-100 cursor-pointer"
+                          className="inline-flex items-center p-1 rounded-md text-[#0284C7] hover:bg-sky-50 transition-colors opacity-70 group-hover:opacity-100 cursor-pointer"
                           title="View Detailed Report"
                         >
-                          <FileText className="w-4 h-4" />
+                          <FileText className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>

@@ -756,7 +756,7 @@ export const NewScreeningFlow: React.FC = () => {
         </div>
 
         {/* Large Canvas Area */}
-        <div className="relative w-full h-[520px] sm:h-[600px] md:h-[680px] rounded-xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center p-2">
+        <div className="relative w-full h-[380px] sm:h-[460px] md:h-[520px] rounded-xl overflow-hidden bg-black border border-slate-800 flex items-center justify-center p-2">
           <FundusRetinaCanvas
             mode={activeXaiTab}
             opacity={heatmapOpacity}
@@ -1007,11 +1007,17 @@ export const NewScreeningFlow: React.FC = () => {
               </div>
             </div>
 
-            {(severity?.recommendation || result?.recommendation) && (
-              <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
-                {severity?.recommendation || result?.recommendation}
-              </p>
-            )}
+            {(() => {
+              const rec = severity?.recommendation || result?.recommendation;
+              const recText = typeof rec === 'string'
+                ? rec
+                : (rec && typeof rec === 'object' ? (rec.recommendation || rec.clinicalRecommendation) : '');
+              return recText ? (
+                <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  {recText}
+                </p>
+              ) : null;
+            })()}
 
             <button
               type="button"

@@ -333,7 +333,9 @@ export const GlaucomaReportPage: React.FC = () => {
               )}
             </div>
             <p className="text-xs text-slate-600 max-w-xl">
-              {screening.clinicalRecommendation ||
+              {(typeof screening.clinicalRecommendation === 'string'
+                ? screening.clinicalRecommendation
+                : ((screening.clinicalRecommendation as any)?.recommendation || (screening.clinicalRecommendation as any)?.clinicalRecommendation)) ||
                 (isSuspect
                   ? 'Elevated cup-to-disc ratio or structural feature suspicion. Complete dilated ophthalmoscopy, IOP tonometry, and visual field evaluation advised.'
                   : 'Optic nerve head morphology and cup-to-disc measurements are within physiologic limits.')}

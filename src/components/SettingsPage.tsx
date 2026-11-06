@@ -496,6 +496,31 @@ export const SettingsPage: React.FC = () => {
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-mono text-[11px] cursor-not-allowed select-text"
                   />
                 </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1.5">
+                    Doctor Contact Number
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={currentUser?.phone || currentUser?.contactNo || '—'}
+                    placeholder="Optional contact number"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium cursor-not-allowed select-text"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1.5">
+                    Doctor Gmail / Email
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={currentUser?.gmail || currentUser?.email || '—'}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium cursor-not-allowed select-text"
+                  />
+                </div>
               </div>
 
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-2.5 text-xs text-slate-600">

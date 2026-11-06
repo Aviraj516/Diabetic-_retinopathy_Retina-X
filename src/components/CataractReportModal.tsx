@@ -189,7 +189,11 @@ export const CataractReportModal: React.FC = () => {
           )}
 
           <p className="text-slate-600 leading-relaxed text-[11px] bg-slate-50 p-3.5 rounded-xl border border-slate-200/70">
-            <strong className="text-slate-900">Recommendation:</strong> {screening.clinicalRecommendation || (isCataract ? 'If cataract is detected by the AI screening model, recommend ophthalmologist evaluation and slit-lamp examination for clinical confirmation.' : 'Clear crystalline lens pattern identified. Continue routine preventive ophthalmic checkup schedule.')}
+            <strong className="text-slate-900">Recommendation:</strong>{' '}
+            {(typeof screening.clinicalRecommendation === 'string'
+              ? screening.clinicalRecommendation
+              : ((screening.clinicalRecommendation as any)?.recommendation || (screening.clinicalRecommendation as any)?.clinicalRecommendation)) ||
+              (isCataract ? 'If cataract is detected by the AI screening model, recommend ophthalmologist evaluation and slit-lamp examination for clinical confirmation.' : 'Clear crystalline lens pattern identified. Continue routine preventive ophthalmic checkup schedule.')}
           </p>
         </div>
 

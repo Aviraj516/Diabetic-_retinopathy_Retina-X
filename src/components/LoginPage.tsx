@@ -21,14 +21,14 @@ import {
   X,
   ExternalLink,
 } from 'lucide-react';
+import trinayLogo from '../assets/logo.png';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
 
 // Clinical Images
 import cataractImg from '../assets/conditions/cataract.jpg';
 import drImg from '../assets/conditions/diabetic_retinopathy.jpg';
 import glaucomaImg from '../assets/conditions/glaucoma.jpg';
-import amdImg from '../assets/conditions/amd.jpg';
-import keratitisImg from '../assets/conditions/keratitis.jpg';
 
 interface ConditionDetail {
   id: string;
@@ -51,13 +51,45 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCondition, setSelectedCondition] = useState<ConditionDetail | null>(null);
 
+  const handleGmailSignIn = async () => {
+    setError(null);
+    setIsLoading(true);
+
+    if (!isSupabaseConfigured()) {
+      setError('Supabase service is not configured for Gmail authentication.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
+        },
+      });
+
+      if (oauthError) {
+        setError(`Gmail login error: ${oauthError.message}`);
+        setIsLoading(false);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to initialize Gmail authentication.');
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     const email = identifier.trim();
     if (!email) {
-      setError('Please enter your Email or User ID.');
+      setError('Please enter your Gmail, Clinician ID, or Mobile number.');
       return;
     }
 
@@ -71,7 +103,7 @@ export const LoginPage: React.FC = () => {
     try {
       const res = await loginWithCredentials(email, password);
       if (!res.success) {
-        setError(res.error || 'Invalid email or password. Please check your credentials.');
+        setError(res.error || 'Invalid credentials. Please verify your details.');
       }
     } catch {
       setError('Authentication failed. Please check your credentials and try again.');
@@ -155,30 +187,6 @@ export const LoginPage: React.FC = () => {
         'Automated optic cup and disc boundary segmentation with vertical CDR calculation and neuroretinal rim thickness profiling.',
       urgency: 'Early detection essential as lost visual field cannot be restored.',
     },
-
-    {
-      id: 'keratitis',
-      name: 'Keratitis & Corneal Ulcer',
-      category: 'Corneal Pathology',
-      badge: 'Anterior Surface',
-      image: keratitisImg,
-      description:
-        'Infection or severe inflammation of the anterior clear cornea caused by bacteria, fungi, viruses, parasites, or contact lens trauma, posing an acute threat of corneal perforation.',
-      symptoms: [
-        'Intense eye pain and gritty foreign-body sensation',
-        'Severe photophobia (sensitivity to light) and tearing',
-        'Marked conjunctival redness and ciliary injection',
-        'White or grayish corneal spot / infiltrate',
-      ],
-      clinicalSigns: [
-        'Epithelial defect with stromal infiltration',
-        'Anterior chamber cell and flare / hypopyon',
-        'Loss of corneal transparency and stromal thinning',
-      ],
-      aiAnalysis:
-        'High-resolution anterior segment classification detecting stromal opacity boundaries, epithelial ulcer margins, and inflammatory severity.',
-      urgency: 'Ophthalmic emergency requiring immediate antimicrobial therapy.',
-    },
   ];
 
   const workflowSteps = [
@@ -237,15 +245,23 @@ export const LoginPage: React.FC = () => {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-50 text-[#0284C7] border border-sky-100 shadow-xs">
-              <Eye className="w-6 h-6 text-[#0284C7]" />
-            </div>
-            <div>
-              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0F172A] flex items-center gap-1.5 leading-none">
-                TRINAY <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-sky-100 text-[#0284C7]">AI</span>
+            <img
+              src={trinayLogo}
+              alt="TRINAY Logo"
+              className="h-10 w-auto max-h-[42px] object-contain shrink-0"
+            />
+            <div className="flex flex-col min-w-0 justify-center">
+              <span
+                className="text-xl sm:text-2xl font-black tracking-tight text-[#0F172A] leading-none"
+                style={{ fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              >
+                TRINAY
               </span>
-              <span className="text-[11px] text-slate-500 font-semibold tracking-wider uppercase block mt-0.5">
-                Clinical Ophthalmology Suite
+              <span
+                className="text-[11px] font-semibold text-[#0284C7] tracking-normal leading-none mt-1"
+                style={{ fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              >
+                Your Eye Health Assistant
               </span>
             </div>
           </div>
@@ -295,13 +311,13 @@ export const LoginPage: React.FC = () => {
               </h1>
 
               <p className="text-base sm:text-lg text-slate-300 font-normal leading-relaxed max-w-2xl">
-                TRINAY assists ophthalmologists, optometrists, and primary health clinics in rapid multi-disease evaluation across Diabetic Retinopathy, Cataract, Glaucoma, and Keratitis with explainable visual analytics.
+                TRINAY assists ophthalmologists, optometrists, and primary health clinics in rapid multi-disease evaluation across Diabetic Retinopathy, Cataract, and Glaucoma with explainable visual analytics.
               </p>
 
               {/* Trust Badges */}
               <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-800/80 text-xs text-slate-300">
                 <div className="space-y-1">
-                  <div className="text-xl font-bold text-white">4 Diseases</div>
+                  <div className="text-xl font-bold text-white">3 Diseases</div>
                   <div className="text-slate-400">Multi-Model Pipeline</div>
                 </div>
                 <div className="space-y-1">
@@ -320,19 +336,19 @@ export const LoginPage: React.FC = () => {
               <div className="w-full bg-slate-900/95 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-md overflow-hidden">
                 {/* Brand Header */}
                 <div className="p-7 pb-5 text-center border-b border-slate-800/80">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#0284C7]/20 text-[#0284C7] border border-[#0284C7]/30 mb-2.5 shadow-lg shadow-sky-950/50">
-                    <Eye className="w-6 h-6 text-[#0284C7]" />
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 p-2 border border-slate-700/80 mb-2.5 shadow-lg shadow-sky-950/50">
+                    <img src={trinayLogo} alt="TRINAY Logo" className="w-full h-full object-contain" />
                   </div>
                   <h2 className="text-xl font-bold text-white tracking-wide">
                     Clinician Authentication
                   </h2>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    Enter credentials to access clinical dashboard
+                    Enter credentials or sign in with Google / Gmail
                   </p>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-7 pt-5 space-y-4">
+                <div className="p-7 pt-5 space-y-4">
                   {error && (
                     <div className="p-3 bg-red-950/70 border border-red-800/80 rounded-xl text-xs text-red-300 flex items-start gap-2">
                       <span className="font-bold shrink-0">!</span>
@@ -340,81 +356,106 @@ export const LoginPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Email / User ID */}
-                  <div>
-                    <label
-                      htmlFor="login-identifier"
-                      className="block text-xs font-semibold text-slate-300 mb-1.5"
-                    >
-                      Email / Clinician ID
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                        <User className="w-4 h-4" />
-                      </div>
-                      <input
-                        id="login-identifier"
-                        type="text"
-                        required
-                        autoComplete="username"
-                        value={identifier}
-                        onChange={(e) => {
-                          setIdentifier(e.target.value);
-                          setError(null);
-                        }}
-                        placeholder="clinician@hospital.org"
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-hidden focus:border-[#0284C7] focus:ring-1 focus:ring-[#0284C7] transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password */}
-                  <div>
-                    <label
-                      htmlFor="login-password"
-                      className="block text-xs font-semibold text-slate-300 mb-1.5"
-                    >
-                      Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                        <Lock className="w-4 h-4" />
-                      </div>
-                      <input
-                        id="login-password"
-                        type="password"
-                        required
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => {
-                          setPassword(e.target.value);
-                          setError(null);
-                        }}
-                        placeholder="••••••••"
-                        className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-hidden focus:border-[#0284C7] focus:ring-1 focus:ring-[#0284C7] transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Log In Button */}
+                  {/* Gmail Service OAuth Button */}
                   <button
-                    id="login-submit-btn"
-                    type="submit"
+                    type="button"
+                    onClick={handleGmailSignIn}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#0284C7] hover:bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-950/50 transition-all text-sm mt-1 disabled:opacity-70 cursor-pointer"
+                    className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-xl shadow-md transition-all text-sm cursor-pointer disabled:opacity-70"
                   >
-                    {isLoading ? (
-                      <span>Authenticating Clinician...</span>
-                    ) : (
-                      <>
-                        <span>Sign In to Dashboard</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
+                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span>Sign In with Gmail / Google</span>
                   </button>
 
+                  {/* Divider */}
+                  <div className="relative flex items-center justify-center my-3.5">
+                    <div className="border-t border-slate-800 w-full"></div>
+                    <span className="bg-slate-900 px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 shrink-0">
+                      Or Clinician Details
+                    </span>
+                    <div className="border-t border-slate-800 w-full"></div>
+                  </div>
 
-                </form>
+                  <form onSubmit={handleSubmit} className="space-y-3.5">
+                    {/* Gmail / User ID */}
+                    <div>
+                      <label
+                        htmlFor="login-identifier"
+                        className="block text-xs font-semibold text-slate-300 mb-1.5"
+                      >
+                        Gmail / Clinician ID
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                          <User className="w-4 h-4" />
+                        </div>
+                        <input
+                          id="login-identifier"
+                          type="text"
+                          required
+                          autoComplete="username"
+                          value={identifier}
+                          onChange={(e) => {
+                            setIdentifier(e.target.value);
+                            setError(null);
+                          }}
+                          placeholder="doctor@gmail.com"
+                          className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-hidden focus:border-[#0284C7] focus:ring-1 focus:ring-[#0284C7] transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password */}
+                    <div>
+                      <label
+                        htmlFor="login-password"
+                        className="block text-xs font-semibold text-slate-300 mb-1.5"
+                      >
+                        Password
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                          <Lock className="w-4 h-4" />
+                        </div>
+                        <input
+                          id="login-password"
+                          type="password"
+                          required
+                          autoComplete="current-password"
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            setError(null);
+                          }}
+                          placeholder="••••••••"
+                          className="w-full pl-10 pr-3.5 py-2.5 bg-slate-800/90 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-hidden focus:border-[#0284C7] focus:ring-1 focus:ring-[#0284C7] transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Log In Button */}
+                    <button
+                      id="login-submit-btn"
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#0284C7] hover:bg-sky-600 active:bg-sky-700 text-white font-bold rounded-xl shadow-lg shadow-sky-950/50 transition-all text-sm mt-1 disabled:opacity-70 cursor-pointer"
+                    >
+                      {isLoading ? (
+                        <span>Authenticating Clinician...</span>
+                      ) : (
+                        <>
+                          <span>Sign In to Dashboard</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -431,7 +472,7 @@ export const LoginPage: React.FC = () => {
                 EXPLORE EYE CONDITIONS & CLINICAL SCREENING
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E0F2FE] text-[#0284C7] border border-sky-200">
-                4 Major Diseases
+                3 Major Diseases
               </span>
             </div>
 
@@ -440,12 +481,12 @@ export const LoginPage: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-[18px] text-slate-600 font-normal leading-relaxed">
-              Learn about 4 common eye conditions, recognize early symptoms, and see how AI-assisted eye screening helps doctors protect your vision.
+              Learn about 3 core eye conditions, recognize early symptoms, and see how AI-assisted eye screening helps doctors protect your vision.
             </p>
           </div>
 
-          {/* 5 Conditions Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+          {/* 3 Conditions Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {conditionsData.map((cond) => (
               <div
                 key={cond.id}
@@ -586,14 +627,6 @@ export const LoginPage: React.FC = () => {
               })}
             </div>
           </div>
-
-          {/* Clinical Disclaimer Notice */}
-          <div className="mt-12 p-4 sm:p-5 rounded-2xl bg-sky-50/70 border border-sky-200/70 flex items-start gap-3 max-w-4xl mx-auto">
-            <Info className="w-5 h-5 text-[#0284C7] shrink-0 mt-0.5" />
-            <p className="text-xs sm:text-[13px] text-slate-700 leading-relaxed">
-              <strong className="text-[#0F172A] font-bold">Clinical Advisory Notice:</strong> TRINAY is designed as an AI-assisted diagnostic decision support system to aid healthcare professionals during ocular screenings. It provides quantitative metrics and visual heatmaps but does not independently diagnose, prescribe, or replace physical examinations by a licensed ophthalmologist.
-            </p>
-          </div>
         </div>
       </section>
 
@@ -705,26 +738,33 @@ export const LoginPage: React.FC = () => {
         </div>
       )}
 
-      {/* 6. Professional Clinical Footer */}
-      <footer className="bg-[#0A1120] text-slate-400 py-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30">
-              <Eye className="w-4.5 h-4.5 text-sky-400" />
-            </div>
-            <div>
-              <span className="text-base font-bold text-white tracking-tight">
-                TRINAY AI
-              </span>
-              <span className="text-[11px] text-slate-500 block">
-                Clinical Ophthalmology Health System
-              </span>
-            </div>
+      {/* 6. Professional Compact Clinical Footer with Clinical Advisory Notice */}
+      <footer className="bg-[#070D19] text-slate-400 py-3.5 sm:py-4 border-t border-slate-800/90 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-2.5">
+          {/* Clinical Advisory Notice Bar */}
+          <div className="py-2 px-3.5 rounded-xl bg-slate-900/95 border border-sky-500/25 flex items-start sm:items-center gap-2.5 shadow-xs">
+            <Info className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5 sm:mt-0" />
+            <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed">
+              <strong className="text-white font-semibold">Clinical Advisory Notice:</strong> TRINAY is designed as an AI-assisted diagnostic decision support system to aid healthcare professionals during ocular screenings. It provides quantitative metrics and visual heatmaps but does not independently diagnose, prescribe, or replace physical examinations by a licensed ophthalmologist.
+            </p>
           </div>
 
-          <div className="text-xs text-slate-500 text-center sm:text-right">
-            <p>© {new Date().getFullYear()} TRINAY Health. All rights reserved.</p>
-            <p className="mt-0.5">Secure Ophthalmic AI Decision Support Platform</p>
+          {/* Bottom Bar: Logo, Branding, Copyright */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-0.5">
+            <div className="flex items-center gap-2.5">
+              <img src={trinayLogo} alt="TRINAY Logo" className="h-6 w-auto object-contain shrink-0" />
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-white tracking-tight">TRINAY AI</span>
+                <span className="text-[11px] text-slate-500">•</span>
+                <span className="text-[11px] text-slate-400 font-medium">Your Eye Health Assistant</span>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-500 flex flex-wrap items-center justify-center sm:justify-end gap-x-4 gap-y-1">
+              <span>© {new Date().getFullYear()} TRINAY Health. All rights reserved.</span>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <span>Secure Ophthalmic AI Decision Support</span>
+            </div>
           </div>
         </div>
       </footer>

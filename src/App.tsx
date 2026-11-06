@@ -56,13 +56,14 @@ const AppContent: React.FC = () => {
   } = useApp();
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // If restoring session on reload, prevent screen flash
   if (isAuthRestoring && currentUser) {
     return (
       <div className="min-h-screen bg-[#0D1829] flex flex-col items-center justify-center text-white space-y-4">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-semibold tracking-wider text-slate-300">Loading RETINA-X Platform...</p>
+        <p className="text-xs font-semibold tracking-wider text-slate-300">Loading TRINAY Platform...</p>
       </div>
     );
   }
@@ -158,20 +159,26 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans antialiased selection:bg-sky-600 selection:text-white w-full max-w-full min-w-0">
       {/* Top Navigation Bar - Full Width across top */}
-      <TopBar onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)} />
+      <TopBar
+        onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleDesktopSidebar={() => setIsSidebarCollapsed((prev) => !prev)}
+      />
 
       {/* Main Body: Real Dashboard Layout with Left-Docked Sidebar and Main Content */}
-      <div className="flex-1 flex min-w-0 w-full">
+      <div className="flex-1 flex min-w-0 w-full max-w-full">
         <Sidebar
           isOpenOnMobile={isMobileSidebarOpen}
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         />
 
         {/* Dynamic Page Views */}
-        <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-7 overflow-y-auto animate-in fade-in duration-150">
-          <div className="max-w-[1600px] w-full mx-auto">
+        <main className="flex-1 min-w-0 w-0 p-3.5 sm:p-5 md:p-6 lg:p-7 overflow-y-auto animate-in fade-in duration-150">
+          <div className="w-full max-w-[1536px] mx-auto min-w-0">
             <ErrorBoundary>
               {renderMainContent()}
             </ErrorBoundary>

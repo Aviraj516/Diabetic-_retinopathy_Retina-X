@@ -1,50 +1,65 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import {
-  Search,
-  Globe,
-  Bell,
-  ChevronDown,
   Menu,
   LogOut,
-  Settings,
-  Shield,
-  UserCheck,
+  Phone,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ChevronRight,
+  ShieldCheck,
   Stethoscope,
-  Plus,
-  User,
-  CheckCircle2,
 } from 'lucide-react';
+import trinayLogo from '../assets/logo.png';
 import { useApp } from '../context/AppContext';
-import { LANGUAGES } from '../data/translations';
+import { NavigationPage } from '../types';
 
 interface TopBarProps {
   onToggleMobileSidebar: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleDesktopSidebar?: () => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ onToggleMobileSidebar }) => {
+const PAGE_TITLES: Record<string, string> = {
+  dashboard: 'Clinical Overview',
+  patients: 'Patient Registry',
+  'patient-detail': 'Patient Profile',
+  'new-screening': 'Start Screening',
+  'dr-screening': 'Diabetic Retinopathy',
+  'screening-history': 'Screening Records',
+  'cataract-screening': 'Cataract Assessment',
+  'cataract-history': 'Cataract Records',
+  'cataract-report-detail': 'Cataract Report',
+  'glaucoma-screening': 'Glaucoma Assessment',
+  'glaucoma-history': 'Glaucoma Records',
+  'glaucoma-report-detail': 'Glaucoma Report',
+  analytics: 'Analytics & Insights',
+  'reports-card': 'Diagnostic Reports',
+  reports: 'Diagnostic Reports',
+  'report-detail': 'Detailed Report',
+  screenings: 'Screening Audit',
+  referrals: 'Clinical Referrals',
+  'cases-reviews': 'Specialist Reviews',
+  users: 'System Users',
+  settings: 'Clinician Settings',
+};
+
+export const TopBar: React.FC<TopBarProps> = ({
+  onToggleMobileSidebar,
+  isSidebarCollapsed = false,
+  onToggleDesktopSidebar,
+}) => {
   const {
     currentUser,
     currentRole,
+    activePage,
     logout,
-    language,
-    setIsLanguageModalOpen,
-    setIsAddPatientModalOpen,
     setActivePage,
   } = useApp();
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      setActivePage('patients');
-    }
-  };
-
   const displayName = currentUser?.name
-    ? currentUser.name.toLowerCase() === 'avi' || currentUser.name.includes('Arvind') || currentUser.name.includes('Kulkarni')
+    ? currentUser.name.toLowerCase() === 'avi' ||
+      currentUser.name.includes('Arvind') ||
+      currentUser.name.includes('Kulkarni')
       ? 'Dr. Aviraj Murkute'
       : currentUser.name.startsWith('Dr.')
       ? currentUser.name
@@ -60,100 +75,122 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleMobileSidebar }) => {
       ? 'System Administrator'
       : 'Ophthalmologist';
 
-  const initials =
-    displayName
-      ? displayName
-          .replace(/^Dr\.\s*/i, '')
-          .split(' ')
-          .filter(Boolean)
-          .map((n) => n[0])
-          .slice(0, 2)
-          .join('')
-          .toUpperCase()
-      : 'AM';
+  const initials = displayName
+    ? displayName
+        .replace(/^Dr\.\s*/i, '')
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'AM';
+
+  const currentSection = PAGE_TITLES[activePage] || 'Dashboard';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-[68px] px-4 md:px-7 bg-white border-b border-slate-300 shadow-xs">
-      {/* Left side: Mobile menu toggle + TRINAY branding */}
-      <div className="flex items-center gap-3 shrink-0">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-3 sm:px-5 md:px-6 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] w-full max-w-full min-w-0 transition-all">
+      {/* Left side: Navigation toggles, Logo & Breadcrumb */}
+      <div className="flex items-center gap-2 sm:gap-3.5 shrink-0 min-w-0">
+        {/* Mobile menu toggle */}
         <button
           type="button"
           onClick={onToggleMobileSidebar}
           aria-label="Open sidebar"
-          className="p-2 -ml-1 text-slate-600 rounded-lg md:hidden hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+          className="p-1.5 -ml-1 text-slate-600 rounded-lg md:hidden hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
         >
           <Menu className="w-5 h-5" />
         </button>
 
+        {/* Desktop sidebar collapse/expand toggle */}
+        {onToggleDesktopSidebar && (
+          <button
+            type="button"
+            onClick={onToggleDesktopSidebar}
+            aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="hidden md:inline-flex items-center justify-center w-8 h-8 -ml-1 text-slate-500 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="w-4.5 h-4.5" />
+            ) : (
+              <PanelLeftClose className="w-4.5 h-4.5" />
+            )}
+          </button>
+        )}
+
+        {/* TRINAY Logo & Branding */}
         <div
           onClick={() => setActivePage('dashboard')}
-          className="flex items-center gap-3 cursor-pointer select-none group"
+          className="flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none group min-w-0"
         >
-          <div className="w-12 h-12 rounded-full bg-[#0284C7] flex items-center justify-center p-2.5 text-white shadow-xs shrink-0 group-hover:bg-sky-700 transition-colors">
-            <Stethoscope className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-[21px] font-black tracking-tight text-[#0F172A] leading-tight">
-              TRINAY
-            </span>
-            <span className="text-[12px] font-bold text-slate-400 tracking-wider uppercase leading-none mt-0.5">
-              MEDICAL HEALTH SYSTEM
+          <img
+            src={trinayLogo}
+            alt="TRINAY Logo"
+            className="h-8 sm:h-9 w-auto max-h-[36px] object-contain shrink-0 transition-transform group-hover:scale-105"
+          />
+          <div className="flex flex-col min-w-0 justify-center">
+            <div className="flex items-center gap-1.5">
+              <span
+                className="text-[17px] sm:text-[18px] font-black tracking-tight text-[#0F172A] leading-none"
+                style={{ fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              >
+                TRINAY
+              </span>
+              <span className="hidden sm:inline-flex px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-sky-700 bg-sky-50 border border-sky-200/80 rounded-md">
+                Clinical AI
+              </span>
+            </div>
+            <span
+              className="text-[10px] sm:text-[11px] font-semibold text-[#0284C7] tracking-normal leading-none mt-1 truncate"
+              style={{ fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}
+            >
+              Eye Health Platform
             </span>
           </div>
         </div>
+
+        {/* Breadcrumb Context (Desktop) */}
+        <div className="hidden xl:flex items-center gap-1.5 ml-3 pl-3.5 border-l border-slate-200 text-xs font-medium text-slate-500 min-w-0">
+          <span className="text-slate-400">TRINAY</span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+          <span className="font-semibold text-slate-800 truncate">{currentSection}</span>
+        </div>
       </div>
 
-      {/* Middle: Patient Search Bar */}
-      <div className="flex-1 max-w-lg mx-4 lg:mx-8 hidden sm:block">
-        <form onSubmit={handleSearchSubmit} className="relative w-full">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-            <Search className="w-4 h-4 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search patient by name, Phone or Patient ID..."
-            className="w-full pl-9.5 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 bg-[#F8FAFC] border border-slate-200/90 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-[#0284C7]/20 focus:border-[#0284C7] focus:bg-white transition-all font-normal"
-          />
-        </form>
-      </div>
-
-      {/* Right controls: Language, Notification Bell, Doctor Profile, Logout */}
+      {/* Right controls: Clinical Workspace Status, Doctor Profile, Logout */}
       <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
-        {/* Language Selector Pill */}
-        <button
-          type="button"
-          onClick={() => setIsLanguageModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer"
-          title="Select Language"
-        >
-          <span>{currentLangObj.name}</span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-        </button>
-
-        {/* Notification Bell with red indicator badge */}
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
-        >
-          <Bell className="w-5 h-5 text-slate-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
-        </button>
+        {/* Clinician Active Pill */}
+        <div className="hidden lg:inline-flex items-center gap-2 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span>Clinician Workspace Active</span>
+        </div>
 
         {/* Doctor Profile Info */}
-        <div className="flex items-center gap-2.5 pl-1">
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[#0284C7] text-white font-bold text-xs shrink-0 shadow-2xs">
+        <div
+          onClick={() => setActivePage('settings')}
+          className="flex items-center gap-2.5 pl-1 py-1 pr-1.5 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+          title="View profile & settings"
+        >
+          <div className="flex items-center justify-center w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-[#0284C7] text-white font-extrabold text-[11px] sm:text-xs shrink-0 shadow-xs ring-2 ring-sky-100">
             {initials}
           </div>
-          <div className="hidden lg:flex flex-col text-left">
-            <span className="text-sm font-bold text-[#0F172A] leading-tight">
+          <div className="hidden md:flex flex-col text-left">
+            <span className="text-xs font-bold text-[#0F172A] leading-tight">
               {displayName}
             </span>
-            <span className="text-[11px] text-slate-400 font-medium leading-tight mt-0.5">
-              {displayTitle}
-            </span>
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+              <span>{displayTitle}</span>
+              {(currentUser?.phone || currentUser?.contactNo) && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="inline-flex items-center gap-0.5 text-[#0284C7] font-semibold">
+                    <Phone className="w-2.5 h-2.5 shrink-0" />
+                    <span>{currentUser.phone || currentUser.contactNo}</span>
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -161,10 +198,10 @@ export const TopBar: React.FC<TopBarProps> = ({ onToggleMobileSidebar }) => {
         <button
           type="button"
           onClick={logout}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50/50 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 rounded-xl transition-colors cursor-pointer ml-1"
-          title="Logout"
+          className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50/70 hover:bg-rose-100/80 hover:text-rose-700 border border-rose-200/80 rounded-xl transition-all cursor-pointer shadow-2xs"
+          title="Sign out of TRINAY"
         >
-          <LogOut className="w-3.5 h-3.5 text-rose-500" />
+          <LogOut className="w-3.5 h-3.5 text-rose-500 shrink-0" />
           <span className="hidden sm:inline">Logout</span>
         </button>
       </div>

@@ -1,6 +1,30 @@
+# Virtual environments & dependencies
 .venv/
 node_modules/
+
+# Python compiled bytecode & caches
 __pycache__/
 *.pyc
+**/*.pyc
+**/*__pycache__*
+
+# Operating system metadata
 .DS_Store
-.git/
+**/.DS_Store
+Thumbs.db
+
+# Archives & quarantine
+archive/
+*.zip
+
+# Runtime uploads & transient caches
+translation_cache/
+uploads/screening_results/
+uploads/screenings_cache.json
+
+# IDE settings
+.vscode/
+.idea/
+
+# Environment files
+.env.local

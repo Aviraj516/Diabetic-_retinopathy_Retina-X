@@ -312,7 +312,9 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
                     )}
                   </div>
                   <div className="text-[11px] text-slate-600 mt-1">
-                    {glaucomaRec.clinicalRecommendation ||
+                    {(typeof glaucomaRec.clinicalRecommendation === 'string'
+                      ? glaucomaRec.clinicalRecommendation
+                      : ((glaucomaRec.clinicalRecommendation as any)?.recommendation || (glaucomaRec.clinicalRecommendation as any)?.clinicalRecommendation)) ||
                       (glaucomaRec.glaucomaPrediction === 'GLAUCOMA_SUSPECT'
                         ? 'Further clinical evaluation and dilated ophthalmoscopy required.'
                         : 'Optic nerve & cup-to-disc ratio within expected physiologic limits.')}
@@ -618,7 +620,9 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
                     )}
                   </div>
                   <div className="text-[11px] text-slate-600 mt-1">
-                    {cataractRec.clinicalRecommendation ||
+                    {(typeof cataractRec.clinicalRecommendation === 'string'
+                      ? cataractRec.clinicalRecommendation
+                      : ((cataractRec.clinicalRecommendation as any)?.recommendation || (cataractRec.clinicalRecommendation as any)?.clinicalRecommendation)) ||
                       (cataractRec.cataractPrediction === 'CATARACT'
                         ? 'Slit-lamp examination & ophthalmologist consultation advised.'
                         : 'Anterior segment clear. Routine annual eye checkup recommended.')}
@@ -775,7 +779,12 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
                       Doctor's Clinical Triage Summary
                     </span>
                     <p className="text-slate-600 text-[11.5px] leading-relaxed">
-                      {(rec as any).doctorSummary || cataractRec.clinicalRecommendation || (
+                      {(typeof (rec as any).doctorSummary === 'string'
+                        ? (rec as any).doctorSummary
+                        : ((rec as any).doctorSummary as any)?.recommendation) ||
+                        (typeof cataractRec.clinicalRecommendation === 'string'
+                          ? cataractRec.clinicalRecommendation
+                          : ((cataractRec.clinicalRecommendation as any)?.recommendation || (cataractRec.clinicalRecommendation as any)?.clinicalRecommendation)) || (
                         cataractRec.cataractPrediction === 'CATARACT'
                           ? 'Anterior segment examination reveals clinically significant crystalline lens opacification. Pupillary aperture exhibits focal or diffuse density that scatters light along the visual axis. Slit-lamp examination with pupillary dilation is recommended to grade nuclear sclerosis/cortical opacities and assess visual prognosis.'
                           : 'Crystalline lens appears clear and transparent throughout the pupillary aperture. No focal lens clouding or anterior segment abnormalities detected. Continue routine preventive ophthalmic surveillance.'
@@ -838,6 +847,13 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
               imageQuality: existingReport?.imageQuality || drRec.imageQuality,
             });
 
+            const rawReportRec = existingReport?.recommendation || (rec as any).recommendation;
+            const safeRecStr = typeof rawReportRec === 'string'
+              ? rawReportRec
+              : (rawReportRec && typeof rawReportRec === 'object'
+                  ? (rawReportRec.recommendation || rawReportRec.clinicalRecommendation || '')
+                  : '');
+
             const recommendedAction = getRecommendedAction({
               imageQuality: existingReport?.imageQuality || drRec.imageQuality,
               drSeverity: existingReport?.drSeverity || drRec.drSeverity,
@@ -845,7 +861,7 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
               referralStatus: existingReport?.referralStatus || rec.referralStatus,
               referralPriority: existingReport?.referralPriority || (rec as any).referralPriority,
               referralReason: existingReport?.referralReason || (rec as any).referralReason,
-              recommendation: existingReport?.recommendation || (rec as any).recommendation,
+              recommendation: safeRecStr,
             });
 
             const anatomy = existingReport?.anatomyData || (rec as any).anatomyData || (rec as any).anatomy;
@@ -1272,7 +1288,11 @@ export const ScreeningReportModal: React.FC<ScreeningReportModalProps> = ({
                     </span>
                   </div>
                   <h5 className="font-bold text-slate-900">{recommendedAction.actionTitle}</h5>
-                  <p className="text-slate-700 leading-relaxed font-medium">{recommendedAction.actionSummary}</p>
+                  <p className="text-slate-700 leading-relaxed font-medium">
+                    {typeof recommendedAction.actionSummary === 'string'
+                      ? recommendedAction.actionSummary
+                      : ((recommendedAction.actionSummary as any)?.recommendation || (recommendedAction.actionSummary as any)?.clinicalRecommendation || '')}
+                  </p>
                   <div className="text-[11px] text-slate-600 pt-1 border-t border-slate-200/60 flex justify-between">
                     <span>Follow-Up Interval: <strong className="text-slate-900">{recommendedAction.timingGuideline}</strong></span>
                     <span className="text-[10px] text-slate-400">{recommendedAction.protocolBasis}</span>
